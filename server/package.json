@@ -1,0 +1,18 @@
+{
+  "name": "speachy-server",
+  "version": "1.0.0",
+  "description": "Server side application for Speachy: A platform to revolutionize public speaking, empowering users to find their voice, sharpen their skills and have the confidence to share their stories and ideas with the world.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Navdeep Beniwal",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
