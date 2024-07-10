@@ -51,7 +51,7 @@ const InterviewHome = () => {
     );
     console.log("Questions (fetched from backend api):", questions);
 
-    navigate("/jobs/questions", {
+    navigate("/interview/questions", {
       state: {
         questions: questions,
         companyName: companyName,

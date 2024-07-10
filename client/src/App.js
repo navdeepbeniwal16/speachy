@@ -6,6 +6,7 @@ import HomePage from "./pages/HomePage";
 import NavigationBar from "./components/NavigationBar";
 import InterviewHome from "./pages/InterviewHome";
 import PageWrapper from "./components/PageWrapper";
+import InterviewQuestions from "./pages/InterviewQuestions";
 
 function App() {
   return (
@@ -16,6 +17,10 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/interview" element={<InterviewHome />} />
+            <Route
+              path="/interview/questions"
+              element={<InterviewQuestions />}
+            />
           </Routes>
         </Box>
       </PageWrapper>
