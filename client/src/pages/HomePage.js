@@ -1,5 +1,5 @@
 import React from "react";
-import { Typography, Container, Link, Box } from "@mui/material";
+import { Typography, Container, Link, Box, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 const HomePage = () => {
@@ -24,6 +24,15 @@ const HomePage = () => {
         scenarios. Dive into fun practice sessions, get awesome feedback, and
         gain the confidence to shine in any real life interaction!
       </Typography>
+
+      <Box id="interview-section">
+        <Typography variant="body1">
+          Please click the button to take to Interview Home page <br></br>
+          <Button type="button" onClick={() => navigate("/interview")}>
+            Interview Home
+          </Button>
+        </Typography>
+      </Box>
 
       <Box id="feedback">
         <Typography
