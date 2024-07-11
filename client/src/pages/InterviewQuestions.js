@@ -22,7 +22,7 @@ const InterviewQuestions = () => {
   const jobDescription = location.state.jobDescription;
 
   const navigateToPracticePage = (questionId) => {
-    navigate(`/jobs/questions/${questionId}`, {
+    navigate(`/interview/questions/${questionId}`, {
       state: {
         questions: questions,
         questionId: questionId,

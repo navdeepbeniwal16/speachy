@@ -35,76 +35,43 @@ class InterviewService {
     }
   }
 
-  //   static async fetchAudioTranscription(blob) {
-  //     const formData = new FormData();
-  //     formData.append("file", blob, "audio-file.ogg");
+  static async fetchAudioResponseFeedback(
+    questionText,
+    audioResponseBlob,
+    companyName,
+    jobRole,
+    jobDescription
+  ) {
+    const formData = new FormData();
+    formData.append("file", audioResponseBlob, "audio-file.ogg");
+    formData.append("questionText", questionText);
+    formData.append("companyName", companyName);
+    formData.append("jobRole", jobRole);
+    formData.append("jobDescription", jobDescription);
 
-  //     try {
-  //       const response = await fetch(
-  //         "/scenarios/jobs/fetch-audio-transcription",
-  //         {
-  //           method: "POST",
-  //           headers: {},
-  //           body: formData,
-  //         }
-  //       );
+    try {
+      const response = await fetch("/interview/evaluate-response-audio", {
+        method: "POST",
+        headers: {},
+        body: formData,
+      });
 
-  //       if (response.status !== 200) {
-  //         throw new Error("Request unsuccessful: " + response);
-  //       }
+      if (response.status !== 200) {
+        throw new Error("Request unsuccessful: " + response);
+      }
 
-  //       const data = await response.json();
-  //       if (!data.transcription) {
-  //         throw new Error(
-  //           "Transcripts not found in response payload: " + response
-  //         );
-  //       }
+      const data = await response.json();
+      if (!data.results) {
+        throw new Error("Results not found in response payload: " + response);
+      }
 
-  //       const transcriptionObj = data.transcription;
-  //       return transcriptionObj;
-  //     } catch (error) {
-  //       console.error("Failed to upload audio:", error);
-  //       return null;
-  //     }
-  //   }
-
-  //   static async fetchAudioResponseFeedback(
-  //     questionText,
-  //     audioResponseBlob,
-  //     companyName,
-  //     jobRole,
-  //     jobDescription
-  //   ) {
-  //     const formData = new FormData();
-  //     formData.append("file", audioResponseBlob, "audio-file.ogg");
-  //     formData.append("questionText", questionText);
-  //     formData.append("companyName", companyName);
-  //     formData.append("jobRole", jobRole);
-  //     formData.append("jobDescription", jobDescription);
-
-  //     try {
-  //       const response = await fetch("/scenarios/jobs/evaluate-response-audio", {
-  //         method: "POST",
-  //         headers: {},
-  //         body: formData,
-  //       });
-
-  //       if (response.status !== 200) {
-  //         throw new Error("Request unsuccessful: " + response);
-  //       }
-
-  //       const data = await response.json();
-  //       if (!data.results) {
-  //         throw new Error("Results not found in response payload: " + response);
-  //       }
-
-  //       const resultsObj = data.results;
-  //       return resultsObj;
-  //     } catch (error) {
-  //       console.error("Failed to fetch audio response feedback:", error);
-  //       return null;
-  //     }
-  //   }
+      const resultsObj = data.results;
+      return resultsObj;
+    } catch (error) {
+      console.error("Failed to fetch audio response feedback:", error);
+      return null;
+    }
+  }
 }
 
 export default InterviewService;
