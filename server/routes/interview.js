@@ -98,12 +98,6 @@ router.get("/", (req, res, next) => {
 router.post("/fetch-questions", async (req, res) => {
   const { company, role, description } = req.body;
 
-  if (!company || !role) {
-    return res
-      .status(400)
-      .send("'company' and 'role' are required in request body.");
-  }
-
   console.log("interview.js : Received job details:", {
     company,
     role,
@@ -208,18 +202,13 @@ const evaluateResponse = async (req, res, next) => {
       });
     }
 
+    // Making theses fields optional
     if (!requestBody.companyName) {
-      return res.status(400).json({
-        message: "Error evaluating response",
-        description: "Request body is missing 'companyName'",
-      });
+      requestBody.companyName = null;
     }
 
     if (!requestBody.jobRole) {
-      return res.status(400).json({
-        message: "Error evaluating response",
-        description: "Request body is missing 'jobRole'",
-      });
+      requestBody.jobRole = null;
     }
 
     const { questionText, responseText, companyName, jobRole, jobDescription } =
