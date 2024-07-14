@@ -136,7 +136,9 @@ const SignUp = () => {
               />
             </Box>
           )}
-          <Box
+          <Paper
+            variant="elevation"
+            elevation={3}
             sx={{
               display: "flex",
               flexDirection: "column",
@@ -144,13 +146,13 @@ const SignUp = () => {
               alignItems: "center",
               height: "100%",
               padding: 3,
-              backgroundColor: "#f7f7f7",
+              backgroundColor: "#fff",
             }}
           >
             <Avatar
               sx={{
                 m: 1,
-                bgcolor: "primary.main",
+                bgcolor: "black",
               }}
             >
               <LockOutlinedIcon />
@@ -244,7 +246,7 @@ const SignUp = () => {
                 Already have an account? <Link to="/signin">SignIn</Link>
               </Typography>
             </Box>
-          </Box>
+          </Paper>
         </Grid>
         <Grid item xs={false} sm={12} md={4} />
       </Grid>

@@ -128,12 +128,12 @@ const SignIn = () => {
         >
           {isSigningIn && (
             <Box sx={{ width: "100%", height: "0px" }}>
-              <LinearProgress
-              // color="red"
-              />
+              <LinearProgress color="warning" />
             </Box>
           )}
-          <Box
+          <Paper
+            variant="elevation"
+            elevation={3}
             sx={{
               display: "flex",
               flexDirection: "column",
@@ -141,7 +141,7 @@ const SignIn = () => {
               alignItems: "center",
               height: "100%",
               padding: 3,
-              backgroundColor: "#f7f7f7",
+              backgroundColor: "#fff",
             }}
           >
             <Avatar
@@ -227,7 +227,7 @@ const SignIn = () => {
                 Don't have an account? <Link to="/signup">SignUp</Link>
               </Typography>
             </Box>
-          </Box>
+          </Paper>
         </Grid>
         <Grid item xs={false} sm={12} md={4} />
       </Grid>
