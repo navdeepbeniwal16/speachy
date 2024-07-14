@@ -5,6 +5,11 @@ const express = require("express");
 const app = express();
 const path = require("path");
 const bodyParser = require("body-parser");
+const morgan = require("morgan");
+const interviewRoute = require("./routes/interview.js");
+
+// Log requests in 'dev' format
+app.use(morgan("common"));
 
 app.use((req, res, next) => {
   if (req.path.endsWith(".json")) {
@@ -27,6 +32,8 @@ app.use(bodyParser.json());
 app.get("/", (req, res, next) => {
   res.send("Hello there! Speachy server here, alive and kicking!");
 });
+
+app.use("/interview", interviewRoute);
 
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.
