@@ -1,19 +1,20 @@
-import * as React from "react";
-
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Divider from "@mui/material/Divider";
-import Typography from "@mui/material/Typography";
 import MenuItem from "@mui/material/MenuItem";
 import Drawer from "@mui/material/Drawer";
 import MenuIcon from "@mui/icons-material/Menu";
-import { Link, useNavigate } from "react-router-dom";
+import Avatar from "@mui/material/Avatar";
+import { deepOrange } from "@mui/material/colors";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 const logoStyle = {
-  width: "140px",
+  width: "100px",
   height: "auto",
   cursor: "pointer",
   marginRight: "16px",
@@ -21,24 +22,44 @@ const logoStyle = {
 };
 
 const NavigationBar = () => {
-  const [open, setOpen] = React.useState(false);
+  const auth = getAuth();
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const toggleDrawer = (newOpen) => () => {
     setOpen(newOpen);
   };
 
-  const scrollToSection = (sectionId) => {
-    const sectionElement = document.getElementById(sectionId);
-    const offset = 128;
-    if (sectionElement) {
-      const targetScroll = sectionElement.offsetTop - offset;
-      sectionElement.scrollIntoView({ behavior: "smooth" });
-      window.scrollTo({
-        top: targetScroll,
-        behavior: "smooth",
-      });
-      setOpen(false);
+  const getDisplayNameInitials = (displayName) => {
+    if (!displayName || displayName.length === 0) {
+      return "N/A";
+    } else {
+      const nameSplitted = displayName.split(" ");
+      if (nameSplitted.length > 1) {
+        return nameSplitted[0][0] + nameSplitted[1][0];
+      } else {
+        return nameSplitted[0][0];
+      }
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      await auth.signOut();
+      console.log("User signed out successfully.");
+      navigate("/");
+    } catch (error) {
+      console.error("Error signing out: ", error);
     }
   };
 
@@ -52,7 +73,6 @@ const NavigationBar = () => {
           bgcolor: "#fff",
           pt: 5,
           mt: -2,
-          border: "0.5px solid lightgrey",
         }}
       >
         <Container width="100%">
@@ -75,71 +95,80 @@ const NavigationBar = () => {
                 px: 0,
               }}
             >
-              {/* <Link to="/">
+              <Link to="/">
                 <img
-                  src="/assets/app_title_logo_bg_removed.png"
+                  src="/assets/Speachy_Logo_SVG.svg"
                   style={logoStyle}
-                  alt="logo of ceenarios"
+                  alt="logo of speachy"
                 />
-              </Link> */}
-
-              <Typography variant="h3" color="black">
-                <strong>Speachy</strong>
-              </Typography>
+              </Link>
 
               <Box sx={{ display: { xs: "none", md: "flex" } }}>
-                <MenuItem
+                {/* <MenuItem
                   onClick={() => scrollToSection("home")}
                   sx={{ py: "10px", px: "12px" }}
                 >
                   <Typography variant="body2" color="grey">
                     <strong>Home</strong>
                   </Typography>
-                </MenuItem>
-                <MenuItem
-                  onClick={() => scrollToSection("faq")}
-                  sx={{ py: "10px", px: "12px" }}
-                >
-                  <Typography variant="body2" color="grey">
-                    <strong>FAQ</strong>
-                  </Typography>
-                </MenuItem>
-                <MenuItem
-                  onClick={() => scrollToSection("feedback")}
-                  sx={{ py: "10px", px: "12px" }}
-                >
-                  <Typography variant="body2" color="grey">
-                    <strong>Feedback</strong>
-                  </Typography>
-                </MenuItem>
+                </MenuItem> */}
               </Box>
             </Box>
-            <Box
-              sx={{
-                display: { xs: "none", md: "flex" },
-                gap: 0.5,
-                alignItems: "center",
-              }}
-            >
-              <Button
-                // color="violet"
-                variant="text"
-                size="small"
-                component="a"
-                href="#"
+            {user ? (
+              <Box
+                sx={{
+                  display: { xs: "none", md: "flex" },
+                  gap: 0.5,
+                  alignItems: "center",
+                }}
               >
-                Sign in
-              </Button>
-              <Button
-                // color="violet"
-                variant="contained"
-                size="small"
-                component="a"
-                href="#"
+                <Button
+                  // color="violet"
+                  size="small"
+                  component="a"
+                  onClick={signOut}
+                >
+                  Sign out
+                </Button>
+                <Avatar
+                  sx={{
+                    bgcolor: deepOrange[400],
+                    width: 30,
+                    height: 30,
+                    fontSize: "12px",
+                  }}
+                >
+                  {user && getDisplayNameInitials(user.displayName)}
+                </Avatar>
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  display: { xs: "none", md: "flex" },
+                  gap: 0.5,
+                  alignItems: "center",
+                }}
               >
-                Sign up
-              </Button>
-            </Box>
+                <Button
+                  // color="violet"
+                  variant="text"
+                  size="small"
+                  component="a"
+                  onClick={() => navigate("/signin")}
+                >
+                  Sign in
+                </Button>
+                <Button
+                  // color="violet"
+                  variant="contained"
+                  size="small"
+                  component="a"
+                  onClick={() => navigate("/signup")}
+                >
+                  Sign up
+                </Button>
+              </Box>
+            )}
 
             <Box sx={{ display: { sm: "", md: "none" } }}>
               <Button
@@ -168,22 +197,14 @@ const NavigationBar = () => {
                       flexGrow: 1,
                     }}
                   ></Box>
-                  <MenuItem onClick={() => scrollToSection("home")}>
-                    Home
-                  </MenuItem>
-                  <MenuItem onClick={() => scrollToSection("faq")}>
-                    FAQ
-                  </MenuItem>
-                  <MenuItem onClick={() => scrollToSection("feedback")}>
-                    Feedback
-                  </MenuItem>
+                  <MenuItem onClick={() => navigate("/")}>Home</MenuItem>
                   <Divider />
                   <MenuItem>
                     <Button
                       //   color="violet"
                       variant="contained"
                       component="a"
-                      href="#"
+                      onClick={() => navigate("/signup")}
                       sx={{ width: "100%" }}
                     >
                       Sign up
@@ -194,7 +215,7 @@ const NavigationBar = () => {
                       //   color="violet"
                       variant="outlined"
                       component="a"
-                      href="#"
+                      onClick={() => navigate("/signin")}
                       sx={{ width: "100%" }}
                     >
                       Sign in

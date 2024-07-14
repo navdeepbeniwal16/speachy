@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -14,17 +14,30 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import InterviewService from "../services/interview-service.js";
+import { getAuth } from "firebase/auth";
 
 const InterviewHome = () => {
+  const auth = getAuth();
   const navigate = useNavigate();
   const [isStarting, setIsStarting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isCompanyProvided, setIsCompanyProvided] = useState(true);
   const [isRoleProvided, setIsRoleProvided] = useState(true);
-
   const [companyName, setCompanyName] = useState("");
   const [jobRole, setRole] = useState("");
   const [jobDescription, setJobDescription] = useState("");
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const firebaseUser = auth.currentUser;
+    if (firebaseUser) {
+      setUser(firebaseUser);
+    } else {
+      setUser(null);
+    }
+
+    return;
+  }, []);
 
   const handleUpload = async (event) => {
     event.preventDefault();
