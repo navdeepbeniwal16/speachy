@@ -8,6 +8,10 @@ import {
   Paper,
   Snackbar,
   Alert,
+  Grid,
+  Card,
+  CardActionArea,
+  CardContent,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { getAuth } from "firebase/auth";
@@ -84,34 +88,89 @@ const HomePage = () => {
   }, [auth.currentUser]);
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, pt: 4, fontFamily: "Roboto" }}>
-      <Typography variant="h4" gutterBottom sx={{ mb: 4, fontWeight: "bold" }}>
-        Welcome to <span style={{ color: "darkorange" }}>Speachy</span>
-      </Typography>
-      <Typography variant="body1" sx={{ mb: 4 }}>
-        Speachy helps you level up your speaking skills for all kinds of
-        scenarios. Dive into fun practice sessions, get awesome feedback, and
-        gain the confidence to shine in any real-life interaction!
-      </Typography>
-
-      <Box id="interview-section" sx={{ mb: 4 }}>
-        <Typography variant="body1" gutterBottom>
-          Please click the button to go to the Interview Home page
+    <Container maxWidth="lg" sx={{ mt: 4, pt: 4, pb: 8, fontFamily: "Roboto" }}>
+      <Box sx={{ textAlign: "center", mb: 8 }}>
+        <Typography variant="h2" gutterBottom sx={{ fontWeight: "bold" }}>
+          Welcome to <span style={{ color: "darkorange" }}>Speachy</span>
         </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => navigate("/interview")}
+        <Typography variant="h5" sx={{ mb: 4 }} gutterBottom>
+          Speachy helps you level up your speaking skills for all kinds of
+          scenarios. Dive into fun practice sessions, get awesome feedback, and
+          gain the confidence to shine in any real-life interaction!
+        </Typography>
+      </Box>
+
+      <Box id="interview-section" sx={{ mb: 8 }}>
+        <Typography
+          variant="h4"
+          sx={{ textAlign: "center", mb: 4 }}
+          gutterBottom
         >
-          Interview Home
-        </Button>
+          What are we working on today?
+        </Typography>
+
+        <Grid id="catalogue" container spacing={4}>
+          <Grid item xs={12} sm={6}>
+            <Card
+              variant="elevation"
+              sx={{ display: "flex", flexDirection: "row", height: "110px" }}
+            >
+              <CardActionArea
+                onClick={() => navigate("/interview")}
+                sx={{ display: "flex", width: "100%" }}
+              >
+                <CardContent
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Typography gutterBottom variant="h5" component="div">
+                    Impromptu Speaking
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Boost your impromptu speaking with practice and feedback!
+                  </Typography>
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Card
+              variant="elevation"
+              sx={{ display: "flex", flexDirection: "row", height: "110px" }}
+            >
+              <CardActionArea
+                onClick={() => navigate("/interview")}
+                sx={{ display: "flex", width: "100%" }}
+              >
+                <CardContent
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Typography gutterBottom variant="h5" component="div">
+                    Job Interview Preparation
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Ace your interviews with practice questions and response
+                    analysis!
+                  </Typography>
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          </Grid>
+        </Grid>
       </Box>
 
       {loading ? (
         <Box></Box>
       ) : (
         !isOnPremiumPlan && (
-          <Container sx={{ mt: 4, mb: 4 }}>
+          <Container sx={{ mt: 4, mb: 8 }}>
             <Paper
               elevation={1}
               sx={{ p: 4, textAlign: "center", backgroundColor: "#f7f9fc" }}
@@ -120,7 +179,7 @@ const HomePage = () => {
                 <Typography
                   variant="h4"
                   gutterBottom
-                  sx={{ color: "#3f51b5", fontWeight: "bold" }}
+                  sx={{ color: "orange", fontWeight: "bold" }}
                 >
                   Enjoy a 3 Months Free Trial
                 </Typography>
@@ -133,7 +192,7 @@ const HomePage = () => {
                 </Typography>
                 <Button
                   variant="contained"
-                  color="primary"
+                  color="warning"
                   size="large"
                   onClick={availFreeTrial}
                   sx={{ mt: 2 }}
@@ -146,8 +205,8 @@ const HomePage = () => {
         )
       )}
 
-      <Box id="feedback" sx={{ mt: 4 }}>
-        <Typography variant="h5" sx={{ mb: 2, fontWeight: "bold" }}>
+      <Box id="feedback" sx={{ mt: 4, pb: 4, textAlign: "center" }}>
+        <Typography variant="h4" sx={{ mb: 2, fontWeight: "bold" }}>
           Feedback
         </Typography>
         <Typography variant="body1">

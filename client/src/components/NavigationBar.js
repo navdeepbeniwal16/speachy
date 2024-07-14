@@ -70,7 +70,7 @@ const NavigationBar = () => {
         width="100%"
         sx={{
           boxShadow: 0,
-          bgcolor: "#fff",
+          bgcolor: "#FAF9F2",
           pt: 5,
           mt: -2,
         }}
@@ -123,12 +123,12 @@ const NavigationBar = () => {
                 }}
               >
                 <Button
-                  // color="violet"
+                  color="info"
                   size="small"
                   component="a"
                   onClick={signOut}
                 >
-                  Sign out
+                  <strong>Sign out</strong>
                 </Button>
                 <Avatar
                   sx={{
@@ -150,7 +150,7 @@ const NavigationBar = () => {
                 }}
               >
                 <Button
-                  // color="violet"
+                  color="warning"
                   variant="text"
                   size="small"
                   component="a"
@@ -159,7 +159,7 @@ const NavigationBar = () => {
                   Sign in
                 </Button>
                 <Button
-                  // color="violet"
+                  color="warning"
                   variant="contained"
                   size="small"
                   component="a"

@@ -5,7 +5,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { Box } from "@mui/material";
+import { Container } from "@mui/material";
 import "./App.css";
 import HomePage from "./pages/HomePage";
 import NavigationBar from "./components/NavigationBar";
@@ -42,10 +42,10 @@ const requireAuth = (Component) => {
 
 function App() {
   return (
-    <Router>
-      <NavigationBar />
-      <PageWrapper>
-        <Box component="main" sx={{ flexGrow: 1 }}>
+    <Container maxWidth="xl" sx={{ height: "100vh", bgcolor: "#FAF9F2" }}>
+      <Router>
+        <NavigationBar />
+        <PageWrapper>
           <Routes>
             <Route path="/signup" element={<SignUp />} />
             <Route path="/signin" element={<SignIn />} />
@@ -65,9 +65,9 @@ function App() {
             {/* Redirect any unknown routes to home */}
             <Route path="*" element={<Navigate to="/signin" />} />
           </Routes>
-        </Box>
-      </PageWrapper>
-    </Router>
+        </PageWrapper>
+      </Router>
+    </Container>
   );
 }
 
