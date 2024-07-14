@@ -115,11 +115,7 @@ const InterviewPractice = () => {
                 p: 2,
                 my: 2,
                 borderRadius: "10px",
-                backgroundColor: "lightgray",
-                // backgroundColor: (theme) =>
-                //   theme.palette.mode === "light"
-                //     ? theme.palette.grey[200]
-                //     : theme.palette.grey[800],
+                backgroundColor: "#fff",
                 boxShadow: "none",
               }}
             >
@@ -187,7 +183,8 @@ const InterviewPractice = () => {
         </Box>
         <Box sx={{ width: "55%", ml: 2, maxWidth: "55%" }}>
           <Paper
-            variant="outlined"
+            variant="elevation"
+            elevation={"1"}
             sx={{
               borderRadius: "10px",
               mt: "16px",
@@ -198,9 +195,7 @@ const InterviewPractice = () => {
           >
             {isEvaluating && (
               <Box sx={{ width: "100%" }}>
-                <LinearProgress
-                // color="violet"
-                />
+                <LinearProgress color="warning" />
               </Box>
             )}
             {feedback ? (

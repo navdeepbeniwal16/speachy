@@ -127,7 +127,7 @@ const HomePage = () => {
                   }}
                 >
                   <Typography gutterBottom variant="h5" component="div">
-                    Impromptu Speaking
+                    🎤 Impromptu Speaking
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Boost your impromptu speaking with practice and feedback!
@@ -153,7 +153,7 @@ const HomePage = () => {
                   }}
                 >
                   <Typography gutterBottom variant="h5" component="div">
-                    Job Interview Preparation
+                    👔 Job Interview Preparation
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Ace your interviews with practice questions and response

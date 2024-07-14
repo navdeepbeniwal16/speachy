@@ -116,7 +116,7 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
 
       <Button
         variant="contained"
-        // color="violet"
+        color="warning"
         startIcon={isRecording ? <StopIcon /> : <MicIcon />}
         onClick={isRecording ? handleSubmitInner : handleRecordInner}
         sx={{ minWidth: "10%" }}
@@ -124,7 +124,7 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
         {isRecording ? "Submit" : "Record"}
       </Button>
       <RadioButtonCheckedIcon
-      // color={isRecording ? "violet" : "gray"}
+        color={isRecording ? "warning" : "gray"}
       ></RadioButtonCheckedIcon>
     </Box>
   );

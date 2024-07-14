@@ -11,6 +11,7 @@ import {
   Grid,
   Paper,
   LinearProgress,
+  CircularProgress,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import InterviewService from "../services/interview-service.js";
@@ -115,75 +116,99 @@ const InterviewHome = () => {
         <Typography></Typography>
       </Box>
 
-      <Grid container spacing={3} sx={{ padding: 2 }}>
-        <Grid item md={6} xs={12}>
+      <Grid container spacing={4} sx={{ padding: 2 }}>
+        <Grid item md={5} xs={12}>
           <Paper
             variant="none"
             sx={{
               height: "100%",
-              backgroundColor: "#f4f5f5",
-              overflowY: "auto",
-              zIndex: 1,
+              backgroundColor: "#FAF9F2",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              padding: 3,
             }}
           >
-            {isStarting && (
-              <Box sx={{ width: "100%" }}>
-                <LinearProgress
-                // color="violet"
-                />
-              </Box>
-            )}
-
-            <Box sx={{ padding: 2, height: "100%" }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                width: "100%",
+                height: "100%",
+              }}
+            >
               <Typography
-                variant="h6"
-                sx={{
-                  textAlign: "center",
-                }}
+                variant="h5"
+                sx={{ mb: 2, textAlign: "center", fontWeight: "bold" }}
                 gutterBottom
               >
                 Practice
               </Typography>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  height: "80%",
-                }}
-              >
-                <Typography
-                  variant="body2"
-                  color="grey"
-                  sx={{ mb: 3, textAlign: "center" }}
-                >
-                  Practice frequently asked questions
-                </Typography>
 
-                <Button
-                  variant="contained"
-                  onClick={handleStart}
-                  disabled={isStarting}
+              <Typography
+                variant="body1"
+                color="textSecondary"
+                sx={{ mb: 3, textAlign: "center" }}
+              >
+                Get ready to tackle the most common questions with confidence.
+                Start your practice now!
+              </Typography>
+
+              <Button
+                variant="contained"
+                color="warning"
+                onClick={handleStart}
+                disabled={isStarting}
+                sx={{ width: "50%" }}
+              >
+                Start
+              </Button>
+
+              {isStarting && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    padding: 3,
+                  }}
                 >
-                  Start
-                </Button>
-              </Box>
+                  <CircularProgress color="warning" />
+                </Box>
+              )}
             </Box>
           </Paper>
         </Grid>
-        <Grid item md={6} xs={12}>
-          <Paper variant="outlined" sx={{ overflowY: "auto", zIndex: 1 }}>
+
+        <Grid
+          item
+          md={2}
+          xs={12}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Typography>or</Typography>
+        </Grid>
+
+        <Grid item md={5} xs={12}>
+          <Paper
+            variant="elevation"
+            elevation={"1"}
+            sx={{ overflowY: "auto", zIndex: 1 }}
+          >
             {isUploading && (
               <Box sx={{ width: "100%" }}>
-                <LinearProgress
-                // color="violet"
-                />
+                <LinearProgress color="warning" />
               </Box>
             )}
             <Box sx={{ padding: 2 }}>
               <Typography
-                variant="h6"
+                variant="h5"
                 sx={{
                   textAlign: "center",
                 }}
@@ -191,7 +216,11 @@ const InterviewHome = () => {
               >
                 Prepare for upcoming Interview
               </Typography>
-              <Typography variant="body2" color="grey" sx={{ mb: 3 }}>
+              <Typography
+                variant="body2"
+                color="grey"
+                sx={{ mb: 3, textAlign: "center" }}
+              >
                 Tell us about your upcoming Interview, and we'll create a custom
                 question bank just for your prep!
               </Typography>
@@ -216,7 +245,7 @@ const InterviewHome = () => {
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        //   borderColor: "violet.dark",
+                        borderColor: "darkgray",
                       },
                     },
                   }}
@@ -239,7 +268,7 @@ const InterviewHome = () => {
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        //   borderColor: "violet.dark",
+                        borderColor: "darkgray",
                       },
                     },
                   }}
@@ -262,7 +291,7 @@ const InterviewHome = () => {
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "violet.dark",
+                        borderColor: "darkgray",
                       },
                     },
                   }}
@@ -271,7 +300,7 @@ const InterviewHome = () => {
                   type="submit"
                   fullWidth
                   variant="contained"
-                  // color="violet"
+                  color="warning"
                   sx={{ mt: 3, mb: 2 }}
                   disabled={isUploading}
                 >

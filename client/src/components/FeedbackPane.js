@@ -26,11 +26,7 @@ const FeedbackPane = ({ feedback }) => {
             />
           ))}
         <Box sx={{ mt: 2 }}>
-          <Button
-            variant="outlined"
-            // color="violet"
-            onClick={handleOpenModal}
-          >
+          <Button variant="outlined" color="warning" onClick={handleOpenModal}>
             See Detailed Feedback
           </Button>
         </Box>

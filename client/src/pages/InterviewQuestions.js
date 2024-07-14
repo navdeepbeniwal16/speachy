@@ -42,7 +42,8 @@ const InterviewQuestions = () => {
       onClick={() => navigateToPracticePage(index)}
     >
       <Card
-        variant="outlined"
+        variant="elevation"
+        elevation={"1"}
         sx={{
           width: "100%",
           borderRadius: "10px",
@@ -57,8 +58,12 @@ const InterviewQuestions = () => {
           </Typography>
           <Typography variant="body2">{questionObj.question}</Typography>
         </CardContent>
-        <Box sx={{ marginRight: 2 }}>
-          <ArrowForwardIosIcon />
+        <Box
+          sx={{
+            marginRight: 2,
+          }}
+        >
+          <ArrowForwardIosIcon sx={{ height: "22px", width: "22px" }} />
         </Box>
       </Card>
     </ListItemButton>
