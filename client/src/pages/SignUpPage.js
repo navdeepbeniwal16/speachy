@@ -131,9 +131,7 @@ const SignUp = () => {
         >
           {isSigningUp && (
             <Box sx={{ width: "100%" }}>
-              <LinearProgress
-              // color="red"
-              />
+              <LinearProgress color="warning" />
             </Box>
           )}
           <Paper
@@ -214,12 +212,12 @@ const SignUp = () => {
                 type="submit"
                 fullWidth
                 variant="contained"
-                color="primary"
+                color="warning"
                 sx={{ mt: 3, mb: 2 }}
               >
                 Sign Up
               </Button>
-              <Typography sx={{ textAlign: "center" }}>or</Typography>
+              {/* <Typography sx={{ textAlign: "center" }}>or</Typography>
               <Button
                 fullWidth
                 variant="contained"
@@ -241,7 +239,7 @@ const SignUp = () => {
                 onClick={() => console.log("Google Sign-In Clicked")}
               >
                 Sign Up with Google
-              </Button>
+              </Button> */}
               <Typography>
                 Already have an account? <Link to="/signin">SignIn</Link>
               </Typography>

@@ -24,7 +24,6 @@ import {
   addDoc,
 } from "firebase/firestore";
 import { firebaseApp } from "../services/firebase.js";
-import InterviewService from "../services/interview-service.js";
 
 const HomePage = () => {
   const auth = getAuth();

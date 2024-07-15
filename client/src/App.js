@@ -5,7 +5,6 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { Container } from "@mui/material";
 import "./App.css";
 import HomePage from "./pages/HomePage";
 import NavigationBar from "./components/NavigationBar";
