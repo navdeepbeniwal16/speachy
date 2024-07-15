@@ -128,6 +128,63 @@ router.post("/fetch-questions", async (req, res) => {
   }
 });
 
+const generatePrompt = async () => {
+  const completion = await openai.chat.completions.create({
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are trained communications coaching who help people build their speaking skills.",
+      },
+      {
+        role: "user",
+        content: `Generate a random prompt that a user may find quite fun and comfortable to answer or talk about`,
+      },
+      {
+        role: "user",
+        content:
+          "Please provide the prompt in the following json format: { prompt: prompt_string }",
+      },
+    ],
+    model: "gpt-3.5-turbo",
+    response_format: { type: "json_object" },
+  });
+
+  // Parse raw json response and extract questions
+  // Throw error is response is not of array type or is empty
+  if (!Array.isArray(completion.choices) || completion.choices.length < 0) {
+    throw new Error(
+      "Error occured in OpenAI chat api response while generating prompt."
+    );
+  }
+
+  const rawJsonResponse = completion.choices[0].message.content;
+  const prompt = Object(JSON.parse(rawJsonResponse))["prompt"];
+
+  return prompt;
+};
+
+router.get("/imprompt", async (req, res) => {
+  try {
+    const prompt = await generatePrompt();
+
+    console.log("interview.js : Prompt generated successfully!");
+
+    res.status(200).json({
+      message: "Prompt generated successfully.",
+      data: {
+        prompt: prompt,
+      },
+    });
+  } catch (error) {
+    console.error("Error generating prompt:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 const fetchAudioTransacription = async (req, res, next) => {
   if (!req.file) {
     console.log("No file uploaded.");
@@ -180,78 +237,77 @@ router.post(
 
 const evaluateResponse = async (req, res, next) => {
   const requestBody = req.body;
+
+  if (!requestBody) {
+    return res.status(400).json({
+      message: "Error evaluating response",
+      description: "Request body is missing",
+    });
+  }
+
+  const {
+    questionText,
+    responseText,
+    companyName = null,
+    jobRole = null,
+    jobDescription = null,
+  } = requestBody;
+
+  if (!questionText) {
+    return res.status(400).json({
+      message: "Error evaluating response",
+      description: "Request body is missing 'questionText'",
+    });
+  }
+
+  if (!responseText) {
+    return res.status(400).json({
+      message: "Error evaluating response",
+      description: "Request body is missing 'responseText'",
+    });
+  }
+
   try {
-    if (!requestBody) {
-      return res.status(400).json({
-        message: "Error evaluating response",
-        description: "Request body is missing",
-      });
-    }
-
-    if (!requestBody.questionText) {
-      return res.status(400).json({
-        message: "Error evaluating response",
-        description: "Request body is missing 'questionText'",
-      });
-    }
-
-    if (!requestBody.responseText) {
-      return res.status(400).json({
-        message: "Error evaluating response",
-        description: "Request body is missing 'responseText'",
-      });
-    }
-
-    // Making theses fields optional
-    if (!requestBody.companyName) {
-      requestBody.companyName = null;
-    }
-
-    if (!requestBody.jobRole) {
-      requestBody.jobRole = null;
-    }
-
-    const { questionText, responseText, companyName, jobRole, jobDescription } =
-      requestBody;
-
     const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
           content:
-            "You are trained to evaluate behavioral interview questions response based on specific job details.",
+            "You are trained to evaluate behavioral interview questions based on specific job details. Your feedback should be critical, detailed, and effective while maintaining a constructive and supportive tone.",
         },
         {
           role: "user",
-          content: `Evaluate the following response to the interview question for a job role at ${companyName}. The job title is ${jobRole}. \n Here's is the job description (Could be null as well): ${jobDescription}. \n Here's the questions and response pair: \n Question: ${questionText} \n ${responseText}`,
+          content: `Evaluate the following response to the interview question for a job role at ${companyName}. The job title is ${jobRole}. \n Here's the job description (Could be null as well): ${jobDescription}. \n Here's the question and response pair: \n Question: ${questionText} \n Response: ${responseText}`,
         },
         {
           role: "user",
           content:
-            "Based on the information provided, evaluate the reponse on the following aspects: \n Relevance: How well the response adddress the question \n Delivery: Clarity and fluency of the response \n Tone: Appropriateness of the tone given the formal setting \n Please also include snippets from response in your feedback to be more specific" +
-            "Please provide the results in the following json format: \n" +
-            "{ summary (json object) : {" +
-            "relevance (json object): { waysToImprove [string array]: [dot points highlighting ways to improve], score [float]]: A score out of 10}," +
-            "delivery (json object): { waysToImprove [string array]: [dot points highlighting ways to improve], score [float]: A score out of 10}," +
-            "tone (json object): {waysToImprove [string array]: [dot points highlighting ways to improve], score [float]: A score out of 10}," +
+            "Based on the information provided, CRITICALLY evaluate the response on the following aspects: \n" +
+            "Relevance: How well the response addresses the question. Include specific examples of what was done well and areas for improvement.\n" +
+            "Delivery: Clarity and fluency of the response. Provide detailed feedback on speaking pace, clarity, and use of pauses.\n" +
+            "Tone: Appropriateness of tone given the formal setting. Comment on professionalism, enthusiasm, and engagement level.\n" +
+            "Please provide the results in the following JSON format:\n" +
+            "{ summary: {" +
+            "relevance: { waysToImprove: ['What was done well', 'What was lacking', 'Suggestions for improvement'], score: [float]: A score out of 10}," +
+            "delivery: { waysToImprove: ['What was done well', 'What was lacking', 'Suggestions for improvement'], score: [float]: A score out of 10}," +
+            "tone: {waysToImprove: ['What was done well', 'What was lacking', 'Suggestions for improvement'], score: [float]: A score out of 10}" +
             "}," +
-            "detailedFeedback (string): overall feedback on the whole of the answer taking into account the requirements of the role provided. It should include specific examples of areas to improve and suggestions for how the answer could be better }",
+            "detailedFeedback: overall feedback on the whole of the response taking into account the requirements of the role provided. It should include specific examples of areas to improve and suggestions for how the answer could be better. Ensure the detailed feedback is comprehensive and addresses multiple aspects of the response in depth. Use a constructive tone to encourage improvement.}" +
+            "\n\nMake sure to be explicit in your feedback points under each category (relevance, delivery, tone). Clearly state what the user did well, what they lacked, and specific suggestions for improvement. For example, 'To improve relevance, you can...' or 'A good example of clarity in delivery is...'.",
         },
       ],
-      model: "gpt-3.5-turbo",
       response_format: { type: "json_object" },
     });
 
-    // Parse raw json response and extract evaluation results
-    // Throw error is response is not of array type or is empty
-    if (!Array.isArray(completion.choices) || completion.choices.length < 0) {
+    if (!Array.isArray(completion.choices) || completion.choices.length === 0) {
       throw new Error(
-        "Error occured in OpenAI chat api response while generating evaluating response for the question and role details."
+        "Error occurred in OpenAI chat API response while generating evaluating response for the question and role details."
       );
     }
 
     const evaluationResultsRawJSON = completion.choices[0].message.content;
-    const evaluationResults = Object(JSON.parse(evaluationResultsRawJSON));
+    const evaluationResults = JSON.parse(evaluationResultsRawJSON);
 
     req.results = evaluationResults;
     next();
@@ -259,7 +315,7 @@ const evaluateResponse = async (req, res, next) => {
     console.log("Error evaluating response:", error);
     return res.status(500).json({
       message: "Unknown error evaluating response",
-      description: error,
+      description: error.message,
     });
   }
 };
