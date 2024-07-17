@@ -288,13 +288,14 @@ const evaluateResponse = async (req, res, next) => {
             "Delivery: Clarity and fluency of the response. Provide detailed feedback on speaking pace, clarity, and use of pauses.\n" +
             "Tone: Appropriateness of tone given the formal setting. Comment on professionalism, enthusiasm, and engagement level.\n" +
             "Please provide the results in the following JSON format:\n" +
-            "{ summary: {" +
-            "relevance: { waysToImprove: ['What was done well', 'What was lacking', 'Suggestions for improvement'], score: [float]: A score out of 10}," +
-            "delivery: { waysToImprove: ['What was done well', 'What was lacking', 'Suggestions for improvement'], score: [float]: A score out of 10}," +
-            "tone: {waysToImprove: ['What was done well', 'What was lacking', 'Suggestions for improvement'], score: [float]: A score out of 10}" +
+            "{ summary (json): {" +
+            "relevance (json): { waysToImprove: ['What was done well', 'What was lacking', 'Suggestions for improvement'], score: [float]: A score out of 10}," +
+            "delivery (json): { waysToImprove: ['What was done well', 'What was lacking', 'Suggestions for improvement'], score: [float]: A score out of 10}," +
+            "tone (json): {waysToImprove: ['What was done well', 'What was lacking', 'Suggestions for improvement'], score: [float]: A score out of 10}" +
             "}," +
-            "detailedFeedback: overall feedback on the whole of the response taking into account the requirements of the role provided. It should include specific examples of areas to improve and suggestions for how the answer could be better. Ensure the detailed feedback is comprehensive and addresses multiple aspects of the response in depth. Use a constructive tone to encourage improvement.}" +
-            "\n\nMake sure to be explicit in your feedback points under each category (relevance, delivery, tone). Clearly state what the user did well, what they lacked, and specific suggestions for improvement. For example, 'To improve relevance, you can...' or 'A good example of clarity in delivery is...'.",
+            "detailedFeedback (string): overall feedback on the whole of the response taking into account the requirements of the role provided. It should include specific examples of areas to improve and suggestions for how the answer could be better. Ensure the detailed feedback is comprehensive and addresses multiple aspects of the response in depth. Use a constructive tone to encourage improvement." +
+            "Clearly state what the user did well, what they lacked, and specific suggestions for improvement. For example, 'To improve relevance, you can...' or 'A good example of clarity in delivery is...' should be included in the paragraph.\n" +
+            "}",
         },
       ],
       response_format: { type: "json_object" },
