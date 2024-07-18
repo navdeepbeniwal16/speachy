@@ -5,7 +5,6 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { Container } from "@mui/material";
 import "./App.css";
 import HomePage from "./pages/HomePage";
 import NavigationBar from "./components/NavigationBar";
@@ -16,6 +15,7 @@ import InterviewPractice from "./pages/InterviewPractice";
 import SignUp from "./pages/SignUpPage";
 import SignIn from "./pages/SignInPage";
 import { auth } from "./services/firebase";
+import ImpromptSpeakingPractice from "./pages/ImpromptSpeakingPractice";
 
 // Function to check if user is authenticated
 const requireAuth = (Component) => {
@@ -42,7 +42,7 @@ const requireAuth = (Component) => {
 
 function App() {
   return (
-    <Container maxWidth="xl" sx={{ height: "100vh", bgcolor: "#FAF9F2" }}>
+    <div style={{ backgroundColor: "#FAF9F2", minHeight: "100vh" }}>
       <Router>
         <NavigationBar />
         <PageWrapper>
@@ -62,12 +62,17 @@ function App() {
               element={<InterviewPracticeWrapper />}
             />
 
+            <Route
+              path="/imprompt"
+              element={<ImpromptSpeakingPracticeWrapper />}
+            />
+
             {/* Redirect any unknown routes to home */}
             <Route path="*" element={<Navigate to="/signin" />} />
           </Routes>
         </PageWrapper>
       </Router>
-    </Container>
+    </div>
   );
 }
 
@@ -76,5 +81,6 @@ const HomePageWrapper = requireAuth(HomePage);
 const InterviewHomeWrapper = requireAuth(InterviewHome);
 const InterviewQuestionsWrapper = requireAuth(InterviewQuestions);
 const InterviewPracticeWrapper = requireAuth(InterviewPractice);
+const ImpromptSpeakingPracticeWrapper = requireAuth(ImpromptSpeakingPractice);
 
 export default App;

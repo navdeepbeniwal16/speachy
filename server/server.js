@@ -7,6 +7,7 @@ const path = require("path");
 const bodyParser = require("body-parser");
 const morgan = require("morgan");
 const interviewRoute = require("./routes/interview.js");
+const impromptuSpeakingRoute = require("./routes/impromptu-speaking.js");
 
 // Log requests in 'dev' format
 app.use(morgan("common"));
@@ -34,6 +35,7 @@ app.get("/", (req, res, next) => {
 });
 
 app.use("/interview", interviewRoute);
+app.use("/impromptu-speaking", impromptuSpeakingRoute);
 
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.

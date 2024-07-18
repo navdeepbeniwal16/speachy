@@ -87,8 +87,15 @@ const HomePage = () => {
     }
   }, [auth.currentUser]);
 
+  const navigateToImpromptSpeakingPracticePage = () => {
+    navigate("/imprompt");
+  };
+
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, pt: 4, pb: 8, fontFamily: "Roboto" }}>
+    <Container
+      maxWidth="lg"
+      sx={{ mt: 4, pt: 4, pb: 8, px: 8, fontFamily: "Roboto" }}
+    >
       <Box sx={{ textAlign: "center", mb: 8 }}>
         <Typography variant="h2" gutterBottom sx={{ fontWeight: "bold" }}>
           Welcome to <span style={{ color: "darkorange" }}>Speachy</span>
@@ -110,13 +117,14 @@ const HomePage = () => {
         </Typography>
 
         <Grid id="catalogue" container spacing={4}>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={6} md={1}></Grid>
+          <Grid item xs={12} sm={6} md={5}>
             <Card
               variant="elevation"
               sx={{ display: "flex", flexDirection: "row", height: "110px" }}
             >
               <CardActionArea
-                onClick={() => navigate("/interview")}
+                onClick={navigateToImpromptSpeakingPracticePage}
                 sx={{ display: "flex", width: "100%" }}
               >
                 <CardContent
@@ -136,7 +144,7 @@ const HomePage = () => {
               </CardActionArea>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={6} md={5}>
             <Card
               variant="elevation"
               sx={{ display: "flex", flexDirection: "row", height: "110px" }}
@@ -163,6 +171,7 @@ const HomePage = () => {
               </CardActionArea>
             </Card>
           </Grid>
+          <Grid item xs={12} sm={6} md={1}></Grid>
         </Grid>
       </Box>
 
@@ -211,8 +220,8 @@ const HomePage = () => {
         </Typography>
         <Typography variant="body1">
           Got any feedback for us? If so, please contact us at{" "}
-          <Link color="inherit" href="mailto:navdeepbeniwal16@gmail.com">
-            navdeepbeniwal16@gmail.com
+          <Link color="inherit" href="mailto:speachyapp@gmail.com">
+            speachyapp@gmail.com
           </Link>
         </Typography>
       </Box>

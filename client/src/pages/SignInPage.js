@@ -13,6 +13,7 @@ import {
   Snackbar,
   Alert,
   Container,
+  colors,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
@@ -195,12 +196,12 @@ const SignIn = () => {
                 type="submit"
                 fullWidth
                 variant="contained"
-                color="primary"
+                color="warning"
                 sx={{ mt: 3, mb: 2 }}
               >
                 Sign In
               </Button>
-              <Typography sx={{ textAlign: "center" }}>or</Typography>
+              {/* <Typography sx={{ textAlign: "center" }}>or</Typography>
               <Button
                 fullWidth
                 variant="contained"
@@ -222,7 +223,7 @@ const SignIn = () => {
                 onClick={() => console.log("Google Sign-In Clicked")}
               >
                 Sign In with Google
-              </Button>
+              </Button> */}
               <Typography>
                 Don't have an account? <Link to="/signup">SignUp</Link>
               </Typography>

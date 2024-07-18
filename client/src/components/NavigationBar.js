@@ -123,7 +123,7 @@ const NavigationBar = () => {
                 }}
               >
                 <Button
-                  color="info"
+                  color="warning"
                   size="small"
                   component="a"
                   onClick={signOut}
@@ -156,7 +156,7 @@ const NavigationBar = () => {
                   component="a"
                   onClick={() => navigate("/signin")}
                 >
-                  Sign in
+                  <strong>Sign in</strong>
                 </Button>
                 <Button
                   color="warning"

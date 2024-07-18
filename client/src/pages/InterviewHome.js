@@ -285,7 +285,7 @@ const InterviewHome = () => {
                   label="Job Description"
                   id="job-description"
                   multiline
-                  rows={10}
+                  rows={8}
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
                   sx={{
