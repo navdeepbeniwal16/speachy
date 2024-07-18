@@ -18,6 +18,7 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   updateProfile,
+  sendEmailVerification,
 } from "firebase/auth";
 import { Link } from "react-router-dom";
 
@@ -57,6 +58,9 @@ const SignUp = () => {
         );
         const user = userCredential.user;
         console.log("User is Signed Up....");
+
+        // Sending email for verification
+        await sendEmailVerification(auth.currentUser);
 
         // Update user profile
         await updateProfile(auth.currentUser, {

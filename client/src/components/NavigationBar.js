@@ -66,13 +66,12 @@ const NavigationBar = () => {
   return (
     <div>
       <AppBar
-        position="fixed"
+        position="relative"
         width="100%"
         sx={{
           boxShadow: 0,
           bgcolor: "#FAF9F2",
           pt: 5,
-          mt: -2,
         }}
       >
         <Container width="100%">
