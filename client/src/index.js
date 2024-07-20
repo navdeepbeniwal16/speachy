@@ -5,7 +5,7 @@ import "./index.css";
 import App from "./App";
 
 Sentry.init({
-  dsn: process.env.DSN,
+  dsn: process.env.REACT_DSN,
   integrations: [
     Sentry.browserTracingIntegration(),
     Sentry.replayIntegration(),
