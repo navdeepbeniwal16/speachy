@@ -24,6 +24,7 @@ import {
   addDoc,
 } from "firebase/firestore";
 import { firebaseApp } from "../services/firebase.js";
+import Pricing from "../components/Pricing.js";
 
 const HomePage = () => {
   const auth = getAuth();
@@ -34,40 +35,40 @@ const HomePage = () => {
 
   const navigate = useNavigate();
 
-  const availFreeTrial = async () => {
-    const currentUserUID = auth.currentUser?.uid;
-    const currentUserEmail = auth.currentUser?.email;
+  // const availFreeTrial = async () => {
+  //   const currentUserUID = auth.currentUser?.uid;
+  //   const currentUserEmail = auth.currentUser?.email;
 
-    if (currentUserUID) {
-      try {
-        const docRef = await addDoc(collection(db, "free-trial"), {
-          userUID: currentUserUID,
-          isTrialAvailed: true,
-          userEmail: currentUserEmail,
-        });
-        console.log("Free trial document written with ID: ", docRef.id);
-        setIsOnPremiumPlan(true);
-        auth.currentUser.isOnPremiumPlan = true;
-        setShowSnackbar(true);
-      } catch (error) {
-        console.error("Error availing free trial: ", error);
-      }
-    }
-  };
+  //   if (currentUserUID) {
+  //     try {
+  //       const docRef = await addDoc(collection(db, "free-trial"), {
+  //         userUID: currentUserUID,
+  //         isTrialAvailed: true,
+  //         userEmail: currentUserEmail,
+  //       });
+  //       console.log("Free trial document written with ID: ", docRef.id);
+  //       setIsOnPremiumPlan(true);
+  //       auth.currentUser.isOnPremiumPlan = true;
+  //       setShowSnackbar(true);
+  //     } catch (error) {
+  //       console.error("Error availing free trial: ", error);
+  //     }
+  //   }
+  // };
 
-  const checkForFreeTrial = async () => {
+  const checkForSubscription = async () => {
     const currentUserUID = auth.currentUser?.uid;
 
     if (currentUserUID) {
       try {
         const dbQuery = query(
-          collection(db, "free-trial"),
+          collection(db, "subscriptions"),
           where("userUID", "==", currentUserUID)
         );
         const querySnapshot = await getDocs(dbQuery);
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          if (data.isTrialAvailed) {
+          if (data.isOnPremiumPlan) {
             setIsOnPremiumPlan(true);
             auth.currentUser.isOnPremiumPlan = true;
           }
@@ -81,7 +82,7 @@ const HomePage = () => {
 
   useEffect(() => {
     if (auth.currentUser) {
-      checkForFreeTrial();
+      checkForSubscription();
     } else {
       setLoading(false);
     }
@@ -175,44 +176,7 @@ const HomePage = () => {
         </Grid>
       </Box>
 
-      {loading ? (
-        <Box></Box>
-      ) : (
-        !isOnPremiumPlan && (
-          <Container sx={{ mt: 4, mb: 8 }}>
-            <Paper
-              elevation={1}
-              sx={{ p: 4, textAlign: "center", backgroundColor: "#f7f9fc" }}
-            >
-              <Box id="free-trial" sx={{ py: 3 }}>
-                <Typography
-                  variant="h4"
-                  gutterBottom
-                  sx={{ color: "orange", fontWeight: "bold" }}
-                >
-                  Enjoy a 3 Months Free Trial
-                </Typography>
-                <Typography variant="body1" gutterBottom>
-                  Unlock your potential and improve your communication skills
-                  with Speachy.
-                </Typography>
-                <Typography variant="body1" gutterBottom>
-                  Click the button below to avail the free trial.
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="warning"
-                  size="large"
-                  onClick={availFreeTrial}
-                  sx={{ mt: 2 }}
-                >
-                  Get Free Trial
-                </Button>
-              </Box>
-            </Paper>
-          </Container>
-        )
-      )}
+      {loading ? <Box></Box> : !isOnPremiumPlan && <Pricing></Pricing>}
 
       <Box id="feedback" sx={{ mt: 4, pb: 4, textAlign: "center" }}>
         <Typography variant="h4" sx={{ mb: 2, fontWeight: "bold" }}>

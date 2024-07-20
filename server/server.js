@@ -10,6 +10,7 @@ const bodyParser = require("body-parser");
 const morgan = require("morgan");
 const interviewRoute = require("./routes/interview.js");
 const impromptuSpeakingRoute = require("./routes/impromptu-speaking.js");
+const paymentsRoute = require("./routes/payments.js");
 
 // Log requests in 'dev' format
 app.use(morgan("dev"));
@@ -38,6 +39,7 @@ app.get("/", (req, res, next) => {
 
 app.use("/interview", interviewRoute);
 app.use("/impromptu-speaking", impromptuSpeakingRoute);
+app.use("/payments", paymentsRoute);
 
 app.get("/debug-sentry", function mainHandler(req, res) {
   throw new Error("My first Sentry testing error!");
