@@ -31,7 +31,14 @@ app.use(
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, "../client/build")));
 
-app.use(bodyParser.json());
+// Global middleware to parse JSON bodies, excluding payments/webhook route
+app.use((req, res, next) => {
+  if (req.originalUrl === "/payments/webhook") {
+    next();
+  } else {
+    bodyParser.json()(req, res, next);
+  }
+});
 
 app.get("/", (req, res, next) => {
   res.send("Hello there! Speachy server here, alive and kicking!");

@@ -21,9 +21,13 @@ import {
   sendEmailVerification,
 } from "firebase/auth";
 import { Link } from "react-router-dom";
+import { firebaseApp } from "../services/firebase.js";
+import { addDoc, collection, getFirestore } from "firebase/firestore";
 
 const SignUp = () => {
   const auth = getAuth();
+  const db = getFirestore(firebaseApp);
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -67,6 +71,20 @@ const SignUp = () => {
           displayName: name,
         });
         console.log("User profile updated!");
+
+        // Add user's entry into "subscriptions" collection with a generated document id.
+        const userSubscriptionDocRef = await addDoc(
+          collection(db, "subscriptions"),
+          {
+            email: auth.currentUser.email,
+            userUID: auth.currentUser.uid,
+            isOnPremiumPlan: false,
+          }
+        );
+        console.log(
+          "Subscription document written with ID: ",
+          userSubscriptionDocRef.id
+        );
         navigate("/");
       } catch (error) {
         console.error("Error occurred during sign up or profile update:");

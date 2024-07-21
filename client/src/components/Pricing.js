@@ -12,6 +12,7 @@ import Typography from "@mui/material/Typography";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import PaymentsService from "../services/payments-service";
+import { getAuth } from "firebase/auth";
 
 const tiers = [
   {
@@ -48,9 +49,13 @@ const Pricing = () => {
         console.log("priceId not found for tier :", tier);
         return;
       }
+      const auth = getAuth();
+      const userUID = auth.currentUser.uid;
       const priceId = tier.priceId;
-      const data = await PaymentsService.createCheckoutSession(priceId);
-      console.log("PaymentService: createCheckoutSession:", data);
+      const data = await PaymentsService.createCheckoutSession(
+        priceId,
+        userUID
+      );
 
       // Redirect to url returned by stripe
       const { url } = data;

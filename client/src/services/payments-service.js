@@ -1,12 +1,13 @@
 import backendApiClient from "./backendAPIClient.js";
 
 class PaymentsService {
-  static async createCheckoutSession(priceId) {
+  static async createCheckoutSession(priceId, userUID) {
     try {
       const response = await backendApiClient.post(
         "/payments/create-checkout-session",
         {
           priceId: priceId,
+          userUID: userUID,
         }
       );
       console.log("Response:", response);
