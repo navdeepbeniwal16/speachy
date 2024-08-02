@@ -22,7 +22,7 @@ import {
 } from "firebase/auth";
 import { Link } from "react-router-dom";
 import { firebaseApp } from "../services/firebase.js";
-import { addDoc, collection, getFirestore } from "firebase/firestore";
+import { doc, getFirestore, setDoc } from "firebase/firestore";
 
 const SignUp = () => {
   const auth = getAuth();
@@ -61,7 +61,7 @@ const SignUp = () => {
           password
         );
         const user = userCredential.user;
-        console.log("User is Signed Up....");
+        console.log("User is Signed Up:", user);
 
         // Sending email for verification
         await sendEmailVerification(auth.currentUser);
@@ -72,9 +72,8 @@ const SignUp = () => {
         });
         console.log("User profile updated!");
 
-        // Add user's entry into "subscriptions" collection with a generated document id.
-        const userSubscriptionDocRef = await addDoc(
-          collection(db, "subscriptions"),
+        const subscriptionDocSetupResult = await setDoc(
+          doc(db, "subscriptions", auth.currentUser.uid),
           {
             email: auth.currentUser.email,
             userUID: auth.currentUser.uid,
@@ -82,8 +81,8 @@ const SignUp = () => {
           }
         );
         console.log(
-          "Subscription document written with ID: ",
-          userSubscriptionDocRef.id
+          "Subscription document written:",
+          subscriptionDocSetupResult
         );
         navigate("/");
       } catch (error) {
