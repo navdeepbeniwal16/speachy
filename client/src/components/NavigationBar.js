@@ -1,17 +1,28 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Box from "@mui/material/Box";
-import AppBar from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
-import Button from "@mui/material/Button";
-import Container from "@mui/material/Container";
-import Divider from "@mui/material/Divider";
-import MenuItem from "@mui/material/MenuItem";
-import Drawer from "@mui/material/Drawer";
+import {
+  Box,
+  AppBar,
+  Toolbar,
+  Button,
+  Container,
+  Divider,
+  IconButton,
+  Menu,
+  Tooltip,
+  MenuItem,
+  Drawer,
+  Chip,
+} from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import Avatar from "@mui/material/Avatar";
+import PersonIcon from "@mui/icons-material/Person";
+import PaymentsIcon from "@mui/icons-material/Payments";
+import Logout from "@mui/icons-material/Logout";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { deepOrange } from "@mui/material/colors";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import PaymentsService from "../services/payments-service";
 
 const logoStyle = {
   width: "100px",
@@ -19,6 +30,112 @@ const logoStyle = {
   cursor: "pointer",
   marginRight: "16px",
   marginTop: "4px",
+};
+
+const getDisplayNameInitials = (displayName) => {
+  if (!displayName || displayName.length === 0) {
+    return "N/A";
+  } else {
+    const nameSplitted = displayName.split(" ");
+    if (nameSplitted.length > 1) {
+      return nameSplitted[0][0] + nameSplitted[1][0];
+    } else {
+      return nameSplitted[0][0];
+    }
+  }
+};
+
+// Component to display drop down menu including options like 'Profile', 'Payments' & 'Signout' button
+const AccountMenu = ({
+  user,
+  handleProfileClick,
+  handlePaymentsClick,
+  handleSignoutClick,
+}) => {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+  return (
+    <Fragment>
+      <Box sx={{ display: "flex", alignItems: "center", textAlign: "center" }}>
+        <Tooltip title="Account settings">
+          <IconButton
+            onClick={handleClick}
+            size="small"
+            sx={{ ml: 2 }}
+            aria-controls={open ? "account-menu" : undefined}
+            aria-haspopup="true"
+            aria-expanded={open ? "true" : undefined}
+          >
+            <Avatar
+              sx={{
+                bgcolor: deepOrange[400],
+                width: 32,
+                height: 32,
+                fontSize: "12px",
+              }}
+            >
+              {user && getDisplayNameInitials(user.displayName)}
+            </Avatar>
+          </IconButton>
+        </Tooltip>
+      </Box>
+      <Menu
+        anchorEl={anchorEl}
+        id="account-menu"
+        open={open}
+        onClose={handleClose}
+        onClick={handleClose}
+        PaperProps={{
+          elevation: 0,
+          sx: {
+            overflow: "visible",
+            filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
+            mt: 1.5,
+            "& .MuiAvatar-root": {
+              width: 32,
+              height: 32,
+              ml: -0.5,
+              mr: 1,
+            },
+            "&::before": {
+              content: '""',
+              display: "block",
+              position: "absolute",
+              top: 0,
+              right: 14,
+              width: 10,
+              height: 10,
+              bgcolor: "background.paper",
+              transform: "translateY(-50%) rotate(45deg)",
+              zIndex: 0,
+            },
+          },
+        }}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+      >
+        <MenuItem onClick={handleProfileClick} sx={{ gap: 1 }}>
+          <PersonIcon style={{ color: "gray" }} /> Profile
+        </MenuItem>
+        <MenuItem onClick={handlePaymentsClick} sx={{ gap: 1 }}>
+          <PaymentsIcon style={{ color: "gray" }} /> Payments
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={handleSignoutClick} sx={{ gap: 1 }}>
+          <Logout fontSize="small" color="warning" />
+          <Button color="warning" size="small" component="a">
+            <strong>Sign out</strong>
+          </Button>
+        </MenuItem>
+      </Menu>
+    </Fragment>
+  );
 };
 
 const NavigationBar = () => {
@@ -40,19 +157,6 @@ const NavigationBar = () => {
     setOpen(newOpen);
   };
 
-  const getDisplayNameInitials = (displayName) => {
-    if (!displayName || displayName.length === 0) {
-      return "N/A";
-    } else {
-      const nameSplitted = displayName.split(" ");
-      if (nameSplitted.length > 1) {
-        return nameSplitted[0][0] + nameSplitted[1][0];
-      } else {
-        return nameSplitted[0][0];
-      }
-    }
-  };
-
   const signOut = async () => {
     try {
       await auth.signOut();
@@ -60,6 +164,21 @@ const NavigationBar = () => {
       navigate("/");
     } catch (error) {
       console.error("Error signing out: ", error);
+    }
+  };
+
+  const navigateToCustomerPaymentPortal = async () => {
+    try {
+      const userUID = auth.currentUser.uid; // Fetch current user uid
+      const response = await PaymentsService.createCustomerPaymentPortal(
+        userUID
+      );
+
+      // Redirect to customer-portal url returned by stripe
+      const { url } = response.data;
+      window.location.href = url;
+    } catch (error) {
+      console.error("Error navigating to customer payment portal:", error);
     }
   };
 
@@ -101,44 +220,33 @@ const NavigationBar = () => {
                   alt="logo of speachy"
                 />
               </Link>
-
-              <Box sx={{ display: { xs: "none", md: "flex" } }}>
-                {/* <MenuItem
-                  onClick={() => scrollToSection("home")}
-                  sx={{ py: "10px", px: "12px" }}
-                >
-                  <Typography variant="body2" color="grey">
-                    <strong>Home</strong>
-                  </Typography>
-                </MenuItem> */}
-              </Box>
             </Box>
             {user ? (
               <Box
                 sx={{
                   display: { xs: "none", md: "flex" },
-                  gap: 0.5,
+                  gap: 0,
                   alignItems: "center",
                 }}
               >
-                <Button
-                  color="warning"
+                // TODO: Only show this when user has an active subscription
+                <Chip
+                  icon={<AutoAwesomeIcon color="#fff" />}
+                  label={"Premium"}
                   size="small"
-                  component="a"
-                  onClick={signOut}
-                >
-                  <strong>Sign out</strong>
-                </Button>
-                <Avatar
                   sx={{
-                    bgcolor: deepOrange[400],
-                    width: 30,
-                    height: 30,
-                    fontSize: "12px",
+                    background: deepOrange[400],
+                    color: "#fff",
                   }}
-                >
-                  {user && getDisplayNameInitials(user.displayName)}
-                </Avatar>
+                />
+                <AccountMenu
+                  user={user}
+                  handleSignoutClick={signOut}
+                  handleProfileClick={() =>
+                    console.log("Handle profile is click")
+                  }
+                  handlePaymentsClick={navigateToCustomerPaymentPortal}
+                ></AccountMenu>
               </Box>
             ) : (
               <Box

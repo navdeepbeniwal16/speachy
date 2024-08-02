@@ -25,6 +25,17 @@ class PaymentsService {
       throw error;
     }
   }
+
+  static async createCustomerPaymentPortal(userUID) {
+    const response = await backendApiClient.post(
+      "/payments/create-customer-portal",
+      {
+        userUID: userUID,
+      }
+    );
+    console.log("createCustomerPaymentPortal Response:", response);
+    return response;
+  }
 }
 
 export default PaymentsService;
