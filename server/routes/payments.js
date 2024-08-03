@@ -153,6 +153,68 @@ router.post("/create-customer-portal", async (req, res) => {
   }
 });
 
+router.post("/fetch-active-entitlements", async (req, res) => {
+  console.log("Inside /fetch-active-entitlements route...");
+  console.log("userUID:", req.body.userUID);
+
+  let customerId = req.body.userUID;
+  if (!customerId) {
+    console.error("Firebase 'customerId' not found in request body");
+    return res.status(400).json({
+      message: "Invalid request body",
+      error: "Firebase customer id not found in the request body",
+    });
+  }
+
+  let stripeCustomerId;
+  try {
+    const subscriptionRef = db.collection("subscriptions").doc(customerId);
+    const doc = await subscriptionRef.get();
+    if (!doc.exists) {
+      console.error("No subscription document found!");
+      throw new Error("No subscription document found!");
+    } else {
+      console.log("Subscription Document Data:", doc.data());
+      if (doc.data().stripeCustomerId) {
+        stripeCustomerId = doc.data().stripeCustomerId;
+      } else {
+        console.error("Customer's 'stripeCustomerId' not found");
+        return res.status(404).json({
+          message: "Couldn't create a customer payment protal",
+          error: "Customer's 'stripeCustomerId' not found",
+        });
+      }
+    }
+  } catch (error) {
+    console.error(
+      "Unknown error occured while fetching subscription document:",
+      error.message
+    );
+    return res.status(500).json({
+      message: "Unknown error occured while fetching subscription document",
+      error: error.message,
+    });
+  }
+
+  try {
+    const activeEntitlements =
+      await stripe.entitlements.activeEntitlements.list({
+        customer: stripeCustomerId,
+      });
+
+    res.json({ entitlements: activeEntitlements.data });
+  } catch (error) {
+    console.error(
+      "Unknown error occured while fetching entitlements from Stripe:",
+      error.message
+    );
+    return res.status(500).json({
+      message: "Unknown error occured while fetching entitlements from Stripe:",
+      error: error.message,
+    });
+  }
+});
+
 router.post(
   "/webhook",
   bodyParser.raw({
