@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, Fragment, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -19,10 +19,10 @@ import Avatar from "@mui/material/Avatar";
 import PersonIcon from "@mui/icons-material/Person";
 import PaymentsIcon from "@mui/icons-material/Payments";
 import Logout from "@mui/icons-material/Logout";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { deepOrange } from "@mui/material/colors";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import PaymentsService from "../services/payments-service";
+import { AppContext } from "../components/AppContext.js";
 
 const logoStyle = {
   width: "100px",
@@ -51,6 +51,7 @@ const AccountMenu = ({
   handleProfileClick,
   handlePaymentsClick,
   handleSignoutClick,
+  isPaidCustomer,
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -121,7 +122,10 @@ const AccountMenu = ({
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       >
         <MenuItem onClick={handleProfileClick} sx={{ gap: 1 }}>
-          <PersonIcon style={{ color: "gray" }} /> Profile
+          <PersonIcon style={{ color: "gray" }} /> Profile{" "}
+          {isPaidCustomer && (
+            <Chip size="small" label="Paid" color="warning"></Chip>
+          )}
         </MenuItem>
         <MenuItem onClick={handlePaymentsClick} sx={{ gap: 1 }}>
           <PaymentsIcon style={{ color: "gray" }} /> Payments
@@ -143,6 +147,7 @@ const NavigationBar = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const { state, setState } = useContext(AppContext);
 
   useEffect(() => {
     const auth = getAuth();
@@ -160,6 +165,11 @@ const NavigationBar = () => {
   const signOut = async () => {
     try {
       await auth.signOut();
+      setState((prevState) => ({
+        ...prevState,
+        isImpromptuSpeakingEnabled: false,
+        isInterviewPracticeEnabled: false,
+      }));
       console.log("User signed out successfully.");
       navigate("/");
     } catch (error) {
@@ -229,16 +239,6 @@ const NavigationBar = () => {
                   alignItems: "center",
                 }}
               >
-                // TODO: Only show this when user has an active subscription
-                <Chip
-                  icon={<AutoAwesomeIcon color="#fff" />}
-                  label={"Premium"}
-                  size="small"
-                  sx={{
-                    background: deepOrange[400],
-                    color: "#fff",
-                  }}
-                />
                 <AccountMenu
                   user={user}
                   handleSignoutClick={signOut}
@@ -246,6 +246,10 @@ const NavigationBar = () => {
                     console.log("Handle profile is click")
                   }
                   handlePaymentsClick={navigateToCustomerPaymentPortal}
+                  isPaidCustomer={
+                    state.isImpromptuSpeakingEnabled ||
+                    state.isInterviewPracticeEnabled
+                  }
                 ></AccountMenu>
               </Box>
             ) : (

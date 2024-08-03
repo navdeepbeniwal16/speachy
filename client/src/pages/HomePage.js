@@ -1,13 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Typography,
   Container,
   Link,
   Box,
-  Button,
-  Paper,
-  Snackbar,
-  Alert,
   Grid,
   Card,
   CardActionArea,
@@ -15,74 +11,64 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { getAuth } from "firebase/auth";
-import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-} from "firebase/firestore";
-import { firebaseApp } from "../services/firebase.js";
 import Pricing from "../components/Pricing.js";
+import PaymentsService from "../services/payments-service.js";
+import { AppContext } from "../components/AppContext.js";
 
 const HomePage = () => {
   const auth = getAuth();
-  const db = getFirestore(firebaseApp);
-  const [isOnPremiumPlan, setIsOnPremiumPlan] = useState(false);
+  const { state, setState } = useContext(AppContext);
   const [loading, setLoading] = useState(true);
-  const [showSnackbar, setShowSnackbar] = useState(false);
 
   const navigate = useNavigate();
 
-  // const availFreeTrial = async () => {
-  //   const currentUserUID = auth.currentUser?.uid;
-  //   const currentUserEmail = auth.currentUser?.email;
-
-  //   if (currentUserUID) {
-  //     try {
-  //       const docRef = await addDoc(collection(db, "free-trial"), {
-  //         userUID: currentUserUID,
-  //         isTrialAvailed: true,
-  //         userEmail: currentUserEmail,
-  //       });
-  //       console.log("Free trial document written with ID: ", docRef.id);
-  //       setIsOnPremiumPlan(true);
-  //       auth.currentUser.isOnPremiumPlan = true;
-  //       setShowSnackbar(true);
-  //     } catch (error) {
-  //       console.error("Error availing free trial: ", error);
-  //     }
-  //   }
-  // };
-
-  const checkForSubscription = async () => {
+  const getUserEntitlements = async () => {
     const currentUserUID = auth.currentUser?.uid;
 
     if (currentUserUID) {
       try {
-        const dbQuery = query(
-          collection(db, "subscriptions"),
-          where("userUID", "==", currentUserUID)
+        const response = await PaymentsService.fetchActiveEntitlements(
+          currentUserUID
         );
-        const querySnapshot = await getDocs(dbQuery);
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (data.isOnPremiumPlan) {
-            setIsOnPremiumPlan(true);
-            auth.currentUser.isOnPremiumPlan = true;
+        const data = response.data;
+        if (data.entitlements === undefined || data.entitlements === null) {
+          throw new Error("Entitlements not found");
+        }
+
+        const entitlements = data.entitlements;
+        let isImpromptuSpeakingEnabled = false;
+        let isInterviewPracticeEnabled = false;
+
+        for (const entitlement of entitlements) {
+          console.log("Entitlement:", entitlement); // TBR for production
+          if (entitlement.lookup_key === "impromptu_speaking_01") {
+            isImpromptuSpeakingEnabled = true;
           }
-        });
+          if (entitlement.lookup_key === "interview_practice_01") {
+            isInterviewPracticeEnabled = true;
+          }
+        }
+
+        setState((prevState) => ({
+          ...prevState,
+          isImpromptuSpeakingEnabled,
+          isInterviewPracticeEnabled,
+        }));
+
+        console.log("Entitlement managed locally:", state); // TBR for production
       } catch (error) {
-        console.error("Error checking free trial: ", error);
+        console.error("Error fetching/assigning entitlements: ", error);
+      } finally {
+        setLoading(false);
       }
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     if (auth.currentUser) {
-      checkForSubscription();
+      getUserEntitlements();
     } else {
       setLoading(false);
     }
@@ -122,9 +108,15 @@ const HomePage = () => {
           <Grid item xs={12} sm={6} md={5}>
             <Card
               variant="elevation"
-              sx={{ display: "flex", flexDirection: "row", height: "110px" }}
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                minHeight: "110px",
+                maxHeight: "130px",
+              }}
             >
               <CardActionArea
+                disabled={!state.isImpromptuSpeakingEnabled}
                 onClick={navigateToImpromptSpeakingPracticePage}
                 sx={{ display: "flex", width: "100%" }}
               >
@@ -138,9 +130,22 @@ const HomePage = () => {
                   <Typography gutterBottom variant="h5" component="div">
                     🎤 Impromptu Speaking
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    gutterBottom
+                  >
                     Boost your impromptu speaking with practice and feedback!
                   </Typography>
+                  {!state.isImpromptuSpeakingEnabled && (
+                    <Typography
+                      variant="subtitle2"
+                      color="text.primary"
+                      sx={{ textAlign: "center", margin: 1 }}
+                    >
+                      🔒 This is a paid feature
+                    </Typography>
+                  )}
                 </CardContent>
               </CardActionArea>
             </Card>
@@ -148,9 +153,15 @@ const HomePage = () => {
           <Grid item xs={12} sm={6} md={5}>
             <Card
               variant="elevation"
-              sx={{ display: "flex", flexDirection: "row", height: "110px" }}
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                minHeight: "110px",
+                maxHeight: "130px",
+              }}
             >
               <CardActionArea
+                disabled={!state.isInterviewPracticeEnabled}
                 onClick={() => navigate("/interview")}
                 sx={{ display: "flex", width: "100%" }}
               >
@@ -168,6 +179,15 @@ const HomePage = () => {
                     Ace your interviews with practice questions and response
                     analysis!
                   </Typography>
+                  {!state.isImpromptuSpeakingEnabled && (
+                    <Typography
+                      variant="subtitle2"
+                      color="text.primary"
+                      sx={{ textAlign: "center", margin: 1 }}
+                    >
+                      🔒 This is a paid feature
+                    </Typography>
+                  )}
                 </CardContent>
               </CardActionArea>
             </Card>
@@ -176,7 +196,7 @@ const HomePage = () => {
         </Grid>
       </Box>
 
-      {loading ? <Box></Box> : !isOnPremiumPlan && <Pricing></Pricing>}
+      {!loading && !state.isImpromptuSpeakingEnabled && <Pricing></Pricing>}
 
       <Box id="feedback" sx={{ mt: 4, pb: 4, textAlign: "center" }}>
         <Typography variant="h4" sx={{ mb: 2, fontWeight: "bold" }}>
@@ -189,25 +209,6 @@ const HomePage = () => {
           </Link>
         </Typography>
       </Box>
-
-      <Snackbar
-        open={showSnackbar}
-        autoHideDuration={6000}
-        onClose={() => setShowSnackbar(false)}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "center",
-        }}
-        key={"bottom" + "center"}
-      >
-        <Alert
-          onClose={() => setShowSnackbar(false)}
-          severity="success"
-          sx={{ width: "100%" }}
-        >
-          🎉 Congratulations! You have successfully availed the free trial!
-        </Alert>
-      </Snackbar>
     </Container>
   );
 };

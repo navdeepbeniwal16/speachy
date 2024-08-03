@@ -33,7 +33,18 @@ class PaymentsService {
         userUID: userUID,
       }
     );
-    console.log("createCustomerPaymentPortal Response:", response);
+    console.log("createCustomerPaymentPortal Response:", response); // TBR for production
+    return response;
+  }
+
+  static async fetchActiveEntitlements(userUID) {
+    const response = await backendApiClient.post(
+      "/payments/fetch-active-entitlements",
+      {
+        userUID: userUID,
+      }
+    );
+    console.log("fetchActiveEntitlements Response:", response); // TBR for production
     return response;
   }
 }

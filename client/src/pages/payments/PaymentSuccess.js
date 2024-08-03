@@ -1,11 +1,13 @@
 import { Box, Button, Container, Typography } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import PaymentsIcon from "@mui/icons-material/Payments";
-import { Link } from "react-router-dom";
+import HomeIcon from "@mui/icons-material/Home";
 import { getAuth } from "firebase/auth";
 import PaymentsService from "../../services/payments-service";
 
 const PaymentSuccess = () => {
   const auth = getAuth();
+  const navigate = useNavigate();
 
   const navigateToCustomerPaymentPortal = async () => {
     try {
@@ -34,9 +36,11 @@ const PaymentSuccess = () => {
             height: "60vh",
           }}
         >
-          <Typography variant="h6">
-            Thanks for subscribing! 🎉 Now, you can head back to{" "}
-            <Link to="/">Home</Link>
+          <Typography variant="h6" sx={{ textAlign: "center" }}>
+            Thanks for subscribing! 🎉 <br></br>Now, you can head back to{" "}
+            <Button onClick={() => navigate("/")} color="warning">
+              <HomeIcon /> Home
+            </Button>{" "}
           </Typography>
           <Typography sx={{ textAlign: "center" }}>or</Typography>
           <Typography variant="h6">
