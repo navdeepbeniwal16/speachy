@@ -2,3 +2,5 @@
 *.env
 *.pem
 *.com
+
+firebase-admin-security.json
