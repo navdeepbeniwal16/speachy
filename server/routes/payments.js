@@ -69,6 +69,7 @@ router.post("/create-checkout-session", async (req, res) => {
       ],
       success_url: `http://${frontendLocalIp}:${frontendPort}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `http://${frontendLocalIp}:${frontendPort}/payment-canceled`,
+      allow_promotion_codes: true,
     });
 
     console.log("Checkout Session:", session);
