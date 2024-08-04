@@ -21,7 +21,7 @@ const updateCurrentUserSubscriptionDoc = async (subscriptionDocBody) => {
     const res = await db
       .collection("subscriptions")
       .doc(userUID)
-      .set(subscriptionDocBody);
+      .set(subscriptionDocBody, { merge: true });
     console.log("Current User Subscription Updated:", res);
   } else {
     console.error("'userUID' not found");
@@ -72,14 +72,15 @@ router.post("/create-checkout-session", async (req, res) => {
       allow_promotion_codes: true,
     });
 
-    console.log("Checkout Session:", session);
+    console.log("Checkout Session Created Successfully:", session);
+
     // TODO: Move the following update to Firestore
     subscriptionsCheckoutSessionsState[session.id] = {
       sessionId: session.id,
       userUID: userUID,
     };
     console.log(
-      "SubscriptionsCheckoutSession:",
+      "Subscriptions Checkout Session Firebase Entry:",
       subscriptionsCheckoutSessionsState[session.id]
     );
 
@@ -253,11 +254,12 @@ router.post(
       console.log("Webhook isn't signed...");
     }
 
+    console.log("EVENT:", eventType);
+
     switch (eventType) {
       case "checkout.session.completed":
         // Payment is successful and the subscription is created.
         // You should provision the subscription and save the customer ID to your database.
-        console.log("EVENT:", eventType);
         console.log("Payment is successful and the subscription is created...");
         console.log("Checkout Session Completed Data:", data.object);
 
@@ -291,9 +293,11 @@ router.post(
         // Continue to provision the subscription as payments continue to be made.
         // Store the status in your database and check when a user accesses your service.
         // This approach helps you avoid hitting rate limits.
-        console.log("EVENT:", eventType);
         console.log("Invoice is paid...");
         console.log("Invoice Paid Data:", data.object);
+        break;
+      case "invoice.payment_succeeded":
+        console.log("Payment successfull");
         break;
       case "invoice.payment_failed":
         // The payment failed or the customer does not have a valid payment method.
