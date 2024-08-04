@@ -1,32 +1,57 @@
 // Load environment variables
 require("dotenv").config();
+const NODE_ENV = process.env.NODE_ENV;
 
 const os = require("os");
-
+const winston = require("winston");
 const express = require("express");
 const router = express.Router();
-const stripe = require("stripe")(process.env.STRIPE_API_KEY);
 const bodyParser = require("body-parser");
+const { validationResult, check } = require("express-validator");
 const firebaseAdmin = require("../configs/firebase-admin.js");
 const { getFirestore } = require("firebase-admin/firestore");
 
-const NODE_ENV = process.env.NODE_ENV;
+const STRIPE_API_KEY = process.env.STRIPE_API_KEY;
+if (!STRIPE_API_KEY) {
+  throw new Error("STRIPE_API_KEY not found in environment variables");
+}
+const stripe = require("stripe")(STRIPE_API_KEY);
 
-const subscriptionsCheckoutSessionsState = {};
+// Set up logging
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.json(),
+  defaultMeta: { service: "payments" },
+  transports: [
+    new winston.transports.File({ filename: "error.log", level: "error" }),
+    new winston.transports.File({ filename: "combined.log" }),
+  ],
+});
+
+if (NODE_ENV === "local") {
+  logger.add(
+    new winston.transports.Console({
+      format: winston.format.simple(),
+    })
+  );
+}
+
+const subscriptionsCheckoutSessionsState = {}; // Temporarily manages subscriptions checkout flow state key variables
 const db = getFirestore(firebaseAdmin);
 
 const updateCurrentUserSubscriptionDoc = async (subscriptionDocBody) => {
-  const userUID = subscriptionDocBody.userUID || null;
-  if (userUID) {
-    const res = await db
-      .collection("subscriptions")
-      .doc(userUID)
-      .set(subscriptionDocBody);
-    console.log("Current User Subscription Updated:", res);
-  } else {
-    console.error("'userUID' not found");
+  const { userUID } = subscriptionDocBody;
+  if (!userUID) {
     throw new Error("'userUID' not found");
   }
+
+  const res = await db
+    .collection("subscriptions")
+    .doc(userUID)
+    .set(subscriptionDocBody, { merge: true });
+
+  logger.info("Current User Subscription Updated");
+  logger.debug("Current User Subscription:", { res });
 };
 
 // Function to get the IP address of server to be redirected to. It's same as server when running in production
@@ -50,171 +75,178 @@ const getRedirectPortNumber = () => {
   return NODE_ENV === "local" ? 3001 : process.env.PORT; // Check if it's local development environment or hosted environment
 };
 
-router.post("/create-checkout-session", async (req, res) => {
-  console.log("Entered route /create-checkout-session");
-  const { userUID, priceId } = req.body;
+// Function to get the transfer protocol to use in the redirect url.
+const getRedirectProtocol = () => {
+  return NODE_ENV === "local" ? "http" : "https"; // Uses 'http' for local development, and 'https' for when in production
+};
 
-  // Get the IP address and port from where the react app is served
-  const frontendLocalIp = getRedirectUrlIpAddress();
-  const frontendPort = getRedirectPortNumber();
-
-  try {
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      success_url: `http://${frontendLocalIp}:${frontendPort}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `http://${frontendLocalIp}:${frontendPort}/payment-canceled`,
-      allow_promotion_codes: true,
-    });
-
-    console.log("Checkout Session:", session);
-    // TODO: Move the following update to Firestore
-    subscriptionsCheckoutSessionsState[session.id] = {
-      sessionId: session.id,
-      userUID: userUID,
-    };
-    console.log(
-      "SubscriptionsCheckoutSession:",
-      subscriptionsCheckoutSessionsState[session.id]
-    );
-
-    res.json({ url: session.url });
-  } catch (error) {
-    console.error("Error creating checkout session:", error);
-    res.status(500).send("Internal Server Error");
-  }
-});
-
-router.post("/create-customer-portal", async (req, res) => {
-  console.log("Inside /create-customer-portal route...");
-  console.log("userUID:", req.body.userUID);
-
-  let customerId = req.body.userUID;
-  if (!customerId) {
-    console.error("Firebase 'customerId' not found in request body");
-    return res.status(400).json({
-      message: "Invalid request body",
-      error: "Firebase customer id not found in the request body",
-    });
-  }
-
-  // Fetch stripeCustomerId from firebase
-  try {
-    const subscriptionRef = db.collection("subscriptions").doc(customerId);
-    const doc = await subscriptionRef.get();
-    if (!doc.exists) {
-      console.error("No subscription document found!");
-      throw new Error("No subscription document found!");
-    } else {
-      console.log("Subscription Document Data:", doc.data());
-      if (doc.data().stripeCustomerId) {
-        customerId = doc.data().stripeCustomerId;
-      } else {
-        console.error("Customer's 'stripeCustomerId' not found");
-        return res.status(404).json({
-          message: "Couldn't create a customer payment protal",
-          error: "Customer's 'stripeCustomerId' not found",
-        });
-      }
+// Returns an array of validation middlewares for all of the passed in fields
+const validateRequestBody = (fields) => [
+  fields.map((field) =>
+    check(field).notEmpty().withMessage(`${field} is required`)
+  ),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      logger.error(
+        "One or multiple error occured during request body validation",
+        { errors: errors }
+      );
+      return res.status(400).json({ errors: errors.array() });
     }
-  } catch (error) {
-    console.error(
-      "Unknown error occured while fetching subscription document:",
-      error.message
-    );
-    return res.status(500).json({
-      message: "Unknown error occured while fetching subscription document",
-      error: error.message,
-    });
-  }
+    next();
+  },
+];
 
-  // Create Stripe Customer Payments Portal
-  try {
-    const returnUrl = `http://${getRedirectUrlIpAddress()}:${getRedirectPortNumber()}`; // TODO: Dynamically decide between the 'http' & 'https' protocols
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: returnUrl,
-    });
+router.post(
+  "/create-checkout-session",
+  validateRequestBody(["userUID", "priceId"]),
+  async (req, res) => {
+    logger.info("Entered route /create-checkout-session");
+    const { userUID, priceId } = req.body;
 
-    res.status(200).json({ url: portalSession.url });
-  } catch (error) {
-    console.error(
-      "Unknown error occured while creating Stripe Customer Payment Portal"
-    );
-    res.status(500).json({
-      message:
-        "Unknown error occured while creating Stripe Customer Payment Portal",
-      error: error.message,
-    });
-  }
-});
-
-router.post("/fetch-active-entitlements", async (req, res) => {
-  console.log("Inside /fetch-active-entitlements route...");
-  console.log("userUID:", req.body.userUID);
-
-  let customerId = req.body.userUID;
-  if (!customerId) {
-    console.error("Firebase 'customerId' not found in request body");
-    return res.status(400).json({
-      message: "Invalid request body",
-      error: "Firebase customer id not found in the request body",
-    });
-  }
-
-  let stripeCustomerId;
-  try {
-    const subscriptionRef = db.collection("subscriptions").doc(customerId);
-    const doc = await subscriptionRef.get();
-    if (!doc.exists) {
-      console.error("No subscription document found!");
-      throw new Error("No subscription document found!");
-    } else {
-      console.log("Subscription Document Data:", doc.data());
-      if (doc.data().stripeCustomerId) {
-        stripeCustomerId = doc.data().stripeCustomerId;
-      } else {
-        console.error("Customer's 'stripeCustomerId' not found");
-        return res.status(404).json({
-          message: "Couldn't create a customer payment protal",
-          error: "Customer's 'stripeCustomerId' not found",
-        });
-      }
-    }
-  } catch (error) {
-    console.error(
-      "Unknown error occured while fetching subscription document:",
-      error.message
-    );
-    return res.status(500).json({
-      message: "Unknown error occured while fetching subscription document",
-      error: error.message,
-    });
-  }
-
-  try {
-    const activeEntitlements =
-      await stripe.entitlements.activeEntitlements.list({
-        customer: stripeCustomerId,
+    try {
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        success_url: `${getRedirectProtocol()}://${getRedirectUrlIpAddress()}:${getRedirectPortNumber()}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${getRedirectProtocol()}://${getRedirectUrlIpAddress()}:${getRedirectPortNumber()}/payment-canceled`,
+        allow_promotion_codes: true,
       });
 
-    res.json({ entitlements: activeEntitlements.data });
-  } catch (error) {
-    console.error(
-      "Unknown error occured while fetching entitlements from Stripe:",
-      error.message
-    );
-    return res.status(500).json({
-      message: "Unknown error occured while fetching entitlements from Stripe:",
-      error: error.message,
-    });
+      logger.info("Checkout session successfuly created");
+      logger.debug("Checkout session:", session);
+
+      subscriptionsCheckoutSessionsState[session.id] = {
+        sessionId: session.id,
+        userUID,
+      };
+
+      logger.debug(
+        "Checkout Session Initial Firebase Entry:",
+        subscriptionsCheckoutSessionsState[session.id]
+      );
+
+      logger.info("Exiting route /create-checkout-session");
+      res.json({ url: session.url });
+    } catch (error) {
+      logger.error("Error creating checkout session", { error });
+      logger.info("Exiting route /create-checkout-session");
+      res
+        .status(500)
+        .json({ message: "Internal Server Error", error: error.message });
+    }
   }
-});
+);
+
+router.post(
+  "/create-customer-portal",
+  validateRequestBody(["userUID"]),
+  async (req, res) => {
+    logger.info("Inside /create-customer-portal route...");
+
+    let userUID = req.body.userUID;
+    logger.debug("userUID:", userUID);
+    let stripeCustomerId; // unique id assigned to the customer by Stripe
+
+    try {
+      // Fetch user's subscription doc stored on firebase
+      logger.info("Fetching user's subscription doc stored on firebase");
+      const subscriptionRef = db.collection("subscriptions").doc(userUID);
+      const doc = await subscriptionRef.get();
+      if (!doc.exists) {
+        throw new Error(
+          `No subscription document found for userUID: ${userUID}`
+        );
+      }
+
+      // Validate subscription doc data, and extract 'stripeCustomerId' out of it
+      logger.info("Validating subscription doc data");
+      const subscriptionData = doc.data();
+      logger.debug(`Subscription Document for userUID ${userUID}:`, doc.data());
+      if (!subscriptionData.stripeCustomerId) {
+        return res.status(404).json({
+          message: "Couldn't create a customer payment portal",
+          error: "Customer's 'stripeCustomerId' not found",
+        });
+      }
+      logger.debug("stripeCustomerId", stripeCustomerId);
+      stripeCustomerId = subscriptionData.stripeCustomerId;
+
+      // Create customer portal by calling Stripe API
+      logger.info("Creating stripe customer portal");
+      const returnUrl = `${getRedirectProtocol()}://${getRedirectUrlIpAddress()}:${getRedirectPortNumber()}`;
+      const portalSession = await stripe.billingPortal.sessions.create({
+        customer: stripeCustomerId,
+        return_url: returnUrl,
+      });
+
+      logger.info("Customer portal successfully created");
+      logger.debug("Customer portal redirect url:", portalSession.url);
+      res.status(200).json({ url: portalSession.url });
+    } catch (error) {
+      logger.error("Error creating customer portal", { error });
+      res.status(500).json({
+        message:
+          "Unknown error occurred while creating Stripe Customer Payment Portal",
+        error: error.message,
+      });
+    }
+  }
+);
+
+router.post(
+  "/fetch-active-entitlements",
+  validateRequestBody(["userUID"]),
+  async (req, res) => {
+    logger.info("Inside /fetch-active-entitlements route...");
+
+    const userUID = req.body.userUID;
+    logger.debug("userUID:", userUID);
+
+    let stripeCustomerId;
+    try {
+      // Fetch user's subscription doc stored on firebase
+      logger.info("Fetching user's subscription doc stored on firebase");
+      const subscriptionRef = db.collection("subscriptions").doc(userUID);
+      const doc = await subscriptionRef.get();
+      if (!doc.exists) {
+        throw new Error("No subscription document found");
+      }
+
+      // Validate subscription doc data, and extract 'stripeCustomerId' out of it
+      logger.info("Validating subscription doc data");
+      const subscriptionData = doc.data();
+      logger.debug(`Subscription Document for userUID ${userUID}:`, doc.data());
+      if (!subscriptionData.stripeCustomerId) {
+        return res.status(404).json({
+          message: "Customer's 'stripeCustomerId' not found",
+        });
+      }
+      stripeCustomerId = subscriptionData.stripeCustomerId;
+
+      // Fetch active entitlements belonging to user with the above stripeCustomerId
+      const activeEntitlements =
+        await stripe.entitlements.activeEntitlements.list({
+          customer: stripeCustomerId,
+        });
+
+      res.json({ entitlements: activeEntitlements.data });
+    } catch (error) {
+      logger.error("Error fetching entitlements", { error });
+      res.status(500).json({
+        message:
+          "Unknown error occurred while fetching entitlements from Stripe",
+        error: error.message,
+      });
+    }
+  }
+);
 
 router.post(
   "/webhook",
@@ -222,9 +254,11 @@ router.post(
     type: "application/json",
   }),
   async (req, res) => {
-    console.log("Entering payments/webhook ...");
+    logger.info("Inside payments/webhook...");
+
     let data;
     let eventType;
+
     // Check if webhook signing is configured.
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
     if (webhookSecret) {
@@ -239,9 +273,10 @@ router.post(
           webhookSecret
         );
       } catch (err) {
-        console.log(`⚠️  Webhook signature verification failed.`);
+        logger.error("Webhook signature verification failed", { err });
         return res.sendStatus(400);
       }
+
       // Extract the object from the event.
       data = event.data;
       eventType = event.type;
@@ -250,61 +285,55 @@ router.post(
       // retrieve the event data directly from the request body.
       data = req.body.data;
       eventType = req.body.type;
-      console.log("Webhook isn't signed...");
+      logger.warn("Webhook isn't signed");
     }
 
-    switch (eventType) {
-      case "checkout.session.completed":
-        // Payment is successful and the subscription is created.
-        // You should provision the subscription and save the customer ID to your database.
-        console.log("EVENT:", eventType);
-        console.log("Payment is successful and the subscription is created...");
-        console.log("Checkout Session Completed Data:", data.object);
+    logger.info("Stripe event received", { eventType });
 
-        try {
+    try {
+      switch (eventType) {
+        case "checkout.session.completed":
+          // Payment is successful and the subscription is created. Provision the subscription and save the customer ID to your database.
+          logger.debug("Checkout Session Completed Event Data:", { data });
+
           const sessionId = data.object.id;
           const stripeCustomerId = data.object.customer;
           const subscriptionId = data.object.subscription;
 
-          console.log("sessionId:", sessionId);
-          console.log("stripeCustomerId", stripeCustomerId);
-          console.log("subscriptionId", subscriptionId);
+          logger.debug("sessionId:", sessionId);
+          logger.debug("stripeCustomerId", stripeCustomerId);
+          logger.debug("subscriptionId", subscriptionId);
 
-          subscriptionsCheckoutSessionsState[sessionId]["stripeCustomerId"] =
-            stripeCustomerId;
-          subscriptionsCheckoutSessionsState[sessionId]["subscriptionId"] =
-            subscriptionId;
+          subscriptionsCheckoutSessionsState[sessionId] = {
+            ...subscriptionsCheckoutSessionsState[sessionId],
+            stripeCustomerId,
+            subscriptionId,
+          };
 
-          console.log(
-            "Subscription Checkout Session",
+          logger.debug(
+            "Subscription Document to Updated to:",
             subscriptionsCheckoutSessionsState[sessionId]
           );
-          updateCurrentUserSubscriptionDoc(
+
+          await updateCurrentUserSubscriptionDoc(
             subscriptionsCheckoutSessionsState[sessionId]
           );
-        } catch (error) {
-          console.log("Error Updating Customer Subscription", error.message);
-        }
-        break;
+          break;
 
-      case "invoice.paid":
-        // Continue to provision the subscription as payments continue to be made.
-        // Store the status in your database and check when a user accesses your service.
-        // This approach helps you avoid hitting rate limits.
-        console.log("EVENT:", eventType);
-        console.log("Invoice is paid...");
-        console.log("Invoice Paid Data:", data.object);
-        break;
-      case "invoice.payment_failed":
-        // The payment failed or the customer does not have a valid payment method.
-        // The subscription becomes past_due. Notify your customer and send them to the
-        // customer portal to update their payment information.
-        console.log("Invoice payment failed...");
-        break;
-
-      default:
-        // Unhandled event type
-        console.log("Unhandeled event...");
+        case "invoice.paid":
+          logger.debug("Invoice Paid Event Data", { data });
+          break;
+        case "invoice.payment_succeeded":
+          logger.debug("Invoice Payment Succeed Event Data", { data });
+          break;
+        case "invoice.payment_failed":
+          logger.warn("Invoice Payment Failed Event Data", { data });
+          break;
+        default:
+          logger.info("Unhandled event type", { eventType });
+      }
+    } catch (error) {
+      logger.error("Error handling Stripe webhook event", { error });
     }
 
     res.sendStatus(200);
