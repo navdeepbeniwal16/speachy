@@ -77,7 +77,6 @@ const SignUp = () => {
           {
             email: auth.currentUser.email,
             userUID: auth.currentUser.uid,
-            isOnPremiumPlan: false,
           }
         );
         console.log(
