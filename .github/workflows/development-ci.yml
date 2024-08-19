@@ -39,5 +39,6 @@ jobs:
             REACT_APP_FIREBASE_MEASUREMENT_ID=${{ secrets.DEV_REACT_APP_FIREBASE_MEASUREMENT_ID }}
             NODE_DSN=${{ secrets.DEV_NODE_DSN }}
             REACT_DSN=${{ secrets.DEV_REACT_DSN }}
+            SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
             STRIPE_API_KEY=${{ secrets.DEV_STRIPE_API_KEY }}
             STRIPE_WEBHOOK_SECRET=${{ secrets.DEV_STRIPE_WEBHOOK_SECRET }}
