@@ -22,6 +22,9 @@ jobs:
       - name: Set up Firebase Admin SDK
         run: echo ${{ secrets.FIREBASE_ADMIN_SDK }} | base64 --decode > ./server/firebase-admin-security.json
 
+      - name: Echo Firebase Admin SDK for debugging
+        run: cat ./server/firebase-admin-security.json
+
       - name: Debug secret variables
         run: |
           echo "DEV_OPEN_AI_API_ACCESS_KEY=${{ secrets.DEV_OPEN_AI_API_ACCESS_KEY }}"
