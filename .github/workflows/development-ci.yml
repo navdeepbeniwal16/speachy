@@ -23,6 +23,11 @@ jobs:
         run: |
           echo "DEV_OPEN_AI_API_ACCESS_KEY=${{ secrets.DEV_OPEN_AI_API_ACCESS_KEY }}"
 
+      - name: Test Sentry CLI
+        run: sentry-cli info
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
