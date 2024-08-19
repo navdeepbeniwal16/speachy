@@ -17,9 +17,14 @@ if (!STRIPE_API_KEY) {
 }
 const stripe = require("stripe")(STRIPE_API_KEY);
 
+const LOG_LEVEL = process.env.LOG_LEVEL;
+if (!LOG_LEVEL) {
+  throw new Error("LOG_LEVEL not found in environment variables");
+}
+
 // Set up logging
 const logger = winston.createLogger({
-  level: "info",
+  level: LOG_LEVEL,
   format: winston.format.json(),
   defaultMeta: { service: "payments" },
   transports: [
@@ -28,13 +33,11 @@ const logger = winston.createLogger({
   ],
 });
 
-if (NODE_ENV === "local") {
-  logger.add(
-    new winston.transports.Console({
-      format: winston.format.simple(),
-    })
-  );
-}
+logger.add(
+  new winston.transports.Console({
+    format: winston.format.simple(),
+  })
+);
 
 const subscriptionsCheckoutSessionsState = {}; // Temporarily manages subscriptions checkout flow state key variables
 const db = getFirestore(firebaseAdmin);
@@ -57,22 +60,18 @@ const updateCurrentUserSubscriptionDoc = async (subscriptionDocBody) => {
 // Function to get the IP address of server to be redirected to. It's same as server when running in production
 const getRedirectUrlIpAddress = () => {
   if (NODE_ENV === "local") return "localhost";
-
-  const interfaces = os.networkInterfaces();
-  for (const name of Object.keys(interfaces)) {
-    for (const iface of interfaces[name]) {
-      // Skip over internal (i.e., 127.0.0.1) and non-IPv4 addresses
-      if (iface.family === "IPv4" && !iface.internal) {
-        return iface.address;
-      }
-    }
-  }
-  return "127.0.0.1"; // Fallback to localhost
+  else if (NODE_ENV === "development") return "dev.speachy.net";
+  else return "www.speachy.net";
 };
 
 // Function to get the PORT number of server to be redirected to. It's same as the server when running in production
 const getRedirectPortNumber = () => {
-  return NODE_ENV === "local" ? 3001 : process.env.PORT; // Check if it's local development environment or hosted environment
+  if (NODE_ENV === "local") {
+    const BUILD = process.env.BUILD;
+    return BUILD === "production" ? 3000 : 3001;
+  } else {
+    return "";
+  }
 };
 
 // Function to get the transfer protocol to use in the redirect url.
