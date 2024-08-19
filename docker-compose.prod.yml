@@ -1,11 +1,13 @@
 version: '0.1'
 services:
   app:
-    image: navdeep16/speachy:latest
+    image: navdeep16/speachy:prod
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - BUILD=production
+      - LOG_LEVEL=debug
 
   nginx:
     image: nginx:alpine
