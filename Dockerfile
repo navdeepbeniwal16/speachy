@@ -45,6 +45,13 @@ ENV NODE_DSN=${NODE_DSN}
 ARG REACT_DSN
 ENV REACT_DSN=${REACT_DSN}
 
+# Load Stripe Environment Variables
+ARG STRIPE_API_KEY
+ENV STRIPE_API_KEY=${STRIPE_API_KEY}
+
+ARG STRIPE_WEBHOOK_SECRET
+ENV STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+
 # Build client
 COPY client/ ./client/
 RUN npm run build --prefix client
