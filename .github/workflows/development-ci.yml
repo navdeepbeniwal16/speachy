@@ -1,0 +1,43 @@
+name: Speachy Development CI
+
+on:
+  push:
+    branches: ["development"]
+  pull_request:
+    branches: ["development"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Debug secret variables
+        run: |
+          echo "DEV_OPEN_AI_API_ACCESS_KEY=${{ secrets.DEV_OPEN_AI_API_ACCESS_KEY }}"
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/speachy:test-ci
+          build-args: |
+            OPEN_AI_API_ACCESS_KEY=${{ secrets.DEV_OPEN_AI_API_ACCESS_KEY }}
+            REACT_APP_FIREBASE_API_KEY=${{ secrets.DEV_REACT_APP_FIREBASE_API_KEY }}
+            REACT_APP_FIREBASE_AUTH_DOMAIN=${{ secrets.DEV_REACT_APP_FIREBASE_AUTH_DOMAIN }}
+            REACT_APP_FIREBASE_PROJECT_ID=${{ secrets.DEV_REACT_APP_FIREBASE_PROJECT_ID }}
+            REACT_APP_FIREBASE_STORAGE_BUCKET=${{ secrets.DEV_REACT_APP_FIREBASE_STORAGE_BUCKET }}
+            REACT_APP_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.DEV_REACT_APP_FIREBASE_MESSAGING_SENDER_ID }}
+            REACT_APP_FIREBASE_APP_ID=${{ secrets.DEV_REACT_APP_FIREBASE_APP_ID }}
+            REACT_APP_FIREBASE_MEASUREMENT_ID=${{ secrets.DEV_REACT_APP_FIREBASE_MEASUREMENT_ID }}
+            NODE_DSN=${{ secrets.DEV_NODE_DSN }}
+            REACT_DSN=${{ secrets.DEV_REACT_DSN }}
+            STRIPE_API_KEY=${{ secrets.DEV_STRIPE_API_KEY }}
+            STRIPE_WEBHOOK_SECRET=${{ secrets.DEV_STRIPE_WEBHOOK_SECRET }}
