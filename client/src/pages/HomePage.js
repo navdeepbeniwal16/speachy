@@ -84,10 +84,13 @@ const HomePage = () => {
       sx={{ mt: 4, pt: 4, pb: 8, px: 8, fontFamily: "Roboto" }}
     >
       <Box sx={{ textAlign: "center", mb: 8 }}>
-        <Typography variant="h2" gutterBottom sx={{ fontWeight: "bold" }}>
-          Welcome to <span style={{ color: "darkorange" }}>Speachy</span>
+        <Typography variant="h2" gutterBottom>
+          Welcome{" "}
+          <span style={{ color: "darkorange", fontWeight: "bold" }}>
+            {auth.currentUser.displayName.split(" ")[0]}
+          </span>
         </Typography>
-        <Typography variant="h5" sx={{ mb: 4 }} gutterBottom>
+        <Typography variant="h6" sx={{ mb: 4 }} gutterBottom>
           Speachy helps you level up your speaking skills for all kinds of
           scenarios. Dive into fun practice sessions, get awesome feedback, and
           gain the confidence to shine in any real-life interaction!
@@ -198,7 +201,14 @@ const HomePage = () => {
 
       {!loading && !state.isImpromptuSpeakingEnabled && <Pricing></Pricing>}
 
-      <Box id="feedback" sx={{ mt: 4, pb: 4, textAlign: "center" }}>
+      <Box
+        id="feedback"
+        sx={{
+          pt: { xs: 4, sm: 8 },
+          pb: { xs: 8, sm: 12 },
+          textAlign: "center",
+        }}
+      >
         <Typography variant="h4" sx={{ mb: 2, fontWeight: "bold" }}>
           Feedback
         </Typography>

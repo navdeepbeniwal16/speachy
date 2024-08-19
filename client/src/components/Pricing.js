@@ -16,27 +16,27 @@ import { getAuth } from "firebase/auth";
 
 const tiers = [
   {
-    title: "Free",
-    price: "0",
-    description: [
-      "Unlimited AI-Generated Summaries",
-      "10 Detailed Feedback",
-      "5 Expert’s Feedback",
-    ],
-    buttonText: "Sign up for free",
-    buttonVariant: "outlined",
-    priceId: null,
-  },
-  {
-    title: "Basic",
+    title: "Get Started",
     subheader: "Recommended",
     price: "9.99",
     description: [
-      "Unlimited AI-Generated Summaries",
-      "Unlimited Detailed Feedback",
-      "Unlimited Expert’s Feedback",
+      {
+        heading: "Unlimited AI-Generated Summaries",
+        subheading:
+          "Get personalized summaries to track your progress and focus on key areas.",
+      },
+      {
+        heading: "Unlimited Detailed Feedback",
+        subheading:
+          "Receive in-depth feedback on your communication skills to ensure continuous improvement.",
+      },
+      {
+        heading: "Unlimited Expert’s Feedback",
+        subheading:
+          "Get expert insights and advice to refine your techniques and boost your confidence.",
+      },
     ],
-    buttonText: "Upgrade",
+    buttonText: "Go To Checkout",
     buttonVariant: "contained",
     priceId: "price_1PeXUIRrj73Jjf7AefX0rkrr",
   },
@@ -44,7 +44,7 @@ const tiers = [
 
 const Pricing = () => {
   const handleButtonClick = async (tier) => {
-    if (tier.title === "Basic") {
+    if (tier.title === "Get Started") {
       if (!tier.priceId) {
         console.log("priceId not found for tier :", tier);
         return;
@@ -83,12 +83,11 @@ const Pricing = () => {
         }}
       >
         <Typography component="h2" variant="h4" color="text.primary">
-          Our Plans
+          Our Price
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Enjoy our free plan or boost your progress with our Basic plan.
-          <br />
-          Choose what suits you best!
+          Join our platform to get the best feedback and guidance on your
+          communication journey. <br></br>Start today!
         </Typography>
       </Box>
       <Grid container spacing={3} alignItems="center" justifyContent="center">
@@ -98,7 +97,7 @@ const Pricing = () => {
             key={tier.title}
             xs={12}
             sm={tier.title === "Enterprise" ? 12 : 6}
-            md={5}
+            md={10}
           >
             <Card
               sx={{
@@ -107,8 +106,8 @@ const Pricing = () => {
                 flexDirection: "column",
                 gap: 4,
                 background:
-                  tier.title === "Basic"
-                    ? "linear-gradient(#FF9100, #EF6C00)"
+                  tier.title === "Get Started"
+                    ? "linear-gradient(#FF9100, #EF7C00)"
                     : undefined,
               }}
             >
@@ -119,7 +118,7 @@ const Pricing = () => {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    color: tier.title === "Basic" ? "grey.100" : "",
+                    color: tier.title === "Get Started" ? "grey.100" : "",
                   }}
                 >
                   <Typography component="h3" variant="h6">
@@ -140,25 +139,12 @@ const Pricing = () => {
                   sx={{
                     display: "flex",
                     alignItems: "baseline",
-                    color: tier.title === "Basic" ? "grey.50" : undefined,
+                    color: tier.title === "Get Started" ? "grey.50" : undefined,
                   }}
                 >
                   <Typography component="h3" variant="h2">
                     ${tier.price}
                   </Typography>
-                  {tier.originalPrice && tier.originalPrice !== tier.price && (
-                    <Typography
-                      component="h3"
-                      variant="h6"
-                      sx={{
-                        textDecoration: "line-through",
-                        color: "white.500",
-                        marginLeft: 1,
-                      }}
-                    >
-                      ${tier.originalPrice}
-                    </Typography>
-                  )}
                   <Typography component="h3" variant="h6">
                     &nbsp; monthly
                   </Typography>
@@ -167,7 +153,7 @@ const Pricing = () => {
                   sx={{
                     my: 2,
                     opacity: 0.2,
-                    borderColor: "grey.500",
+                    borderColor: "#fff",
                   }}
                 />
                 {tier.description.map((line) => (
@@ -175,33 +161,52 @@ const Pricing = () => {
                     key={line}
                     sx={{
                       py: 1,
-                      display: "flex",
-                      gap: 1.5,
-                      alignItems: "center",
                     }}
                   >
-                    <CheckCircleRoundedIcon
+                    <Box
                       sx={{
-                        width: 20,
-                        color: tier.title === "Basic" ? "white" : "#FF6D00",
+                        display: "flex",
+                        gap: 1.5,
+                        alignItems: "center",
                       }}
-                    />
+                    >
+                      <CheckCircleRoundedIcon
+                        sx={{
+                          width: 20,
+                          color:
+                            tier.title === "Get Started" ? "white" : "#FF6D00",
+                        }}
+                      />
+                      <Typography
+                        component="text"
+                        variant="subtitle1"
+                        sx={{
+                          color:
+                            tier.title === "Get Started"
+                              ? "grey.200"
+                              : undefined,
+                        }}
+                      >
+                        <strong>{line.heading}</strong>
+                      </Typography>
+                    </Box>
+
                     <Typography
                       component="text"
                       variant="subtitle2"
                       sx={{
-                        color: tier.title === "Basic" ? "grey.200" : undefined,
+                        color:
+                          tier.title === "Get Started" ? "grey.200" : undefined,
                       }}
                     >
-                      {line}
+                      {line.subheading}
                     </Typography>
                   </Box>
                 ))}
               </CardContent>
-              <CardActions>
-                {tier.title === "Basic" && (
+              <CardActions sx={{ justifyContent: "center" }}>
+                {tier.title === "Get Started" && (
                   <Button
-                    fullWidth
                     variant="outlined"
                     color="warning"
                     component="a"
