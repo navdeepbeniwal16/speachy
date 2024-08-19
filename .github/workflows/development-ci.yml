@@ -22,6 +22,12 @@ jobs:
       - name: Set up Firebase Admin SDK
         run: echo ${{ secrets.FIREBASE_ADMIN_SDK }} | base64 --decode > ./server/firebase-admin-security.json
 
+      - name: Print current working directory
+        run: pwd
+
+      - name: Print current working directory files and folders
+        run: ls
+
       - name: Echo Firebase Admin SDK for debugging
         run: cat ./server/firebase-admin-security.json
 
