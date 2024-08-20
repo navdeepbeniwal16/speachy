@@ -13,23 +13,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Firebase Admin SDK
-        run: echo ${{ secrets.FIREBASE_ADMIN_SDK }} | base64 --decode > ./server/firebase-admin-security.json
-
       - name: Debug secret variables and file existence
         run: |
           echo "DEV_OPEN_AI_API_ACCESS_KEY=${{ secrets.DEV_OPEN_AI_API_ACCESS_KEY }}"
-          ls server
-          cat server/firebase-admin-security.json
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: List server directory contents before Docker build
-        run: ls -la ./server
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
@@ -46,12 +38,7 @@ jobs:
             REACT_APP_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.DEV_REACT_APP_FIREBASE_MESSAGING_SENDER_ID }}
             REACT_APP_FIREBASE_APP_ID=${{ secrets.DEV_REACT_APP_FIREBASE_APP_ID }}
             REACT_APP_FIREBASE_MEASUREMENT_ID=${{ secrets.DEV_REACT_APP_FIREBASE_MEASUREMENT_ID }}
-            FB_DEV_PROJECT_ID=${{ secrets.FB_DEV_PROJECT_ID }}
-            FB_DEV_PRIVATE_KEY=${{ secrets.FB_DEV_PRIVATE_KEY }}
-            FB_DEV_PRIVATE_KEY_ID=${{ secrets.FB_DEV_PRIVATE_KEY_ID }}
-            FB_DEV_CLIENT_EMAIL=${{ secrets.FB_DEV_CLIENT_EMAIL }}
-            FB_DEV_CLIENT_ID=${{ secrets.FB_DEV_CLIENT_ID }}
-            FB_DEV_CLIENT_X509_CERT_URL=${{ secrets.FB_DEV_CLIENT_X509_CERT_URL }}
+            FB_DEV_BASE64_ENCODED_SERVICE_ACCOUNT=${{ secrets.FB_DEV_BASE64_ENCODED_SERVICE_ACCOUNT }}
             NODE_DSN=${{ secrets.DEV_NODE_DSN }}
             REACT_DSN=${{ secrets.DEV_REACT_DSN }}
             SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
