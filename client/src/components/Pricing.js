@@ -14,6 +14,8 @@ import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import PaymentsService from "../services/payments-service";
 import { getAuth } from "firebase/auth";
 
+const REACT_APP_ENV = process.env.REACT_APP_ENV;
+
 const tiers = [
   {
     title: "Get Started",
@@ -38,7 +40,10 @@ const tiers = [
     ],
     buttonText: "Go To Checkout",
     buttonVariant: "contained",
-    priceId: "price_1PeXUIRrj73Jjf7AefX0rkrr",
+    priceId:
+      REACT_APP_ENV === "production"
+        ? "price_1PpssHRrj73Jjf7Aw8KAO8hA"
+        : "price_1PeXUIRrj73Jjf7AefX0rkrr",
   },
 ];
 
