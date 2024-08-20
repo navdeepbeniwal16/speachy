@@ -10,6 +10,9 @@ RUN npm install --prefix server
 # Copy server source (including the firebase-admin-security.json file)
 COPY server/ ./server/
 
+# Debugging Copying step to list server directory contents
+RUN ls -la ./server/
+
 # Install client dependencies
 COPY client/package*.json ./client/
 RUN npm install --prefix client
