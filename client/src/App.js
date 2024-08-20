@@ -16,6 +16,9 @@ import SignUp from "./pages/SignUpPage";
 import SignIn from "./pages/SignInPage";
 import { auth } from "./services/firebase";
 import ImpromptSpeakingPractice from "./pages/ImpromptSpeakingPractice";
+import BannerWrapper from "./components/BannerWrapper";
+import PaymentSuccess from "./pages/payments/PaymentSuccess";
+import PaymentCancel from "./pages/payments/PaymentCancel";
 
 // Function to check if user is authenticated
 const requireAuth = (Component) => {
@@ -44,11 +47,20 @@ function App() {
   return (
     <div style={{ backgroundColor: "#FAF9F2", minHeight: "100vh" }}>
       <Router>
+        <BannerWrapper></BannerWrapper>
         <NavigationBar />
         <PageWrapper>
           <Routes>
             <Route path="/signup" element={<SignUp />} />
             <Route path="/signin" element={<SignIn />} />
+            <Route
+              path="/payment-success"
+              element={<PaymentSuccessWrapper />}
+            />
+            <Route
+              path="/payment-canceled"
+              element={<PaymentCancelWrapper />}
+            />
 
             {/* Protected routes */}
             <Route path="/" element={<HomePageWrapper />} />
@@ -82,5 +94,7 @@ const InterviewHomeWrapper = requireAuth(InterviewHome);
 const InterviewQuestionsWrapper = requireAuth(InterviewQuestions);
 const InterviewPracticeWrapper = requireAuth(InterviewPractice);
 const ImpromptSpeakingPracticeWrapper = requireAuth(ImpromptSpeakingPractice);
+const PaymentSuccessWrapper = requireAuth(PaymentSuccess);
+const PaymentCancelWrapper = requireAuth(PaymentCancel);
 
 export default App;

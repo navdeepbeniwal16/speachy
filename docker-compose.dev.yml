@@ -1,11 +1,11 @@
 version: '0.1'
 services:
   app:
-    image: navdeep16/speachy:prod
+    image: navdeep16/speachy:dev
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - BUILD=production
       - LOG_LEVEL=debug
 
@@ -15,7 +15,7 @@ services:
       - "443:443"
       - "80:80"
     volumes:
-      - ./nginx.prod.conf:/etc/nginx/nginx.conf
+      - ./nginx.dev.conf:/etc/nginx/nginx.conf
       - /etc/letsencrypt:/etc/letsencrypt
     depends_on:
       - app

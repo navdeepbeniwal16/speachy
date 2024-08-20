@@ -1,2 +1,5 @@
 ### Server Files
 node_modules
+
+speachy-dev-firebase-adminsdk.json
+speachy-prod-firebase-adminsdk.json

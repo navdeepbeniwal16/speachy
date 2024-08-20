@@ -8,6 +8,8 @@
     "@mui/icons-material": "^5.16.0",
     "@mui/material": "^5.16.0",
     "@mui/styled-engine": "^5.15.14",
+    "@sentry/cli": "^2.33.1",
+    "@sentry/react": "^8.18.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -23,9 +25,10 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts build && npm run sentry:sourcemaps && npm run sentry:sourcemaps && npm run sentry:sourcemaps",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org speachy --project speachy-react ./build && sentry-cli sourcemaps upload --org speachy --project speachy-react ./build"
   },
   "eslintConfig": {
     "extends": [
@@ -45,5 +48,5 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:8080"
+  "proxy": "http://localhost:3000"
 }

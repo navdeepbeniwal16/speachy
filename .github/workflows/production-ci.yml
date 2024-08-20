@@ -1,0 +1,40 @@
+name: Speachy Production CI
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/speachy:prod
+          no-cache: true
+          build-args: |
+            OPEN_AI_API_ACCESS_KEY=${{ secrets.PROD_OPEN_AI_API_ACCESS_KEY }}
+            REACT_APP_FIREBASE_API_KEY=${{ secrets.PROD_REACT_APP_FIREBASE_API_KEY }}
+            REACT_APP_FIREBASE_AUTH_DOMAIN=${{ secrets.PROD_REACT_APP_FIREBASE_AUTH_DOMAIN }}
+            REACT_APP_FIREBASE_PROJECT_ID=${{ secrets.PROD_REACT_APP_FIREBASE_PROJECT_ID }}
+            REACT_APP_FIREBASE_STORAGE_BUCKET=${{ secrets.PROD_REACT_APP_FIREBASE_STORAGE_BUCKET }}
+            REACT_APP_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.PROD_REACT_APP_FIREBASE_MESSAGING_SENDER_ID }}
+            REACT_APP_FIREBASE_APP_ID=${{ secrets.PROD_REACT_APP_FIREBASE_APP_ID }}
+            REACT_APP_FIREBASE_MEASUREMENT_ID=${{ secrets.PROD_REACT_APP_FIREBASE_MEASUREMENT_ID }}
+            FB_DEV_BASE64_ENCODED_SERVICE_ACCOUNT=${{ secrets.PROD_FB_BASE64_ENCODED_SERVICE_ACCOUNT }}
+            NODE_DSN=${{ secrets.PROD_NODE_DSN }}
+            REACT_DSN=${{ secrets.PROD_REACT_DSN }}
+            SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+            STRIPE_API_KEY=${{ secrets.PROD_STRIPE_API_KEY }}
+            STRIPE_WEBHOOK_SECRET=${{ secrets.PROD_STRIPE_WEBHOOK_SECRET }}

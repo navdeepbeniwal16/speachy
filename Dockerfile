@@ -7,14 +7,14 @@ WORKDIR /usr/src/app
 COPY server/package*.json ./server/
 RUN npm install --prefix server
 
-# Copy server source
+# Copy server source (including the firebase-admin-security.json file)
 COPY server/ ./server/
 
 # Install client dependencies
 COPY client/package*.json ./client/
 RUN npm install --prefix client
 
-# Define environemnt/argument variables
+# Define environment/argument variables
 ARG OPEN_AI_API_ACCESS_KEY
 ENV OPEN_AI_API_ACCESS_KEY=${OPEN_AI_API_ACCESS_KEY}
 
@@ -38,6 +38,25 @@ ENV REACT_APP_FIREBASE_APP_ID=${REACT_APP_FIREBASE_APP_ID}
 
 ARG REACT_APP_FIREBASE_MEASUREMENT_ID
 ENV REACT_APP_FIREBASE_MEASUREMENT_ID=${REACT_APP_FIREBASE_MEASUREMENT_ID}
+
+ARG FB_DEV_BASE64_ENCODED_SERVICE_ACCOUNT
+ENV FB_DEV_BASE64_ENCODED_SERVICE_ACCOUNT=${FB_DEV_BASE64_ENCODED_SERVICE_ACCOUNT}
+
+ARG NODE_DSN
+ENV NODE_DSN=${NODE_DSN}
+
+ARG REACT_DSN
+ENV REACT_DSN=${REACT_DSN}
+
+ARG SENTRY_AUTH_TOKEN
+ENV SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
+
+# Load Stripe Environment Variables
+ARG STRIPE_API_KEY
+ENV STRIPE_API_KEY=${STRIPE_API_KEY}
+
+ARG STRIPE_WEBHOOK_SECRET
+ENV STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
 
 # Build client
 COPY client/ ./client/

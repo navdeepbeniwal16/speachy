@@ -18,11 +18,16 @@ import {
   getAuth,
   createUserWithEmailAndPassword,
   updateProfile,
+  sendEmailVerification,
 } from "firebase/auth";
 import { Link } from "react-router-dom";
+import { firebaseApp } from "../services/firebase.js";
+import { doc, getFirestore, setDoc } from "firebase/firestore";
 
 const SignUp = () => {
   const auth = getAuth();
+  const db = getFirestore(firebaseApp);
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,13 +61,28 @@ const SignUp = () => {
           password
         );
         const user = userCredential.user;
-        console.log("User is Signed Up....");
+        console.log("User is Signed Up:", user);
+
+        // Sending email for verification
+        await sendEmailVerification(auth.currentUser);
 
         // Update user profile
         await updateProfile(auth.currentUser, {
           displayName: name,
         });
         console.log("User profile updated!");
+
+        const subscriptionDocSetupResult = await setDoc(
+          doc(db, "subscriptions", auth.currentUser.uid),
+          {
+            email: auth.currentUser.email,
+            userUID: auth.currentUser.uid,
+          }
+        );
+        console.log(
+          "Subscription document written:",
+          subscriptionDocSetupResult
+        );
         navigate("/");
       } catch (error) {
         console.error("Error occurred during sign up or profile update:");
