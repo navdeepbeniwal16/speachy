@@ -1,8 +1,5 @@
 FROM node:latest
 
-# Debugging Copying step to list server directory contents
-RUN ls -la ./server/
-
 # Create app directory
 WORKDIR /usr/src/app
 
