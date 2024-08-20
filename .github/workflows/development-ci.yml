@@ -27,7 +27,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/speachy:test-ci
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/speachy:dev
           no-cache: true
           build-args: |
             OPEN_AI_API_ACCESS_KEY=${{ secrets.DEV_OPEN_AI_API_ACCESS_KEY }}
