@@ -31,7 +31,7 @@ jobs:
           no-cache: true
           build-args: |
             OPEN_AI_API_ACCESS_KEY=${{ secrets.DEV_OPEN_AI_API_ACCESS_KEY }}
-            REACT_APP_ENV=${{ secrets.REACT_APP_ENV }}
+            REACT_APP_ENV=${{ secrets.DEV_REACT_APP_ENV }}
             REACT_APP_FIREBASE_API_KEY=${{ secrets.DEV_REACT_APP_FIREBASE_API_KEY }}
             REACT_APP_FIREBASE_AUTH_DOMAIN=${{ secrets.DEV_REACT_APP_FIREBASE_AUTH_DOMAIN }}
             REACT_APP_FIREBASE_PROJECT_ID=${{ secrets.DEV_REACT_APP_FIREBASE_PROJECT_ID }}
