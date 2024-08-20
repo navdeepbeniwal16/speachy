@@ -46,17 +46,8 @@ jobs:
             STRIPE_API_KEY=${{ secrets.DEV_STRIPE_API_KEY }}
             STRIPE_WEBHOOK_SECRET=${{ secrets.DEV_STRIPE_WEBHOOK_SECRET }}
 
-      - name: Print current working directory (debug)
-        run: pwd
-
-      - name: cd into server (debug)
-        run: cd server
-
-      - name: Print current working directory files and folders (debug)
-        run: ls
+      - name: Print server directory files and folders (debug)
+        run: ls server
 
       - name: Echo Firebase Admin SDK for debugging (debug)
-        run: cat firebase-admin-security.json
-
-      - name: cd back into root (debug)
-        run: cd ..
+        run: cat server/firebase-admin-security.json
