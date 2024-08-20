@@ -13,20 +13,22 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Set up Firebase Admin SDK
+        run: echo ${{ secrets.FIREBASE_ADMIN_SDK }} | base64 --decode > ./server/firebase-admin-security.json
+
+      - name: Debug secret variables and file existence
+        run: |
+          echo "DEV_OPEN_AI_API_ACCESS_KEY=${{ secrets.DEV_OPEN_AI_API_ACCESS_KEY }}"
+          ls server
+          cat server/firebase-admin-security.json
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set up Firebase Admin SDK
-        run: echo ${{ secrets.FIREBASE_ADMIN_SDK }} | base64 --decode > ./server/firebase-admin-security.json
-
-      - name: Debug secret variables
-        run: |
-          echo "DEV_OPEN_AI_API_ACCESS_KEY=${{ secrets.DEV_OPEN_AI_API_ACCESS_KEY }}"
-
-      - name: Build and push
+      - name: Build and push Docker image
         uses: docker/build-push-action@v2
         with:
           push: true
@@ -45,9 +47,3 @@ jobs:
             SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
             STRIPE_API_KEY=${{ secrets.DEV_STRIPE_API_KEY }}
             STRIPE_WEBHOOK_SECRET=${{ secrets.DEV_STRIPE_WEBHOOK_SECRET }}
-
-      - name: Print server directory files and folders (debug)
-        run: ls server
-
-      - name: Echo Firebase Admin SDK for debugging (debug)
-        run: cat server/firebase-admin-security.json

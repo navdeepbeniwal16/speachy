@@ -7,14 +7,14 @@ WORKDIR /usr/src/app
 COPY server/package*.json ./server/
 RUN npm install --prefix server
 
-# Copy server source
+# Copy server source (including the firebase-admin-security.json file)
 COPY server/ ./server/
 
 # Install client dependencies
 COPY client/package*.json ./client/
 RUN npm install --prefix client
 
-# Define environemnt/argument variables
+# Define environment/argument variables
 ARG OPEN_AI_API_ACCESS_KEY
 ENV OPEN_AI_API_ACCESS_KEY=${OPEN_AI_API_ACCESS_KEY}
 
