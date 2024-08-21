@@ -192,6 +192,9 @@ const SignIn = () => {
                 error={!!errors.password}
                 helperText={errors.password}
               />
+              <Typography variant="subtitle2" textAlign={"right"}>
+                <Link to="/forgot-password">Forgot Password?</Link>
+              </Typography>
               <Button
                 type="submit"
                 fullWidth
@@ -224,7 +227,8 @@ const SignIn = () => {
               >
                 Sign In with Google
               </Button> */}
-              <Typography>
+
+              <Typography variant="subtitle2" textAlign={"center"}>
                 Don't have an account? <Link to="/signup">SignUp</Link>
               </Typography>
             </Box>

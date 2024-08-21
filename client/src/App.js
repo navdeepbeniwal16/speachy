@@ -19,6 +19,7 @@ import ImpromptSpeakingPractice from "./pages/ImpromptSpeakingPractice";
 import BannerWrapper from "./components/BannerWrapper";
 import PaymentSuccess from "./pages/payments/PaymentSuccess";
 import PaymentCancel from "./pages/payments/PaymentCancel";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 
 // Function to check if user is authenticated
 const requireAuth = (Component) => {
@@ -53,6 +54,7 @@ function App() {
           <Routes>
             <Route path="/signup" element={<SignUp />} />
             <Route path="/signin" element={<SignIn />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route
               path="/payment-success"
               element={<PaymentSuccessWrapper />}
