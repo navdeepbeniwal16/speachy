@@ -30,8 +30,6 @@ const logoStyle = {
   width: "100px",
   height: "auto",
   cursor: "pointer",
-  marginRight: "16px",
-  marginTop: "4px",
 };
 
 // Component to display drop down menu including options like 'Profile', 'Payments' & 'Signout' button
@@ -234,8 +232,8 @@ const NavigationBar = () => {
                   color="warning"
                   badgeContent={getEnvironmentLabel()}
                   anchorOrigin={{
-                    vertical: "center",
-                    horizontal: "center",
+                    vertical: "top",
+                    horizontal: "right",
                   }}
                 >
                   <img
