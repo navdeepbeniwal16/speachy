@@ -13,9 +13,11 @@ import {
   MenuItem,
   Drawer,
   Chip,
+  Badge,
+  Typography,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import Avatar from "@mui/material/Avatar";
+import SettingsIcon from "@mui/icons-material/Settings";
 import PersonIcon from "@mui/icons-material/Person";
 import PaymentsIcon from "@mui/icons-material/Payments";
 import Logout from "@mui/icons-material/Logout";
@@ -28,21 +30,6 @@ const logoStyle = {
   width: "100px",
   height: "auto",
   cursor: "pointer",
-  marginRight: "16px",
-  marginTop: "4px",
-};
-
-const getDisplayNameInitials = (displayName) => {
-  if (!displayName || displayName.length === 0) {
-    return "N/A";
-  } else {
-    const nameSplitted = displayName.split(" ");
-    if (nameSplitted.length > 1) {
-      return nameSplitted[0][0] + nameSplitted[1][0];
-    } else {
-      return nameSplitted[0][0];
-    }
-  }
 };
 
 // Component to display drop down menu including options like 'Profile', 'Payments' & 'Signout' button
@@ -73,16 +60,14 @@ const AccountMenu = ({
             aria-haspopup="true"
             aria-expanded={open ? "true" : undefined}
           >
-            <Avatar
+            <SettingsIcon
               sx={{
-                bgcolor: deepOrange[400],
+                color: deepOrange[400],
                 width: 32,
                 height: 32,
                 fontSize: "12px",
               }}
-            >
-              {user && getDisplayNameInitials(user.displayName)}
-            </Avatar>
+            ></SettingsIcon>
           </IconButton>
         </Tooltip>
       </Box>
@@ -121,6 +106,12 @@ const AccountMenu = ({
         transformOrigin={{ horizontal: "right", vertical: "top" }}
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       >
+        <MenuItem>
+          <Typography variant="subtitle2" color="text.secondary">
+            {user.email}
+          </Typography>
+        </MenuItem>
+
         <MenuItem onClick={handleProfileClick} sx={{ gap: 1 }}>
           <PersonIcon style={{ color: "gray" }} /> Profile{" "}
           {isPaidCustomer && (
@@ -192,6 +183,19 @@ const NavigationBar = () => {
     }
   };
 
+  const getEnvironmentLabel = () => {
+    const env = process.env.REACT_APP_ENV;
+    if (env === "local") {
+      return "Local";
+    } else if (env === "development") {
+      return "Development";
+    } else if (env === "production") {
+      return "Early Access";
+    }
+
+    return "Unknown";
+  };
+
   return (
     <div>
       <AppBar
@@ -224,11 +228,20 @@ const NavigationBar = () => {
               }}
             >
               <Link to="/">
-                <img
-                  src="/assets/Speachy_Logo_SVG.svg"
-                  style={logoStyle}
-                  alt="logo of speachy"
-                />
+                <Badge
+                  color="warning"
+                  badgeContent={getEnvironmentLabel()}
+                  anchorOrigin={{
+                    vertical: "top",
+                    horizontal: "right",
+                  }}
+                >
+                  <img
+                    src="/assets/Speachy_Logo_SVG.svg"
+                    style={logoStyle}
+                    alt="logo of speachy"
+                  />
+                </Badge>
               </Link>
             </Box>
             {user ? (
@@ -239,6 +252,10 @@ const NavigationBar = () => {
                   alignItems: "center",
                 }}
               >
+                <Typography variant="subtitle1" color="black">
+                  {auth.currentUser.displayName}
+                </Typography>
+
                 <AccountMenu
                   user={user}
                   handleSignoutClick={signOut}

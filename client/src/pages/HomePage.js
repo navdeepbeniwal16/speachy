@@ -130,7 +130,12 @@ const HomePage = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <Typography gutterBottom variant="h5" component="div">
+                  <Typography
+                    gutterBottom
+                    variant="h5"
+                    component="div"
+                    textAlign={"center"}
+                  >
                     🎤 Impromptu Speaking
                   </Typography>
                   <Typography
@@ -175,7 +180,12 @@ const HomePage = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <Typography gutterBottom variant="h5" component="div">
+                  <Typography
+                    gutterBottom
+                    variant="h5"
+                    component="div"
+                    textAlign={"center"}
+                  >
                     👔 Job Interview Preparation
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
