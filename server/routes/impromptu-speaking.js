@@ -2,6 +2,7 @@
 require("dotenv").config();
 
 // Dependencies
+const winston = require("winston");
 const OpenAI = require("openai");
 const express = require("express");
 const router = express.Router();
@@ -9,47 +10,107 @@ const multer = require("multer");
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const { transcribeAudio } = require("../controllers/core");
+const firebaseAdmin = require("../configs/firebase-admin.js");
+const { getFirestore } = require("firebase-admin/firestore");
+
+const IMPROMTU_QUESTIONS_IDS_COLLECTION = "impromptu_questions_ids";
+const IMPROMPTU_QUESTIONS_IDS_DOC = "ids_document";
+const IMPROMTU_QUESTIONS_COLLECTION = "impromptu_questions";
+
+const LOG_LEVEL = process.env.LOG_LEVEL;
+if (!LOG_LEVEL) {
+  throw new Error("LOG_LEVEL not found in environment variables");
+}
+
+// Set up logging
+const logger = winston.createLogger({
+  level: LOG_LEVEL,
+  format: winston.format.json(),
+  defaultMeta: { service: "impromptu-speaking" },
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.simple(),
+    }),
+  ],
+});
 
 // Initialise services
 const openai = new OpenAI({
   apiKey: process.env.OPEN_AI_API_ACCESS_KEY,
   dangerouslyAllowBrowser: false,
 });
+logger.info("'openai' service is initialised.");
 
-const generatePrompt = async () => {
-  const completion = await openai.chat.completions.create({
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are trained communications coaching who help people build their speaking skills.",
-      },
-      {
-        role: "user",
-        content: `Generate a random prompt that a user may find quite fun and comfortable to answer or talk about`,
-      },
-      {
-        role: "user",
-        content:
-          "Please provide the prompt in the following json format: { prompt: prompt_string }",
-      },
-    ],
-    model: "gpt-3.5-turbo",
-    response_format: { type: "json_object" },
-  });
+const db = getFirestore(firebaseAdmin);
+logger.info("firestore 'db' is initialised.");
 
-  // Parse raw json response and extract questions
-  // Throw error is response is not of array type or is empty
-  if (!Array.isArray(completion.choices) || completion.choices.length < 0) {
-    throw new Error(
-      "Error occured in OpenAI chat api response while generating prompt."
+// Function to fetch an array of all impromptu prompts ids
+const getAllImpromptuPromptsIDs = async () => {
+  logger.debug("Inside getAllImpromptuPromptsIDs()");
+  const idsRef = db
+    .collection(IMPROMTU_QUESTIONS_IDS_COLLECTION)
+    .doc(IMPROMPTU_QUESTIONS_IDS_DOC);
+  const idsDoc = await idsRef.get();
+
+  // Check if the document exists
+  if (!idsDoc.exists) {
+    logger.error(
+      `Document '${IMPROMPTU_QUESTIONS_IDS_DOC}' not found in '${IMPROMTU_QUESTIONS_IDS_COLLECTION}' collection.`
     );
+    logger.debug("Return an empty impromptu prompts array");
+    return []; // Return an empty array
   }
 
-  const rawJsonResponse = completion.choices[0].message.content;
-  const prompt = Object(JSON.parse(rawJsonResponse))["prompt"];
+  const idsData = idsDoc.data();
 
-  return prompt;
+  // Validate that 'ids' is an array and not empty
+  if (!Array.isArray(idsData.ids) || idsData.ids.length === 0) {
+    logger.error(
+      `'ids' field is either missing or not an array in '${IMPROMPTU_QUESTIONS_IDS_DOC}' document.`
+    );
+    logger.debug("Return an empty impromptu prompts array");
+    return []; // Return an empty array
+  }
+
+  logger.info("Impromptu Prompts IDs fetched.");
+  logger.debug("Impromptu Prompts IDs:", { ids: idsData.ids });
+  return idsData.ids;
+};
+
+// Function to get impromptu prompt object by 'id'
+const getImpromptuPromptByID = async (id) => {
+  logger.debug("Inside getImpromptuPromptByID()");
+  const promptRef = db.collection(IMPROMTU_QUESTIONS_COLLECTION).doc(id);
+  const promptDoc = await promptRef.get();
+
+  // Check if the document exists
+  if (!promptDoc.exists) {
+    logger.error(
+      `Document with id '${id}' not found in '${IMPROMTU_QUESTIONS_COLLECTION}' collection.`
+    );
+    logger.debug("Return a 'null' impromptu prompt object");
+    return null; // Return null as document doesn't exist
+  }
+
+  const promptData = promptDoc.data();
+
+  // Validate that the required fields are present and valid
+  if (
+    typeof promptData.question !== "string" ||
+    promptData.question.trim() === "" ||
+    typeof promptData.difficulty !== "string" ||
+    promptData.difficulty.trim() === ""
+  ) {
+    logger.error(
+      `Invalid or missing 'question' or 'difficulty' fields in document with id '${id}'.`
+    );
+    logger.debug("Return a 'null' impromptu prompt object");
+    return null; // Return null as fields are missing or invalid
+  }
+
+  logger.info("Prompt object fetched successfully!");
+  logger.debug("Prompt object to return:", { prompt: promptData });
+  return promptData;
 };
 
 const fetchAudioTransacription = async (req, res, next) => {
@@ -172,19 +233,23 @@ const evaluateResponse = async (req, res, next) => {
 
 /* API Routes */
 router.get("/prompt", async (req, res) => {
+  logger.info("Inside /prompt API handler...");
   try {
-    const prompt = await generatePrompt();
-
-    console.log("impromptu-speaking.js : Prompt generated successfully!");
+    const allPromptsIdsArr = await getAllImpromptuPromptsIDs();
+    const randomPromptIdIndex = Math.floor(
+      Math.random() * allPromptsIdsArr.length
+    );
+    const randomPromptId = allPromptsIdsArr[randomPromptIdIndex];
+    const prompt = await getImpromptuPromptByID(randomPromptId);
 
     res.status(200).json({
-      message: "Prompt generated successfully.",
+      message: "Prompt fetched successfully.",
       data: {
         prompt: prompt,
       },
     });
   } catch (error) {
-    console.error("Error generating prompt:", error);
+    console.error("Error fetching prompt:", error);
     return res.status(500).json({
       success: false,
       error: error.message,

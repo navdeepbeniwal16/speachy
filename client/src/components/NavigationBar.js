@@ -27,7 +27,7 @@ import PaymentsService from "../services/payments-service";
 import { AppContext } from "../components/AppContext.js";
 
 const logoStyle = {
-  width: "100px",
+  width: "220px",
   height: "auto",
   cursor: "pointer",
 };
@@ -237,7 +237,7 @@ const NavigationBar = () => {
                   }}
                 >
                   <img
-                    src="/assets/Speachy_Logo_SVG.svg"
+                    src="/assets/Speachy_Logo_Full_SVG.svg"
                     style={logoStyle}
                     alt="logo of speachy"
                   />
