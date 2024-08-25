@@ -206,7 +206,7 @@ router.post(
     logger.info("Inside /fetch-active-entitlements route...");
 
     const userUID = req.body.userUID;
-    logger.debug("userUID:", userUID);
+    logger.debug("userUID:", { userUID });
 
     let stripeCustomerId;
     try {
