@@ -5,6 +5,8 @@ import {
   Paper,
   Typography,
   LinearProgress,
+  Chip,
+  Skeleton,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +21,7 @@ import SnackbarAlert from "../components/SnackbarAlert";
 const ImpromptSpeakingPractice = () => {
   const navigate = useNavigate();
 
-  const [prompt, setPrompt] = useState("Prompt is loading...");
+  const [prompt, setPrompt] = useState(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
 
   const [audioUrl, setAudioUrl] = useState(null);
@@ -46,7 +48,7 @@ const ImpromptSpeakingPractice = () => {
 
       const response =
         await ImpromptuSpeakingService.fetchAudioResponseFeedback(
-          prompt,
+          prompt.question,
           audioBlob
         );
 
@@ -107,92 +109,114 @@ const ImpromptSpeakingPractice = () => {
             maxWidth: "45%",
           }}
         >
-          <Box sx={{ mx: "5px" }}>
-            <Paper
-              variant="rounded"
-              height={130}
-              sx={{
-                p: 2,
-                my: 2,
-                borderRadius: "10px",
-                backgroundColor: "#fff",
-                // boxShadow: "none",
-              }}
-            >
-              <Typography
-                variant="body2"
+          {prompt ? (
+            <Box sx={{ mx: "5px" }}>
+              <Paper
+                variant="rounded"
+                height={130}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  fontWeight: "bold",
-                  color: "#333333",
+                  p: 2,
+                  my: 2,
+                  borderRadius: "10px",
+                  backgroundColor: "#fff",
+                  // boxShadow: "none",
                 }}
               >
-                {prompt}
-              </Typography>
-              <Box
-                sx={{
-                  display: "flex",
-
-                  justifyContent: "right",
-                }}
-              >
-                <IconButton onClick={fetchPrompt}>
-                  <RefreshIcon
-                    sx={{ height: "20px", color: "gray" }}
-                  ></RefreshIcon>
-                </IconButton>
-              </Box>
-            </Paper>
-
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                height: "65vh",
-                marginY: "2px",
-              }}
-            >
-              <Box
-                sx={{
-                  marginX: "5px",
-                  paddin: "5px",
-                  display: "flex",
-                  overflowY: "auto",
-                  zIndex: 1,
-                }}
-              >
-                {transcription && (
-                  <Typography variant="body2" sx={{ textAlign: "center" }}>
-                    {transcription.text}
-                  </Typography>
-                )}
-              </Box>
+                <Typography
+                  variant="body"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    fontWeight: "bold",
+                    color: "#333333",
+                  }}
+                >
+                  {prompt.question}
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "row",
+                    marginTop: 1,
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <Chip
+                    variant="filled"
+                    size="small"
+                    label={
+                      prompt.difficulty.toUpperCase()[0] +
+                      prompt.difficulty.toLowerCase().substring(1)
+                    }
+                  ></Chip>
+                  <IconButton onClick={fetchPrompt}>
+                    <RefreshIcon
+                      sx={{
+                        height: "20px",
+                        color: "gray",
+                      }}
+                    ></RefreshIcon>
+                  </IconButton>
+                </Box>
+              </Paper>
 
               <Box
                 sx={{
-                  flexGrow: 1,
                   display: "flex",
                   flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "flex-end",
-                  marginBottom: 3,
-                  width: "100%",
+                  height: "65vh",
+                  marginY: "2px",
                 }}
               >
-                {audioUrl && (
-                  <audio src={audioUrl} controls style={{ width: "60%" }} />
-                )}
-                <VoiceRecordingTab
-                  handleRecord={() =>
-                    console.log("Handle record is pressed...")
-                  }
-                  handleSubmit={handleVoiceRecordingSubmit}
-                  style={{ width: "100%" }}
-                />
+                <Box
+                  sx={{
+                    marginX: "5px",
+                    paddin: "5px",
+                    display: "flex",
+                    overflowY: "auto",
+                    zIndex: 1,
+                  }}
+                >
+                  {transcription && (
+                    <Typography variant="body2" sx={{ textAlign: "center" }}>
+                      {transcription.text}
+                    </Typography>
+                  )}
+                </Box>
+
+                <Box
+                  sx={{
+                    flexGrow: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "flex-end",
+                    marginBottom: 3,
+                    width: "100%",
+                  }}
+                >
+                  {audioUrl && (
+                    <audio src={audioUrl} controls style={{ width: "60%" }} />
+                  )}
+                  <VoiceRecordingTab
+                    handleRecord={() =>
+                      console.log("Handle record is pressed...")
+                    }
+                    handleSubmit={handleVoiceRecordingSubmit}
+                    style={{ width: "100%" }}
+                  />
+                </Box>
               </Box>
             </Box>
-          </Box>
+          ) : (
+            <Skeleton
+              variant="rectangular"
+              sx={{ mx: "5px", mt: "15px", borderRadius: "10px" }}
+              height={118}
+              // width={210} height={118}
+            />
+          )}
         </Box>
         <Box sx={{ width: "55%", ml: 2, maxWidth: "55%" }}>
           <Paper
