@@ -142,13 +142,13 @@ const SignUp = () => {
 
   return (
     <Container>
-      <Grid container component="main" sx={{ height: "100%", padding: 5 }}>
-        <Grid item xs={false} sm={12} md={4} />
+      <Grid container component="main" sx={{ height: "100%" }}>
+        <Grid item xs={false} sm={12} md={3} />
         <Grid
           item
           xs={12}
           sm={12}
-          md={4}
+          md={6}
           component={Paper}
           elevation={0}
           // square
@@ -173,7 +173,7 @@ const SignUp = () => {
               justifyContent: "center",
               alignItems: "center",
               height: "100%",
-              padding: 3,
+              padding: 2,
               backgroundColor: "#fff",
             }}
           >
@@ -185,7 +185,7 @@ const SignUp = () => {
             >
               <LockOutlinedIcon />
             </Avatar>
-            <Typography component="h1" variant="h5">
+            <Typography component="h1" variant="h6">
               Sign Up
             </Typography>
             <Box
@@ -260,7 +260,7 @@ const SignUp = () => {
                 fullWidth
                 variant="contained"
                 color="warning"
-                sx={{ mt: 3, mb: 2 }}
+                sx={{ mt: 3, mb: 2, textTransform: "none" }}
               >
                 Sign Up
               </Button>
@@ -287,8 +287,11 @@ const SignUp = () => {
               >
                 Sign Up with Google
               </Button> */}
-              <Typography>
-                Already have an account? <Link to="/signin">SignIn</Link>
+              <Typography variant="subtitle2" textAlign={"center"}>
+                Already have an account?{" "}
+                <Link to="/signin" style={{ textDecoration: "none" }}>
+                  Sign In
+                </Link>
               </Typography>
             </Box>
           </Paper>

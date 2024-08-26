@@ -27,7 +27,7 @@ import PaymentsService from "../services/payments-service";
 import { AppContext } from "../components/AppContext.js";
 
 const logoStyle = {
-  width: "220px",
+  width: "200px",
   height: "auto",
   cursor: "pointer",
 };
