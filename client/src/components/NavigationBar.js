@@ -124,8 +124,13 @@ const AccountMenu = ({
         <Divider />
         <MenuItem onClick={handleSignoutClick} sx={{ gap: 1 }}>
           <Logout fontSize="small" color="warning" />
-          <Button color="warning" size="small" component="a">
-            <strong>Sign out</strong>
+          <Button
+            color="warning"
+            size="small"
+            component="a"
+            sx={{ textTransform: "none" }}
+          >
+            <strong>Sign Out</strong>
           </Button>
         </MenuItem>
       </Menu>
@@ -311,50 +316,98 @@ const NavigationBar = () => {
                 <MenuIcon />
               </Button>
               <Drawer anchor="right" open={open} onClose={toggleDrawer(false)}>
-                <Box
-                  sx={{
-                    minWidth: "60dvw",
-                    p: 2,
-                    backgroundColor: "background.paper",
-                    flexGrow: 1,
-                  }}
-                >
+                {user ? (
                   <Box
                     sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "end",
+                      display: { md: "flex" },
+                      gap: 0,
+                      minWidth: "60dvw",
+                      p: 2,
+                      backgroundColor: "background.paper",
                       flexGrow: 1,
                     }}
-                  ></Box>
-                  {/* <MenuItem onClick={() => navigate("/")}> */}
-                  {/* </MenuItem> */}
-                  {/* <Divider /> */}
-                  <MenuItem>
-                    <Button
-                      color="warning"
-                      variant="text"
-                      // size="small"
-                      component="a"
-                      onClick={() => navigate("/signin")}
-                      sx={{ textTransform: "none" }}
+                  >
+                    <Box sx={{ padding: 2 }}>
+                      <Typography
+                        variant="subtitle1"
+                        color="black"
+                        sx={{ textAlign: "left" }}
+                      >
+                        {auth.currentUser.displayName}
+                      </Typography>
+                      <Typography
+                        variant="subtitle2"
+                        color="text.secondary"
+                        sx={{ textAlign: "left" }}
+                      >
+                        {user.email}
+                      </Typography>
+                    </Box>
+
+                    <Divider />
+
+                    <MenuItem
+                      onClick={() => console.log("Profile option is clicked")}
+                      sx={{ gap: 1 }}
                     >
-                      <strong>Sign In</strong>
-                    </Button>
-                  </MenuItem>
-                  <MenuItem>
-                    <Button
-                      color="warning"
-                      variant="contained"
-                      // size="small"
-                      component="a"
-                      onClick={() => navigate("/signup")}
-                      sx={{ textTransform: "none" }}
+                      <PersonIcon style={{ color: "gray" }} /> Profile{" "}
+                      {true && (
+                        <Chip size="small" label="Paid" color="warning"></Chip>
+                      )}
+                    </MenuItem>
+                    <MenuItem
+                      onClick={navigateToCustomerPaymentPortal}
+                      sx={{ gap: 1 }}
                     >
-                      Sign Up
-                    </Button>
-                  </MenuItem>
-                </Box>
+                      <PaymentsIcon style={{ color: "gray" }} /> Payments
+                    </MenuItem>
+                    <Divider />
+                    <MenuItem onClick={signOut} sx={{ gap: 1 }}>
+                      <Logout fontSize="small" color="warning" />
+                      <Button
+                        color="warning"
+                        component="a"
+                        sx={{ textTransform: "none" }}
+                      >
+                        <strong>Sign Out</strong>
+                      </Button>
+                    </MenuItem>
+                  </Box>
+                ) : (
+                  <Box
+                    sx={{
+                      minWidth: "60dvw",
+                      p: 2,
+                      backgroundColor: "background.paper",
+                      flexGrow: 1,
+                    }}
+                  >
+                    <MenuItem>
+                      <Button
+                        color="warning"
+                        variant="text"
+                        // size="small"
+                        component="a"
+                        onClick={() => navigate("/signin")}
+                        sx={{ textTransform: "none" }}
+                      >
+                        <strong>Sign In</strong>
+                      </Button>
+                    </MenuItem>
+                    <MenuItem>
+                      <Button
+                        color="warning"
+                        variant="contained"
+                        // size="small"
+                        component="a"
+                        onClick={() => navigate("/signup")}
+                        sx={{ textTransform: "none" }}
+                      >
+                        Sign Up
+                      </Button>
+                    </MenuItem>
+                  </Box>
+                )}
               </Drawer>
             </Box>
           </Toolbar>
