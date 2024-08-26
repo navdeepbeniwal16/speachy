@@ -280,20 +280,22 @@ const NavigationBar = () => {
                 <Button
                   color="warning"
                   variant="text"
-                  size="small"
+                  // size="small"
                   component="a"
                   onClick={() => navigate("/signin")}
+                  sx={{ textTransform: "none" }}
                 >
-                  <strong>Sign in</strong>
+                  <strong>Sign In</strong>
                 </Button>
                 <Button
                   color="warning"
                   variant="contained"
-                  size="small"
+                  // size="small"
                   component="a"
                   onClick={() => navigate("/signup")}
+                  sx={{ textTransform: "none" }}
                 >
-                  Sign up
+                  Sign Up
                 </Button>
               </Box>
             )}
@@ -301,7 +303,7 @@ const NavigationBar = () => {
             <Box sx={{ display: { sm: "", md: "none" } }}>
               <Button
                 variant="text"
-                // color="violet"
+                color="warning"
                 aria-label="menu"
                 onClick={toggleDrawer(true)}
                 sx={{ minWidth: "30px", p: "4px" }}
@@ -325,28 +327,31 @@ const NavigationBar = () => {
                       flexGrow: 1,
                     }}
                   ></Box>
-                  <MenuItem onClick={() => navigate("/")}>Home</MenuItem>
-                  <Divider />
+                  {/* <MenuItem onClick={() => navigate("/")}> */}
+                  {/* </MenuItem> */}
+                  {/* <Divider /> */}
                   <MenuItem>
                     <Button
-                      //   color="violet"
-                      variant="contained"
+                      color="warning"
+                      variant="text"
+                      // size="small"
                       component="a"
-                      onClick={() => navigate("/signup")}
-                      sx={{ width: "100%" }}
+                      onClick={() => navigate("/signin")}
+                      sx={{ textTransform: "none" }}
                     >
-                      Sign up
+                      <strong>Sign In</strong>
                     </Button>
                   </MenuItem>
                   <MenuItem>
                     <Button
-                      //   color="violet"
-                      variant="outlined"
+                      color="warning"
+                      variant="contained"
+                      // size="small"
                       component="a"
-                      onClick={() => navigate("/signin")}
-                      sx={{ width: "100%" }}
+                      onClick={() => navigate("/signup")}
+                      sx={{ textTransform: "none" }}
                     >
-                      Sign in
+                      Sign Up
                     </Button>
                   </MenuItem>
                 </Box>
