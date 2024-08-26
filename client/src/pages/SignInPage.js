@@ -127,12 +127,13 @@ const SignIn = () => {
         }}
       >
         <CssBaseline />
-        <Grid item xs={false} sm={12} md={3} />
+        <Grid item xs={false} sm={12} md={3} lg={4} />
         <Grid
           item
           xs={12}
           sm={12}
           md={6}
+          lg={4}
           component={Paper}
           elevation={0}
           sx={{
@@ -183,7 +184,7 @@ const SignIn = () => {
                 required
                 fullWidth
                 id="email"
-                label="Email Address"
+                label="Email "
                 name="email"
                 autoComplete="email"
                 autoFocus
@@ -236,7 +237,7 @@ const SignIn = () => {
                 color="warning"
                 sx={{ mt: 3, mb: 2, textTransform: "none" }}
               >
-                Sign In
+                <strong>Sign In</strong>
               </Button>
               {/* <Typography sx={{ textAlign: "center" }}>or</Typography>
               <Button
@@ -271,7 +272,7 @@ const SignIn = () => {
             </Box>
           </Paper>
         </Grid>
-        <Grid item xs={false} sm={12} md={3} />
+        <Grid item xs={false} sm={12} md={3} lg={4} />
       </Grid>
 
       {isSignInError && (
