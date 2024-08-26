@@ -119,14 +119,20 @@ const SignIn = () => {
 
   return (
     <Container>
-      <Grid container component="main" sx={{ height: "100%", padding: 5 }}>
+      <Grid
+        container
+        component="main"
+        sx={{
+          height: "100%",
+        }}
+      >
         <CssBaseline />
-        <Grid item xs={false} sm={12} md={4} />
+        <Grid item xs={false} sm={12} md={3} />
         <Grid
           item
           xs={12}
           sm={12}
-          md={4}
+          md={6}
           component={Paper}
           elevation={0}
           sx={{
@@ -150,7 +156,7 @@ const SignIn = () => {
               justifyContent: "center",
               alignItems: "center",
               height: "100%",
-              padding: 3,
+              padding: 2,
               backgroundColor: "#fff",
             }}
           >
@@ -162,7 +168,7 @@ const SignIn = () => {
             >
               <LockOutlinedIcon />
             </Avatar>
-            <Typography component="h1" variant="h5">
+            <Typography component="h1" variant="h6">
               Sign In
             </Typography>
             <Box
@@ -219,14 +225,16 @@ const SignIn = () => {
                 }}
               />
               <Typography variant="subtitle2" textAlign={"right"}>
-                <Link to="/forgot-password">Forgot Password?</Link>
+                <Link to="/forgot-password" style={{ textDecoration: "none" }}>
+                  Forgot Password?
+                </Link>
               </Typography>
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
                 color="warning"
-                sx={{ mt: 3, mb: 2 }}
+                sx={{ mt: 3, mb: 2, textTransform: "none" }}
               >
                 Sign In
               </Button>
@@ -255,12 +263,15 @@ const SignIn = () => {
               </Button> */}
 
               <Typography variant="subtitle2" textAlign={"center"}>
-                Don't have an account? <Link to="/signup">SignUp</Link>
+                Don't have an account?{" "}
+                <Link to="/signup" style={{ textDecoration: "none" }}>
+                  Sign Up
+                </Link>
               </Typography>
             </Box>
           </Paper>
         </Grid>
-        <Grid item xs={false} sm={12} md={4} />
+        <Grid item xs={false} sm={12} md={3} />
       </Grid>
 
       {isSignInError && (
