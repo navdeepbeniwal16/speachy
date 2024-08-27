@@ -8,6 +8,8 @@ import {
   Card,
   CardActionArea,
   CardContent,
+  Backdrop,
+  CircularProgress,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { getAuth } from "firebase/auth";
@@ -231,6 +233,16 @@ const HomePage = () => {
           </Link>
         </Typography>
       </Box>
+
+      <div>
+        <Backdrop
+          sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+          open={loading}
+          onClick={() => console.log("Backdrop is closed.")}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
+      </div>
     </Container>
   );
 };
