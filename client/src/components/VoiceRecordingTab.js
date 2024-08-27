@@ -109,8 +109,8 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
         gap: 3,
       }}
     >
-      <TimerIcon color="gray" sx={{ mr: "-20px" }}></TimerIcon>
-      <Typography sx={{ color: "gray" }}>
+      <TimerIcon color="gray" fontSize="large" sx={{ mr: "-20px" }}></TimerIcon>
+      <Typography variant="h5" sx={{ color: "gray" }}>
         <strong>{`${timer}s`}</strong>
       </Typography>
 
@@ -125,6 +125,7 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
       </Button>
       <RadioButtonCheckedIcon
         color={isRecording ? "warning" : "gray"}
+        fontSize="large"
       ></RadioButtonCheckedIcon>
     </Box>
   );

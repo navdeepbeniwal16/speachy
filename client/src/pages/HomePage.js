@@ -8,6 +8,8 @@ import {
   Card,
   CardActionArea,
   CardContent,
+  Backdrop,
+  CircularProgress,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { getAuth } from "firebase/auth";
@@ -79,12 +81,9 @@ const HomePage = () => {
   };
 
   return (
-    <Container
-      maxWidth="lg"
-      sx={{ mt: 4, pt: 4, pb: 8, px: 8, fontFamily: "Roboto" }}
-    >
+    <Container maxWidth="lg" sx={{ mt: 4, pt: 4, pb: 4, fontFamily: "Roboto" }}>
       <Box sx={{ textAlign: "center", mb: 8 }}>
-        <Typography variant="h2" gutterBottom>
+        <Typography variant="h3" gutterBottom>
           Welcome{" "}
           <span style={{ color: "darkorange", fontWeight: "bold" }}>
             {auth.currentUser.displayName.split(" ")[0]}
@@ -97,7 +96,7 @@ const HomePage = () => {
         </Typography>
       </Box>
 
-      <Box id="interview-section" sx={{ mb: 8 }}>
+      <Box sx={{ mb: 8 }}>
         <Typography
           variant="h4"
           sx={{ textAlign: "center", mb: 4 }}
@@ -106,9 +105,9 @@ const HomePage = () => {
           What are we working on today?
         </Typography>
 
-        <Grid id="catalogue" container spacing={4}>
-          <Grid item xs={12} sm={6} md={1}></Grid>
-          <Grid item xs={12} sm={6} md={5}>
+        <Grid id="catalogue" container spacing={2}>
+          <Grid item xs={0} sm={0} md={1}></Grid>
+          <Grid item xs={12} sm={12} md={5}>
             <Card
               variant="elevation"
               sx={{
@@ -141,6 +140,7 @@ const HomePage = () => {
                   <Typography
                     variant="body2"
                     color="text.secondary"
+                    sx={{ textAlign: "center" }}
                     gutterBottom
                   >
                     Boost your impromptu speaking with practice and feedback!
@@ -158,7 +158,7 @@ const HomePage = () => {
               </CardActionArea>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={5}>
+          <Grid item xs={12} sm={12} md={5}>
             <Card
               variant="elevation"
               sx={{
@@ -188,7 +188,11 @@ const HomePage = () => {
                   >
                     👔 Job Interview Preparation
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ textAlign: "center" }}
+                  >
                     Ace your interviews with practice questions and response
                     analysis!
                   </Typography>
@@ -205,7 +209,7 @@ const HomePage = () => {
               </CardActionArea>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={1}></Grid>
+          <Grid item xs={0} sm={0} md={1}></Grid>
         </Grid>
       </Box>
 
@@ -229,6 +233,16 @@ const HomePage = () => {
           </Link>
         </Typography>
       </Box>
+
+      <div>
+        <Backdrop
+          sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+          open={loading}
+          onClick={() => console.log("Backdrop is closed.")}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
+      </div>
     </Container>
   );
 };
