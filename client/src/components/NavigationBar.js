@@ -114,13 +114,13 @@ const AccountMenu = ({
 
         <MenuItem onClick={handleProfileClick} sx={{ gap: 1 }}>
           <PersonIcon style={{ color: "gray" }} /> Profile{" "}
-          {isPaidCustomer && (
+          {/* {isPaidCustomer && (
             <Chip size="small" label="Paid" color="warning"></Chip>
-          )}
+          )} */}
         </MenuItem>
-        <MenuItem onClick={handlePaymentsClick} sx={{ gap: 1 }}>
+        {/* <MenuItem onClick={handlePaymentsClick} sx={{ gap: 1 }}>
           <PaymentsIcon style={{ color: "gray" }} /> Payments
-        </MenuItem>
+        </MenuItem> */}
         <Divider />
         <MenuItem onClick={handleSignoutClick} sx={{ gap: 1 }}>
           <Logout fontSize="small" color="warning" />
@@ -351,16 +351,16 @@ const NavigationBar = () => {
                       sx={{ gap: 1 }}
                     >
                       <PersonIcon style={{ color: "gray" }} /> Profile{" "}
-                      {true && (
-                        <Chip size="small" label="Paid" color="warning"></Chip>
-                      )}
+                      {/* {isPaidCustomer && (
+            <Chip size="small" label="Paid" color="warning"></Chip>
+          )} */}
                     </MenuItem>
-                    <MenuItem
+                    {/* <MenuItem
                       onClick={navigateToCustomerPaymentPortal}
                       sx={{ gap: 1 }}
                     >
                       <PaymentsIcon style={{ color: "gray" }} /> Payments
-                    </MenuItem>
+                    </MenuItem> */}
                     <Divider />
                     <MenuItem onClick={signOut} sx={{ gap: 1 }}>
                       <Logout fontSize="small" color="warning" />

@@ -118,7 +118,7 @@ const HomePage = () => {
               }}
             >
               <CardActionArea
-                disabled={!state.isImpromptuSpeakingEnabled}
+                // disabled={!state.isImpromptuSpeakingEnabled}
                 onClick={navigateToImpromptSpeakingPracticePage}
                 sx={{ display: "flex", width: "100%" }}
               >
@@ -145,7 +145,7 @@ const HomePage = () => {
                   >
                     Boost your impromptu speaking with practice and feedback!
                   </Typography>
-                  {!state.isImpromptuSpeakingEnabled && (
+                  {/* {!state.isImpromptuSpeakingEnabled && (
                     <Typography
                       variant="subtitle2"
                       color="text.primary"
@@ -153,7 +153,7 @@ const HomePage = () => {
                     >
                       🔒 This is a paid feature
                     </Typography>
-                  )}
+                  )} */}
                 </CardContent>
               </CardActionArea>
             </Card>
@@ -169,7 +169,7 @@ const HomePage = () => {
               }}
             >
               <CardActionArea
-                disabled={!state.isInterviewPracticeEnabled}
+                // disabled={!state.isInterviewPracticeEnabled}
                 onClick={() => navigate("/interview")}
                 sx={{ display: "flex", width: "100%" }}
               >
@@ -196,7 +196,7 @@ const HomePage = () => {
                     Ace your interviews with practice questions and response
                     analysis!
                   </Typography>
-                  {!state.isImpromptuSpeakingEnabled && (
+                  {/* {!state.isImpromptuSpeakingEnabled && (
                     <Typography
                       variant="subtitle2"
                       color="text.primary"
@@ -204,7 +204,7 @@ const HomePage = () => {
                     >
                       🔒 This is a paid feature
                     </Typography>
-                  )}
+                  )} */}
                 </CardContent>
               </CardActionArea>
             </Card>
@@ -213,7 +213,7 @@ const HomePage = () => {
         </Grid>
       </Box>
 
-      {!loading && !state.isImpromptuSpeakingEnabled && <Pricing></Pricing>}
+      {/* {!loading && !state.isImpromptuSpeakingEnabled && <Pricing></Pricing>} */}
 
       <Box
         id="feedback"
