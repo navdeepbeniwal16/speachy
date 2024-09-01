@@ -189,9 +189,8 @@ const ImpromptSpeakingPractice = () => {
               mb: 3,
             }}
           >
-            {/* {audioUrl && ( */}
-            <audio src={audioUrl} controls style={{ width: "50%" }} />
-            {/* )} */}
+            <audio src={audioUrl} controls style={{ width: "60%" }} />
+
             <VoiceRecordingTab
               handleRecord={() => console.log("Handle record is pressed...")}
               handleSubmit={handleVoiceRecordingSubmit}
