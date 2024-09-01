@@ -15,8 +15,9 @@ const FeedbackPane = ({ feedback }) => {
   };
 
   return (
-    <Container sx={{ my: "22px" }}>
-      <Typography variant="h5">Summary</Typography>
+    <Container sx={{ py: 2 }}>
+      <Typography variant="h6">Summary</Typography>
+
       <Box sx={{ py: 2 }}>
         {feedback &&
           Object.entries(feedback.summary).map(([heading, details]) => (
@@ -31,7 +32,7 @@ const FeedbackPane = ({ feedback }) => {
             variant="contained"
             color="warning"
             onClick={handleOpenModal}
-            sx={{ width: "100%" }}
+            sx={{ width: "100%", textTransform: "none", fontWeight: "bold" }}
           >
             See Detailed Feedback
           </Button>
