@@ -37,13 +37,13 @@ const InterviewQuestions = () => {
     <ListItemButton
       key={index}
       component="div"
-      sx={{ margin: "0px", borderRadius: "15px" }}
+      sx={{ margin: "0px", borderRadius: "10px" }}
       disablePadding
       onClick={() => navigateToPracticePage(index)}
     >
       <Card
         variant="elevation"
-        elevation={"1"}
+        elevation={0}
         sx={{
           width: "100%",
           borderRadius: "10px",
@@ -53,9 +53,6 @@ const InterviewQuestions = () => {
         }}
       >
         <CardContent>
-          <Typography variant="subtitle2">
-            <strong>Question {index + 1}</strong>
-          </Typography>
           <Typography variant="body2">{questionObj.question}</Typography>
         </CardContent>
         <Box
@@ -70,7 +67,7 @@ const InterviewQuestions = () => {
   ));
 
   return (
-    <Container component="main" maxWidth="lg" sx={{ paddingTop: "20px" }}>
+    <Container component="main" maxWidth="lg">
       <Box
         sx={{
           display: "flex",
