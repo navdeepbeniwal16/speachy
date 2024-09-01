@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import {
   Box,
-  Button,
   LinearProgress,
   Paper,
   Typography,
   IconButton,
+  Collapse,
 } from "@mui/material";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import CircleIcon from "@mui/icons-material/Circle";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 
 const FeedbackCard = ({ heading, feedbackPoints = [], score = 0 }) => {
   const [showFeedback, setShowFeedback] = useState(true);
@@ -29,9 +31,22 @@ const FeedbackCard = ({ heading, feedbackPoints = [], score = 0 }) => {
 
   return (
     <Paper variant="outlined" sx={{ mb: 2, p: 2, borderRadius: "10px" }}>
-      <Typography variant="body1" sx={{ mb: 1, fontWeight: "bold" }}>
-        {headingsLabelMapping[heading] || "Unknown Heading"}
-      </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Typography variant="body1" sx={{ mb: 1, fontWeight: "bold" }}>
+          {headingsLabelMapping[heading] || "Unknown Heading"}
+        </Typography>
+        <IconButton onClick={() => setShowFeedback(!showFeedback)}>
+          {showFeedback ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        </IconButton>
+      </Box>
+
       <LinearProgress
         variant="determinate"
         value={score * 10}
@@ -44,7 +59,7 @@ const FeedbackCard = ({ heading, feedbackPoints = [], score = 0 }) => {
           },
         }}
       />
-      {showFeedback && (
+      <Collapse in={showFeedback}>
         <Box>
           {Array.isArray(feedbackPoints) && feedbackPoints.length > 0 ? (
             feedbackPoints.map((point, index) => (
@@ -55,7 +70,7 @@ const FeedbackCard = ({ heading, feedbackPoints = [], score = 0 }) => {
                 variant="body2"
                 sx={{ mb: 0.5 }}
               >
-                <ChevronRightIcon sx={{ fontSize: 20, marginRight: 1 }} />
+                <CircleIcon sx={{ fontSize: 8, marginRight: 1 }} />
                 {point}
               </Typography>
             ))
@@ -65,14 +80,7 @@ const FeedbackCard = ({ heading, feedbackPoints = [], score = 0 }) => {
             </Typography>
           )}
         </Box>
-      )}
-      <Button
-        size="small"
-        onClick={() => setShowFeedback(!showFeedback)}
-        sx={{ mt: 2 }}
-      >
-        {showFeedback ? "Hide Feedback" : "Show Feedback"}
-      </Button>
+      </Collapse>
     </Paper>
   );
 };
