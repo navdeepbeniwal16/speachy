@@ -100,24 +100,19 @@ const InterviewHome = () => {
   };
 
   return (
-    <Container component="main" maxWidth="lg" sx={{ paddingTop: "20px" }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-        }}
-      >
+    <Container maxWidth="lg">
+      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
         <IconButton onClick={() => navigate("/")}>
-          <ArrowBackIcon></ArrowBackIcon>
+          <ArrowBackIcon />
         </IconButton>
-        <Typography variant="h5" gutterBottom sx={{ marginLeft: "-25px" }}>
-          Interviews
+        <Typography variant="h6" gutterBottom>
+          👔 Job Interview Preparation
         </Typography>
-        <Typography></Typography>
+        <Box></Box>
       </Box>
 
-      <Grid container spacing={4} sx={{ padding: 2 }}>
-        <Grid item md={5} xs={12}>
+      <Grid container spacing={2} sx={{ padding: 0 }}>
+        <Grid item xs={12} sm={12} md={12} lg={5} xl={5}>
           <Paper
             variant="none"
             sx={{
@@ -162,7 +157,7 @@ const InterviewHome = () => {
                 color="warning"
                 onClick={handleStart}
                 disabled={isStarting}
-                sx={{ width: "50%" }}
+                sx={{ width: "50%", textTransform: "none", fontWeight: "bold" }}
               >
                 Start
               </Button>
@@ -183,30 +178,37 @@ const InterviewHome = () => {
 
         <Grid
           item
-          md={2}
-          xs={12}
           sx={{
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
             alignItems: "center",
           }}
+          xs={12}
+          sm={12}
+          md={12}
+          lg={2}
+          xl={2}
         >
           <Typography>or</Typography>
         </Grid>
 
-        <Grid item md={5} xs={12}>
+        <Grid item xs={12} sm={12} md={12} lg={5} xl={5}>
           <Paper
             variant="elevation"
-            elevation={"1"}
-            sx={{ overflowY: "auto", zIndex: 1 }}
+            elevation={0}
+            sx={{
+              overflowY: "auto",
+              zIndex: 1,
+              borderRadius: "10px",
+            }}
           >
             {isUploading && (
               <Box sx={{ width: "100%" }}>
                 <LinearProgress color="warning" />
               </Box>
             )}
-            <Box sx={{ padding: 2 }}>
+            <Box sx={{ p: 2 }}>
               <Typography
                 variant="h5"
                 sx={{
@@ -301,7 +303,12 @@ const InterviewHome = () => {
                   fullWidth
                   variant="contained"
                   color="warning"
-                  sx={{ mt: 3, mb: 2 }}
+                  sx={{
+                    mt: 3,
+                    mb: 2,
+                    textTransform: "none",
+                    fontWeight: "bold",
+                  }}
                   disabled={isUploading}
                 >
                   Upload
