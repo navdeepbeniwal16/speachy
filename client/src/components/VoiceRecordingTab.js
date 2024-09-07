@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button, Box, Typography } from "@mui/material";
-import MicIcon from "@mui/icons-material/Mic";
-import StopIcon from "@mui/icons-material/Stop";
-import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
-import TimerIcon from "@mui/icons-material/Timer";
+import MicNoneOutlinedIcon from "@mui/icons-material/MicNoneOutlined";
+import MicOffOutlinedIcon from "@mui/icons-material/MicOffOutlined";
+import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 
 const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
   const [recorder, setRecorder] = useState(null);
@@ -11,6 +10,7 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
   const [audioUrl, setAudioUrl] = useState(null);
   const [timer, setTimer] = useState(0);
   const intervalRef = useRef(null);
+  let chunks = [];
 
   const handleRecordInner = () => {
     setIsRecording(true);
@@ -60,17 +60,17 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
     if (!recorder) return;
 
     setIsRecording(true);
-    recorder.start();
 
-    let chunks = []; // Array to collect data chunks
+    recorder.start(1000); // Use timeslice of 1000ms (1 second) to fix data audio data compatibility sent from Safari browser
 
-    // Handle incoming data
     recorder.ondataavailable = (e) => {
-      chunks.push(e.data); // Collect chunks of recorded data
+      if (e.data.size > 0) {
+        chunks.push(e.data); // Collect chunks of recorded data
+      }
     };
 
     recorder.onstop = () => {
-      const blob = new Blob(chunks, { type: "audio/ogg; codecs=opus" });
+      const blob = new Blob(chunks, { type: "audio/mpeg" });
       const url = URL.createObjectURL(blob);
       setAudioUrl(url);
       setIsRecording(false);
@@ -109,7 +109,14 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
         gap: 3,
       }}
     >
-      <TimerIcon color="gray" fontSize="large" sx={{ mr: "-20px" }}></TimerIcon>
+      <TimerOutlinedIcon
+        color="gray"
+        fontSize="large"
+        sx={{
+          mr: "-20px",
+          color: "gray",
+        }}
+      ></TimerOutlinedIcon>
       <Typography variant="h5" sx={{ color: "gray" }}>
         <strong>{`${timer}s`}</strong>
       </Typography>
@@ -117,16 +124,23 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
       <Button
         variant="contained"
         color="warning"
-        startIcon={isRecording ? <StopIcon /> : <MicIcon />}
         onClick={isRecording ? handleSubmitInner : handleRecordInner}
-        sx={{ minWidth: "10%" }}
+        sx={{ minWidth: "10%", textTransform: "none" }}
       >
-        {isRecording ? "Submit" : "Record"}
+        <strong>{isRecording ? "Submit" : "Record"}</strong>
       </Button>
-      <RadioButtonCheckedIcon
-        color={isRecording ? "warning" : "gray"}
-        fontSize="large"
-      ></RadioButtonCheckedIcon>
+
+      {isRecording ? (
+        <MicNoneOutlinedIcon
+          color="warning"
+          fontSize="large"
+        ></MicNoneOutlinedIcon>
+      ) : (
+        <MicOffOutlinedIcon
+          fontSize="large"
+          sx={{ color: "gray" }}
+        ></MicOffOutlinedIcon>
+      )}
     </Box>
   );
 };

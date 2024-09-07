@@ -5,10 +5,15 @@ import {
   Paper,
   Typography,
   LinearProgress,
+  Skeleton,
+  Grid,
+  Collapse,
 } from "@mui/material";
 import React, { useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import VoiceRecordingTab from "../components/VoiceRecordingTab";
 import InterviewService from "../services/interview-service.js";
 import FeedbackPane from "../components/FeedbackPane";
@@ -30,7 +35,9 @@ const InterviewPractice = () => {
   const [isEvaluating, setIsEvaluating] = useState(false);
 
   const [audioUrl, setAudioUrl] = useState(null);
-  const [transcription, setTranscription] = useState(null);
+  const [transcription, setTranscription] = useState({
+    text: "No response recorded yet",
+  });
   const [feedback, setFeedback] = useState(null);
 
   const [alertType, setAlertType] = useState("error");
@@ -81,7 +88,7 @@ const InterviewPractice = () => {
   }
 
   return (
-    <Container component="main" maxWidth="lg" sx={{ paddingTop: "20px" }}>
+    <Container component="main" maxWidth="lg">
       <Box sx={{ display: "flex", justifyContent: "space-between" }}>
         <IconButton
           onClick={() =>
@@ -93,34 +100,25 @@ const InterviewPractice = () => {
           <ArrowBackIcon />
         </IconButton>
         <Typography variant="h6" gutterBottom>
-          Interview Practice Arena
+          👔 Interview Practice Arena
         </Typography>
         <Typography></Typography>
       </Box>
-      <Box sx={{ display: "flex", height: "80vh" }}>
-        <Box
-          sx={{
-            flexGrow: 1,
-            display: "flex",
-            flexDirection: "column",
-            width: "45%",
-            maxWidth: "45%",
-          }}
-        >
-          <Box sx={{ mx: "5px" }}>
+
+      <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+        <Box>
+          {question ? (
             <Paper
               variant="rounded"
-              height={130}
               sx={{
                 p: 2,
                 my: 2,
                 borderRadius: "10px",
                 backgroundColor: "#fff",
-                boxShadow: "none",
               }}
             >
               <Typography
-                variant="body2"
+                variant="body"
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -131,115 +129,122 @@ const InterviewPractice = () => {
                 {question}
               </Typography>
             </Paper>
+          ) : (
+            <Skeleton
+              variant="rectangular"
+              sx={{ mx: 1, mt: 2, borderRadius: "10px" }}
+              height={118}
+            />
+          )}
 
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                height: "65vh",
-                marginY: "2px",
-              }}
-            >
-              <Box
-                sx={{
-                  marginX: "5px",
-                  paddin: "5px",
-                  display: "flex",
-                  overflowY: "auto",
-                  zIndex: 1,
-                }}
-              >
-                {transcription && (
-                  <Typography variant="body2" sx={{ textAlign: "center" }}>
-                    {transcription.text}
-                  </Typography>
-                )}
-              </Box>
-
-              <Box
-                sx={{
-                  flexGrow: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "flex-end",
-                  marginBottom: 3,
-                  width: "100%",
-                }}
-              >
-                {audioUrl && (
-                  <audio src={audioUrl} controls style={{ width: "60%" }} />
-                )}
-                <VoiceRecordingTab
-                  handleRecord={() =>
-                    console.log("Handle record is pressed...")
-                  }
-                  handleSubmit={handleVoiceRecordingSubmit}
-                  style={{ width: "100%" }}
-                />
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-        <Box sx={{ width: "55%", ml: 2, maxWidth: "55%" }}>
-          <Paper
-            variant="elevation"
-            elevation={"1"}
+          <Box
             sx={{
-              borderRadius: "10px",
-              mt: "16px",
-              height: "90%",
-              overflowY: "auto",
-              zIndex: 1,
+              flexGrow: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              mt: 2,
+              mb: 3,
             }}
           >
-            {isEvaluating && (
-              <Box sx={{ width: "100%" }}>
-                <LinearProgress color="warning" />
-              </Box>
-            )}
-            {feedback ? (
-              <FeedbackPane feedback={feedback} />
-            ) : (
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <FeedbackIcon
-                  style={{
-                    width: "300px",
-                    height: "300px",
-                    marginBottom: "8px",
+            <audio src={audioUrl} controls style={{ width: "60%" }} />
+
+            <VoiceRecordingTab
+              handleRecord={() => console.log("Handle record is pressed...")}
+              handleSubmit={handleVoiceRecordingSubmit}
+              style={{ width: "100%" }}
+            />
+          </Box>
+        </Box>
+      </Box>
+
+      <Grid container spacing={2}>
+        <Grid item xs={12} lg={6}>
+          <Box sx={{ mt: "auto", mb: 0 }}>
+            <TranscriptionBox transcription={transcription.text} />
+          </Box>
+        </Grid>
+
+        <Grid item xs={12} lg={6}>
+          <Box sx={{ minHeight: "40vh" }}>
+            <Paper
+              variant="elevation"
+              elevation={0}
+              sx={{
+                borderRadius: "10px",
+                height: "100%",
+                overflowY: "auto",
+              }}
+            >
+              {isEvaluating && (
+                <Box sx={{ width: "100%" }}>
+                  <LinearProgress color="warning" />
+                </Box>
+              )}
+
+              {feedback ? (
+                <FeedbackPane feedback={feedback} />
+              ) : (
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    p: 3,
                   }}
-                />
-                <Box>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{
-                      textAlign: "center",
-                      // color: "grey"
-                    }}
-                  >
+                >
+                  <FeedbackIcon
+                    style={{ width: 300, height: 300, marginBottom: 8 }}
+                  />
+                  <Typography variant="subtitle2" sx={{ textAlign: "center" }}>
                     {isEvaluating
                       ? "Hang tight! We're processing your response..."
                       : "Your personalised feedback will be shown here..."}
                   </Typography>
                 </Box>
-              </Box>
-            )}
-          </Paper>
-        </Box>
-        <SnackbarAlert
-          alertType={alertType}
-          alertMessage={alertMessage}
-          isOpen={isAlertOpen}
-        />
-      </Box>
+              )}
+            </Paper>
+            <SnackbarAlert
+              alertType={alertType}
+              alertMessage={alertMessage}
+              isOpen={isAlertOpen}
+            />
+          </Box>
+        </Grid>
+      </Grid>
     </Container>
+  );
+};
+
+const TranscriptionBox = ({ transcription }) => {
+  const [showText, setShowText] = useState(false);
+
+  const handleToggleText = () => {
+    setShowText(!showText);
+  };
+
+  return (
+    <Box sx={{ bgcolor: "#fff", py: 2, px: 2, borderRadius: "10px" }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Typography variant="h6">Transcription</Typography>
+        <IconButton onClick={handleToggleText}>
+          {showText ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        </IconButton>
+      </Box>
+
+      <Collapse in={showText}>
+        <Typography variant="body2" sx={{ mt: 2 }}>
+          {transcription}
+        </Typography>
+      </Collapse>
+    </Box>
   );
 };
 

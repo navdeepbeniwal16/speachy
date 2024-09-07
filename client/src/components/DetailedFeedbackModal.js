@@ -14,6 +14,8 @@ const style = {
   borderRadius: "10px",
   boxShadow: 24,
   p: 4,
+  overflowY: "auto",
+  zIndex: 1,
 };
 
 const DetailedFeedbackModal = ({ open, handleClose, feedbackText }) => {
@@ -23,13 +25,13 @@ const DetailedFeedbackModal = ({ open, handleClose, feedbackText }) => {
       onClose={handleClose}
       aria-labelledby="modal-title"
       aria-describedby="modal-description"
-      sx={{}}
     >
       <Box sx={style}>
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
           <Typography></Typography>
