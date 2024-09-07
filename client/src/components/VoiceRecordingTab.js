@@ -10,6 +10,7 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
   const [audioUrl, setAudioUrl] = useState(null);
   const [timer, setTimer] = useState(0);
   const intervalRef = useRef(null);
+  let chunks = [];
 
   const handleRecordInner = () => {
     setIsRecording(true);
@@ -59,17 +60,17 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
     if (!recorder) return;
 
     setIsRecording(true);
-    recorder.start();
 
-    let chunks = []; // Array to collect data chunks
+    recorder.start(1000); // Use timeslice of 1000ms (1 second) to fix data audio data compatibility sent from Safari browser
 
-    // Handle incoming data
     recorder.ondataavailable = (e) => {
-      chunks.push(e.data); // Collect chunks of recorded data
+      if (e.data.size > 0) {
+        chunks.push(e.data); // Collect chunks of recorded data
+      }
     };
 
     recorder.onstop = () => {
-      const blob = new Blob(chunks, { type: "audio/ogg; codecs=opus" });
+      const blob = new Blob(chunks, { type: "audio/mpeg" });
       const url = URL.createObjectURL(blob);
       setAudioUrl(url);
       setIsRecording(false);
