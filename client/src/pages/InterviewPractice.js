@@ -147,8 +147,6 @@ const InterviewPractice = () => {
               mb: 3,
             }}
           >
-            <audio src={audioUrl} controls style={{ width: "60%" }} />
-
             <VoiceRecordingTab
               handleRecord={() => console.log("Handle record is pressed...")}
               handleSubmit={handleVoiceRecordingSubmit}
@@ -161,7 +159,10 @@ const InterviewPractice = () => {
       <Grid container spacing={2}>
         <Grid item xs={12} lg={6}>
           <Box sx={{ mt: "auto", mb: 0 }}>
-            <TranscriptionBox transcription={transcription.text} />
+            <TranscriptionBox
+              transcription={transcription.text}
+              audioUrl={audioUrl}
+            />
           </Box>
         </Grid>
 
@@ -178,7 +179,13 @@ const InterviewPractice = () => {
             >
               {isEvaluating && (
                 <Box sx={{ width: "100%" }}>
-                  <LinearProgress color="warning" />
+                  <LinearProgress
+                    sx={{
+                      "& .MuiLinearProgress-bar": {
+                        backgroundColor: "#FA735B", // Custom color for the progress bar
+                      },
+                    }}
+                  />
                 </Box>
               )}
 
@@ -217,7 +224,7 @@ const InterviewPractice = () => {
   );
 };
 
-const TranscriptionBox = ({ transcription }) => {
+const TranscriptionBox = ({ transcription, audioUrl }) => {
   const [showText, setShowText] = useState(false);
 
   const handleToggleText = () => {
@@ -233,7 +240,15 @@ const TranscriptionBox = ({ transcription }) => {
           alignItems: "center",
         }}
       >
-        <Typography variant="h6">Transcription</Typography>
+        <Typography variant="h6" sx={{ width: "100%" }}>
+          Transcription
+        </Typography>
+
+        <audio
+          src={audioUrl}
+          controls
+          style={{ width: "100%", marginRight: "5px" }}
+        />
         <IconButton onClick={handleToggleText}>
           {showText ? <ExpandLessIcon /> : <ExpandMoreIcon />}
         </IconButton>

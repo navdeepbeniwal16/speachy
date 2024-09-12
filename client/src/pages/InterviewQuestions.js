@@ -50,6 +50,7 @@ const InterviewQuestions = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          padding: 1,
         }}
       >
         <CardContent>
@@ -60,7 +61,10 @@ const InterviewQuestions = () => {
             marginRight: 2,
           }}
         >
-          <ArrowForwardIosIcon sx={{ height: "22px", width: "22px" }} />
+          <ArrowForwardIosIcon
+            sx={{ height: "22px", width: "22px" }}
+            style={{ color: "#FA735B" }}
+          />
         </Box>
       </Card>
     </ListItemButton>
