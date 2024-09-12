@@ -123,16 +123,16 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
 
       <Button
         variant="contained"
-        color="warning"
         onClick={isRecording ? handleSubmitInner : handleRecordInner}
         sx={{ minWidth: "10%", textTransform: "none" }}
+        style={{ backgroundColor: "#FA735B" }}
       >
         <strong>{isRecording ? "Submit" : "Record"}</strong>
       </Button>
 
       {isRecording ? (
         <MicNoneOutlinedIcon
-          color="warning"
+          style={{ color: "#FA735B" }}
           fontSize="large"
         ></MicNoneOutlinedIcon>
       ) : (

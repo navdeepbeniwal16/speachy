@@ -85,14 +85,22 @@ const HomePage = () => {
       <Box sx={{ textAlign: "center", mb: 8 }}>
         <Typography variant="h3" gutterBottom>
           Welcome{" "}
-          <span style={{ color: "darkorange", fontWeight: "bold" }}>
+          <span
+            style={{
+              color: "#FA735B",
+              fontWeight: "bold",
+              paddingLeft: "3px",
+              paddingRight: "3px",
+            }}
+          >
             {auth.currentUser.displayName.split(" ")[0]}
           </span>
         </Typography>
         <Typography variant="h6" sx={{ mb: 4 }} gutterBottom>
-          Speachy helps you level up your speaking skills for all kinds of
-          scenarios. Dive into fun practice sessions, get awesome feedback, and
-          gain the confidence to shine in any real-life interaction!
+          Find your voice and sharpen your skills with Speachy! Whether you're
+          preparing for an interview or working on your spontaneous speaking, we
+          help your practise and provide personalised & impartial feedback to
+          help you improve.
         </Typography>
       </Box>
 
@@ -143,7 +151,7 @@ const HomePage = () => {
                     sx={{ textAlign: "center" }}
                     gutterBottom
                   >
-                    Boost your impromptu speaking with practice and feedback!
+                    Boost your impromptu speaking with practise and feedback!
                   </Typography>
                   {/* {!state.isImpromptuSpeakingEnabled && (
                     <Typography
@@ -193,7 +201,7 @@ const HomePage = () => {
                     color="text.secondary"
                     sx={{ textAlign: "center" }}
                   >
-                    Ace your interviews with practice questions and response
+                    Ace your interviews with practise questions and response
                     analysis!
                   </Typography>
                   {/* {!state.isImpromptuSpeakingEnabled && (
@@ -211,6 +219,15 @@ const HomePage = () => {
           </Grid>
           <Grid item xs={0} sm={0} md={1}></Grid>
         </Grid>
+      </Box>
+
+      <Box>
+        <Typography
+          variant="subtitle1"
+          sx={{ fontStyle: "italic", textAlign: "center" }}
+        >
+          Stay tuned for new features and scenarios coming soon!
+        </Typography>
       </Box>
 
       {/* {!loading && !state.isImpromptuSpeakingEnabled && <Pricing></Pricing>} */}

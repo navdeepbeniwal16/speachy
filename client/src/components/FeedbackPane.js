@@ -1,4 +1,4 @@
-import { Box, Container, Button, Typography } from "@mui/material";
+import { Box, Container, Button, Typography, Chip } from "@mui/material";
 import { React, useState } from "react";
 import FeedbackCard from "./FeedbackCard";
 import DetailedFeedbackModal from "../components/DetailedFeedbackModal";
@@ -18,7 +18,21 @@ const FeedbackPane = ({ feedback }) => {
     <Container sx={{ py: 2 }}>
       <Typography variant="h6">Summary</Typography>
 
-      <Box sx={{ py: 2 }}>
+      <Box
+        sx={{
+          py: 2,
+        }}
+      >
+        {feedback && (
+          <Box sx={{ mb: 2 }}>
+            <Chip
+              label={"Fillers " + feedback.fillers}
+              color="warning"
+              variant="outlined"
+            ></Chip>
+          </Box>
+        )}
+
         {feedback &&
           Object.entries(feedback.summary).map(([heading, details]) => (
             <FeedbackCard
@@ -33,6 +47,7 @@ const FeedbackPane = ({ feedback }) => {
             color="warning"
             onClick={handleOpenModal}
             sx={{ width: "100%", textTransform: "none", fontWeight: "bold" }}
+            style={{ backgroundColor: "#FA735B" }}
           >
             See Detailed Feedback
           </Button>

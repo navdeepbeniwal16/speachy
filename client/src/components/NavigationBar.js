@@ -67,6 +67,7 @@ const AccountMenu = ({
                 height: 32,
                 fontSize: "12px",
               }}
+              style={{ color: "#FA735B" }}
             ></SettingsIcon>
           </IconButton>
         </Tooltip>
@@ -123,12 +124,17 @@ const AccountMenu = ({
         </MenuItem> */}
         <Divider />
         <MenuItem onClick={handleSignoutClick} sx={{ gap: 1 }}>
-          <Logout fontSize="small" color="warning" />
+          <Logout
+            fontSize="small"
+            color="warning"
+            style={{ color: "#FA735B" }}
+          />
           <Button
             color="warning"
             size="small"
             component="a"
             sx={{ textTransform: "none" }}
+            style={{ color: "#FA735B" }}
           >
             <strong>Sign Out</strong>
           </Button>
@@ -312,6 +318,7 @@ const NavigationBar = () => {
                 aria-label="menu"
                 onClick={toggleDrawer(true)}
                 sx={{ minWidth: "30px", p: "4px" }}
+                style={{ color: "#FA735B" }}
               >
                 <MenuIcon />
               </Button>
@@ -363,11 +370,16 @@ const NavigationBar = () => {
                     </MenuItem> */}
                     <Divider />
                     <MenuItem onClick={signOut} sx={{ gap: 1 }}>
-                      <Logout fontSize="small" color="warning" />
+                      <Logout
+                        fontSize="small"
+                        color="warning"
+                        style={{ color: "#FA735B" }}
+                      />
                       <Button
                         color="warning"
                         component="a"
                         sx={{ textTransform: "none" }}
+                        style={{ color: "#FA735B" }}
                       >
                         <strong>Sign Out</strong>
                       </Button>

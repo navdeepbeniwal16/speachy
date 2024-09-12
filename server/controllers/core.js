@@ -32,6 +32,8 @@ const transcribeAudio = async (audioFile) => {
       file: fileStream,
       model: "whisper-1",
       response_format: "verbose_json",
+      prompt:
+        "Umm, let me think like, hmm... Okay, here's what I'm, like, thinking.",
       timestamp_granularities: ["word"],
     });
 
