@@ -55,7 +55,7 @@ const FeedbackCard = ({ heading, feedbackPoints = [], score = 0 }) => {
           height: 4,
           borderRadius: 5,
           [`& .MuiLinearProgress-bar`]: {
-            backgroundColor: progressBarColor,
+            backgroundColor: "#FA735B",
           },
         }}
       />

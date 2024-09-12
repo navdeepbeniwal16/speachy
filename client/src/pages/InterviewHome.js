@@ -158,6 +158,7 @@ const InterviewHome = () => {
                 onClick={handleStart}
                 disabled={isStarting}
                 sx={{ width: "50%", textTransform: "none", fontWeight: "bold" }}
+                style={{ backgroundColor: "#FA735B" }}
               >
                 Start
               </Button>
@@ -169,7 +170,7 @@ const InterviewHome = () => {
                     padding: 3,
                   }}
                 >
-                  <CircularProgress color="warning" />
+                  <CircularProgress style={{ color: "#FA735B" }} />
                 </Box>
               )}
             </Box>
@@ -205,7 +206,13 @@ const InterviewHome = () => {
           >
             {isUploading && (
               <Box sx={{ width: "100%" }}>
-                <LinearProgress color="warning" />
+                <LinearProgress
+                  sx={{
+                    "& .MuiLinearProgress-bar": {
+                      backgroundColor: "#FA735B", // Custom color for the progress bar
+                    },
+                  }}
+                />
               </Box>
             )}
             <Box sx={{ p: 2 }}>
@@ -309,6 +316,7 @@ const InterviewHome = () => {
                     textTransform: "none",
                     fontWeight: "bold",
                   }}
+                  style={{ backgroundColor: "#FA735B" }}
                   disabled={isUploading}
                 >
                   Upload
