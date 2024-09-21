@@ -1,12 +1,4 @@
-import {
-  Box,
-  Container,
-  Button,
-  Typography,
-  Chip,
-  Paper,
-  styled,
-} from "@mui/material";
+import { Box, Container, Button, Typography, Chip, Paper } from "@mui/material";
 import { React, useState } from "react";
 import FeedbackCard from "./FeedbackCard";
 import DetailedFeedbackModal from "../components/DetailedFeedbackModal";
@@ -16,7 +8,7 @@ import AlarmOnOutlinedIcon from "@mui/icons-material/AlarmOnOutlined";
 import SpeedIcon from "@mui/icons-material/Speed";
 import BoltIcon from "@mui/icons-material/Bolt";
 
-const FeedbackPane = ({ feedback }) => {
+const FeedbackPane = ({ feedback, transcription }) => {
   const [open, setOpen] = useState(false);
 
   const handleOpenModal = () => {
@@ -25,6 +17,44 @@ const FeedbackPane = ({ feedback }) => {
 
   const handleCloseModal = () => {
     setOpen(false);
+  };
+
+  // Get the duration formatted in MM:SS (minutes:seconds)
+  const getDurationFormattedString = (seconds) => {
+    // NOTE: the function doesn't format for hours when duration is over an hour
+    let minutes = parseInt(seconds / 60);
+    let remainderSeconds = seconds % 60;
+
+    if (String(minutes).length === 1) {
+      minutes = "0" + minutes;
+    }
+
+    if (String(remainderSeconds).length === 1) {
+      remainderSeconds = "0" + remainderSeconds;
+    }
+
+    const formattedDurationString = `${minutes}:${remainderSeconds}`;
+    return formattedDurationString;
+  };
+
+  // Get a string representing the pace Pace (WPM)
+  const getPraceString = (transcription, seconds) => {
+    const noOfWords = transcription?.split(" ").length || 0;
+
+    if (seconds === 0) return "Invalid"; // TODO: Can we think of a better string to return
+
+    const wordsPerMinute = parseInt((noOfWords * 60) / seconds);
+
+    let pace = "";
+    if (wordsPerMinute <= 110) {
+      pace = "Slow";
+    } else if (wordsPerMinute > 110 && wordsPerMinute <= 160) {
+      pace = "Good";
+    } else {
+      pace = "Fast";
+    }
+
+    return `${pace} (${noOfWords} WPM)`;
   };
 
   return (
@@ -82,17 +112,22 @@ const FeedbackPane = ({ feedback }) => {
             >
               <Chip
                 icon={<AlarmOnOutlinedIcon />}
-                label={"1:23"}
+                label={getDurationFormattedString(feedback?.duration || 0)}
                 sx={{ mr: 1 }}
               ></Chip>
               <Chip
                 icon={<SpeedIcon />}
-                label={"Fast (198 WPM)"}
+                // label={"Fast (198 WPM)"}
+                label={getPraceString(
+                  transcription.text || "",
+                  // transcription,
+                  feedback?.duration || 0
+                )}
                 sx={{ mr: 1 }}
               ></Chip>
               <Chip
                 icon={<BoltIcon />}
-                label={feedback.fillers + " Filler Words"}
+                label={feedback?.fillers || "No" + " Filler Words"}
                 sx={{ mr: 1 }}
               ></Chip>
             </Box>
