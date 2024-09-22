@@ -74,7 +74,7 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
       const url = URL.createObjectURL(blob);
       setAudioUrl(url);
       setIsRecording(false);
-      handleSubmit(url); // Call the submit handler with the new URL
+      handleSubmit(blob);
       chunks = []; // Reset chunks for the next recording
     };
   };

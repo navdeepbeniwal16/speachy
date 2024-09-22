@@ -68,6 +68,7 @@ const ImpromptSpeakingPractice = () => {
   const [prompt, setPrompt] = useState(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
+  let audioDuration = 0;
   const [transcription, setTranscription] = useState({
     text: "No response recorded yet",
   });
@@ -93,10 +94,54 @@ const ImpromptSpeakingPractice = () => {
     }
   };
 
-  const handleVoiceRecordingSubmit = async (audioUrl) => {
+  const handleVoiceRecordingSubmit = async (audioBlob) => {
+    console.log("handleVoiceRecordingSubmit is called...");
     setIsEvaluating(true);
+
+    const audioUrl = URL.createObjectURL(audioBlob);
     setAudioUrl(audioUrl);
+
+    // Create an Audio element
+    const audio = new Audio(audioUrl);
+    audio.preload = "auto";
+
+    // Handle loaded metadata event
+    const duration = await getAudioDuration(audio); // Wait for duration to be fetched
+    console.log("Audio Duration:", duration);
+
+    // Converting the seconds to a whole number
+    audioDuration = parseInt(duration);
+
+    console.log("Initiate request to get response feedback");
     await getAudioResponseFeedback(audioUrl);
+  };
+
+  const getAudioDuration = (audio) => {
+    return new Promise((resolve, reject) => {
+      audio.addEventListener("loadedmetadata", () => {
+        if (audio.duration === Infinity || isNaN(Number(audio.duration))) {
+          audio.currentTime = 1e101;
+
+          audio.addEventListener("timeupdate", function getDuration(event) {
+            const duration = event.target.duration;
+            event.target.currentTime = 0;
+            event.target.removeEventListener("timeupdate", getDuration);
+
+            if (duration) {
+              resolve(duration); // Resolve the promise with the correct duration
+            } else {
+              reject("Unable to determine duration");
+            }
+          });
+        } else {
+          resolve(audio.duration); // Duration is already available, resolve it
+        }
+      });
+
+      audio.addEventListener("error", (err) => {
+        reject("Error loading audio metadata");
+      });
+    });
   };
 
   const getAudioResponseFeedback = async (audioUrl) => {
@@ -108,7 +153,10 @@ const ImpromptSpeakingPractice = () => {
           audioBlob
         );
 
-      setFeedback(response.feedback);
+      const feedbackResponse = response.feedback;
+      feedbackResponse.duration = audioDuration;
+
+      setFeedback(feedbackResponse);
       setTranscription(response.transcription);
     } catch (error) {
       console.error("Error fetching audio response feedback:", error);
@@ -241,7 +289,10 @@ const ImpromptSpeakingPractice = () => {
               )}
 
               {feedback ? (
-                <FeedbackPane feedback={feedback} />
+                <FeedbackPane
+                  feedback={feedback}
+                  transcription={transcription}
+                />
               ) : (
                 <Box
                   sx={{
