@@ -117,17 +117,16 @@ const FeedbackPane = ({ feedback, transcription }) => {
               ></Chip>
               <Chip
                 icon={<SpeedIcon />}
-                // label={"Fast (198 WPM)"}
                 label={getPraceString(
                   transcription.text || "",
-                  // transcription,
+
                   feedback?.duration || 0
                 )}
                 sx={{ mr: 1 }}
               ></Chip>
               <Chip
                 icon={<BoltIcon />}
-                label={feedback?.fillers || "No" + " Filler Words"}
+                label={(feedback?.fillers || "No") + " Filler Words"}
                 sx={{ mr: 1 }}
               ></Chip>
             </Box>

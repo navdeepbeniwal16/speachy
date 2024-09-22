@@ -295,6 +295,9 @@ const evaluateResponse = async (req, res, next) => {
             "}," +
             "detailedFeedback (string): overall feedback on the whole of the response taking into account the requirements of the role provided. It should include specific examples of areas to improve and suggestions for how the answer could be better. Ensure the detailed feedback is comprehensive and addresses multiple aspects of the response in depth. Use a constructive tone to encourage improvement." +
             "Clearly state what the user did well, what they lacked, and specific suggestions for improvement. For example, 'To improve relevance, you can...' or 'A good example of clarity in delivery is...' should be included in the paragraph.\n" +
+            "overview (string) : Praise words, very breifly describe positive thing about the response and example eg: Well done, you gave an engaging response by mentioning your pet Toby!," +
+            "tip (string) : Next time try [insert advice] to improve your response" +
+            "fillers (integer): number of filler words," +
             "}",
         },
       ],
