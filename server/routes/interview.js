@@ -267,19 +267,54 @@ const evaluateResponse = async (req, res, next) => {
     });
   }
 
-  try {
+  const model = "gpt-4o-mini";
+  const systemPrompt = {
+    role: "system",
+    content:
+      "You are a trained job interviewing coach and you are tasked with evaluating behavioral interview questions response based on the specific job details. Your feedback should be critical, should include expert-level details, and should be effective. Your response should have a 'Humane' tone, and shouldn't be 'Condescending', 'Mean' or 'Too nice'",
+  };
+
+  const userPrompt = {
+    role: "user",
+    content: `Evaluate the following response to the interview question for a job role at ${companyName}. The job title is ${jobRole}. \n Here's the job description: """${jobDescription}""". \n Here's the question and response pair: \n Question: ${questionText} \n Response: ${responseText} \n Note: The Company, Job Role and Description could be empty/null as well`,
+  };
+
+  const getInstructionPrompt = (instruction) => {
+    const instructionPrompt = {
+      role: "user",
+      content: instruction,
+    };
+
+    return instructionPrompt;
+  };
+
+  const parseFieldValue = async (completion, field) => {
+    // Ensure we receive a response from the Chat API
+    if (!Array.isArray(completion.choices) || completion.choices.length === 0) {
+      throw new Error(
+        "Error occurred in OpenAI Chat API response while generating Response overview"
+      );
+    }
+
+    // Extracting the JSON response to a java object
+    const responseRawJSON = completion.choices[0].message.content;
+    const responseJSON = JSON.parse(responseRawJSON);
+
+    if (!responseJSON[field]) {
+      throw new Error(
+        `${field} field not present in the OpenAI Chat API response`
+      );
+    }
+
+    return responseJSON[field];
+  };
+
+  const getFeedback = async () => {
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: model,
       messages: [
-        {
-          role: "system",
-          content:
-            "You are trained to evaluate behavioral interview questions based on specific job details. Your feedback should be critical, detailed, and effective while maintaining a constructive and supportive tone.",
-        },
-        {
-          role: "user",
-          content: `Evaluate the following response to the interview question for a job role at ${companyName}. The job title is ${jobRole}. \n Here's the job description (Could be null as well): ${jobDescription}. \n Here's the question and response pair: \n Question: ${questionText} \n Response: ${responseText}`,
-        },
+        systemPrompt,
+        userPrompt,
         {
           role: "user",
           content:
@@ -312,8 +347,120 @@ const evaluateResponse = async (req, res, next) => {
 
     const evaluationResultsRawJSON = completion.choices[0].message.content;
     const evaluationResults = JSON.parse(evaluationResultsRawJSON);
+    return evaluationResults;
+  };
 
-    req.results = evaluationResults;
+  const getOverview = async () => {
+    const completion = await openai.chat.completions.create({
+      model: model,
+      messages: [
+        systemPrompt,
+        userPrompt,
+        getInstructionPrompt(
+          "Your response needs to provide an 'overview' of the response to the question, briefly describing the positives and areas to improve \n" +
+            "Notes: The overview field text should be in not more than 30 words\n" +
+            "You must provide the results in the following JSON format:\n" +
+            "{" +
+            "overview (string) : Praise words, very breifly describe positive thing about the response and example. Eg: Well done, your response effectively highlights your strong problem-solving skills and a clear debugging approach, but includes more technical details than a recruiter or hiring manager may easily grasp." +
+            "}"
+        ),
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    // Parse 'overview' string value from the response
+    return parseFieldValue(completion, "overview");
+  };
+
+  const getTip = async () => {
+    const completion = await openai.chat.completions.create({
+      model: model,
+      messages: [
+        systemPrompt,
+        userPrompt,
+        getInstructionPrompt(
+          "Your response needs to provide a key (i.e the most relevant) 'tip' to the user to improve the response/delivery/engagement\n" +
+            "Notes: The 'tip' field text should be in not more than 20 words\n" +
+            "You must provide the results in the following JSON format:\n" +
+            "{" +
+            "tip (string) : Next time try [insert advice] to improve your response. Eg: Next time, try to improve your response by avoiding too many technical jargons and focusing on the project outcomes" +
+            "}"
+        ),
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    // Parse 'tip' string value from the response
+    return parseFieldValue(completion, "tip");
+  };
+
+  const getRelevance = async () => {
+    const completion = await openai.chat.completions.create({
+      model: model,
+      messages: [
+        systemPrompt,
+        userPrompt,
+        getInstructionPrompt(
+          "Your response needs to provide an expert-level critical evaluation of the response for it's relevance\n" +
+            "Approach to follow:\n" +
+            "Step 1: Extract a maximum of three highlights around what's currently making the response less relevant to the question being asked. Notes: 1. Judge the response from the eyes of a Hiring Manager 2. Don't include problems that are quite minor 3. There should be no more than 3 bullet points\n" +
+            "Step 2: Based on the highlights extracted in Step 1, suggest a 'ways to improve' each of the problem in a very brief bullet point. NOTE: 1. There should be no more than bullet points than the highlights generated in Step 1 2. The tone of the text should be warm, humane, and humorous occsionally 3. Each bullet point should have no more than 25 words\n" +
+            "Notes: The 'waysToImprove' field array should not contain more than 3 bullet points\n" +
+            "You must provide the results in the following JSON format:\n" +
+            "{" +
+            "relevance (json): { waysToImprove: [examples: 'Mention how you communicated the issue to stakeholders, showing you’re not just a tech wizard but a people person too!', 'Wrap it up with a takeaway or lesson learned to show you’re continuously growing—hiring managers love a learner’s mindset!'], score: [float]: A score out of 10}," +
+            "}"
+        ),
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    // Parse 'tip' string value from the response
+    return parseFieldValue(completion, "relevance");
+  };
+
+  const getDelivery = async () => {
+    const completion = await openai.chat.completions.create({
+      model: model,
+      messages: [
+        systemPrompt,
+        userPrompt,
+        getInstructionPrompt(
+          "Your response needs to provide an expert-level critical evaluation of the delivery of the answer to the question\n" +
+            "Approach to follow:\n" +
+            "Step 1: Find a maximum of three highlights (Only if possible, and not nitpicking) around what's currently making the response delivery less impactful. Notes: 1. Judge the response from the eyes of a Hiring Manager 2. Don't include problems that are quite minor 3. There should be no more than 3 bullet points\n" +
+            "Step 2: Based on the highlights extracted in Step 1, suggest a way to improve each of the problem in a very brief bullet point. NOTE: 1. There should be no more than bullet points than the highlights generated in Step 1 2. The bullet point should not include suggestions related to response 'Relevancy'', as they would be covered in different prompts 3. Don't repeat the suggestions 4. The tone of the text should be warm, humane, and humorous occsionally 3. Each bullet point should have no more than 20 words.\n" +
+            "Notes: The 'waysToImprove' field array should not contain more than 3 bullet points\n" +
+            "You must provide the results in the following JSON format:\n" +
+            "{" +
+            "delivery (json): { waysToImprove: [examples: 'Add a bit of personality to make the answer feel more relatable—professional, but not robotic!', 'Break the response into steps: challenge, approach, solution—makes it easy for anyone to follow.'], score: [float]: A score out of 10}," +
+            "}"
+        ),
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    // Parse 'tip' string value from the response
+    return parseFieldValue(completion, "delivery");
+  };
+
+  try {
+    // Run all async functions concurrently
+    const [feedback, overview, tip, relevance, delivery] = await Promise.all([
+      getFeedback(),
+      getOverview(),
+      getTip(),
+      getRelevance(),
+      getDelivery(),
+    ]);
+
+    // Set results after both have completed
+    feedback.overview = overview;
+    feedback.tip = tip;
+    feedback.summary.relevance = relevance;
+    feedback.summary.delivery = delivery;
+
+    req.results = feedback;
     next();
   } catch (error) {
     console.log("Error evaluating response:", error);
