@@ -4,6 +4,7 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import { AppProvider } from "./components/AppContext";
+import Hotjar from "@hotjar/browser";
 
 Sentry.init({
   dsn: process.env.REACT_DSN,
@@ -19,6 +20,11 @@ Sentry.init({
   replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
   replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
 });
+
+const siteId = 5059540;
+const hotjarVersion = 6;
+
+Hotjar.init(siteId, hotjarVersion);
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
