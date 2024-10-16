@@ -120,6 +120,7 @@ const HomePage = () => {
               variant="elevation"
               sx={{
                 display: "flex",
+                borderRadius: "10px",
                 flexDirection: "row",
                 minHeight: "110px",
                 maxHeight: "130px",
@@ -171,6 +172,7 @@ const HomePage = () => {
               variant="elevation"
               sx={{
                 display: "flex",
+                borderRadius: "10px",
                 flexDirection: "row",
                 minHeight: "110px",
                 maxHeight: "130px",
@@ -231,25 +233,6 @@ const HomePage = () => {
       </Box>
 
       {/* {!loading && !state.isImpromptuSpeakingEnabled && <Pricing></Pricing>} */}
-
-      <Box
-        id="feedback"
-        sx={{
-          pt: { xs: 4, sm: 8 },
-          pb: { xs: 8, sm: 12 },
-          textAlign: "center",
-        }}
-      >
-        <Typography variant="h4" sx={{ mb: 2, fontWeight: "bold" }}>
-          Feedback
-        </Typography>
-        <Typography variant="body1">
-          Got any feedback for us? If so, please contact us at{" "}
-          <Link color="inherit" href="mailto:speachyapp@gmail.com">
-            speachyapp@gmail.com
-          </Link>
-        </Typography>
-      </Box>
 
       <div>
         <Backdrop

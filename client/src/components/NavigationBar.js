@@ -214,7 +214,7 @@ const NavigationBar = () => {
         width="100%"
         sx={{
           boxShadow: 0,
-          bgcolor: "#FAF9F2",
+          bgcolor: "#f9f5f4",
           pt: 5,
         }}
       >

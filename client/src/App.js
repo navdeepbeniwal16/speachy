@@ -46,7 +46,7 @@ const requireAuth = (Component) => {
 
 function App() {
   return (
-    <div style={{ backgroundColor: "#FAF9F2", minHeight: "100vh" }}>
+    <div style={{ backgroundColor: "#f9f5f4", minHeight: "100vh" }}>
       <Router>
         <BannerWrapper></BannerWrapper>
         <NavigationBar />

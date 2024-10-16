@@ -20,6 +20,8 @@ const InterviewQuestions = () => {
   const companyName = location.state.companyName;
   const jobRole = location.state.jobRole;
   const jobDescription = location.state.jobDescription;
+  const industry = location.state.industry;
+  const requiredExperience = location.state.requiredExperience;
 
   const navigateToPracticePage = (questionId) => {
     navigate(`/interview/questions/${questionId}`, {
@@ -29,6 +31,8 @@ const InterviewQuestions = () => {
         companyName: companyName,
         jobRole: jobRole,
         jobDescription: jobDescription,
+        industry: industry,
+        requiredExperience: requiredExperience,
       },
     });
   };
