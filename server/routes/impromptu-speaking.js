@@ -200,6 +200,8 @@ const evaluateResponse = async (req, res, next) => {
             "delivery (json): { waysToImprove: [string array]: ['What was done well', 'What was lacking', 'Suggestions for improvement'], score: [float]: A score out of 10}," +
             "tone (json): {waysToImprove: [string array]: ['What was done well', 'What was lacking', 'Suggestions for improvement'], score: [float]: A score out of 10}" +
             "}," +
+            "overview (string) : Praise words, very breifly describe positive thing about the response and example eg: Well done, you gave an engaging response by mentioning your pet Toby!," +
+            "tip (string) : Next time try [insert advice] to improve your response" +
             "detailedFeedback (string): overall feedback on the whole of the response to the prompt. It should include specific examples of areas to improve and suggestions for how the answer could be better. Ensure the detailed feedback is comprehensive and addresses multiple aspects of the response in depth. Use a friendly tone and incorporate relevant emojis to make it engaging. " +
             "fillers (integer): number of filler words," +
             "Clearly state what the user did well, what they lacked, and specific suggestions for improvement. For example, 'To improve relevance, you can...' or 'A good example of clarity in delivery is...' should be included within the text.\n" +
