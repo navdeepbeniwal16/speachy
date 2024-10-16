@@ -31,6 +31,8 @@ const InterviewPractice = () => {
   const companyName = location.state.companyName;
   const jobRole = location.state.jobRole;
   const jobDescription = location.state.jobDescription;
+  const industry = location.state.industry;
+  const requiredExperience = location.state.requiredExperience;
 
   const [isEvaluating, setIsEvaluating] = useState(false);
 
@@ -106,7 +108,9 @@ const InterviewPractice = () => {
         audioBlob,
         companyName,
         jobRole,
-        jobDescription
+        jobDescription,
+        industry,
+        requiredExperience
       );
 
       console.log("Audio Evaluation Results:", response);

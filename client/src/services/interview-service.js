@@ -1,7 +1,13 @@
 import backendApiClient from "./backendAPIClient.js";
 
 class InterviewService {
-  static async fetchBehaviouralQuestions(company, role, description) {
+  static async fetchBehaviouralQuestions(
+    company,
+    role,
+    description,
+    industry,
+    requiredExperience
+  ) {
     try {
       const response = await backendApiClient.post(
         "/interview/fetch-questions",
@@ -9,6 +15,8 @@ class InterviewService {
           company: company,
           role: role,
           description: description,
+          industry: industry,
+          requiredExperience: requiredExperience,
         }
       );
 
@@ -40,7 +48,9 @@ class InterviewService {
     audioResponseBlob,
     companyName,
     jobRole,
-    jobDescription
+    jobDescription,
+    industry,
+    requiredExperience
   ) {
     const formData = new FormData();
     formData.append("file", audioResponseBlob, "audio-file.ogg");
@@ -48,6 +58,8 @@ class InterviewService {
     formData.append("companyName", companyName);
     formData.append("jobRole", jobRole);
     formData.append("jobDescription", jobDescription);
+    formData.append("industry", industry);
+    formData.append("requiredExperience", requiredExperience);
 
     try {
       const response = await fetch("/interview/evaluate-response-audio", {
