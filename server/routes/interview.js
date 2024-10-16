@@ -19,7 +19,13 @@ const openai = new OpenAI({
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-const getQuestionsSet = async (company, role, description) => {
+const getQuestionsSet = async (
+  company,
+  role,
+  description,
+  industry,
+  requiredExperience
+) => {
   const completion = await openai.chat.completions.create({
     messages: [
       {
@@ -29,7 +35,7 @@ const getQuestionsSet = async (company, role, description) => {
       },
       {
         role: "user",
-        content: `Generate a list of behavioral interview questions for a job role at ${company}. The job title is ${role}. Here is the job description: ${description}`,
+        content: `Generate a list of behavioral interview questions for a job role at company: ${company}, which operates in the industry: ${industry}. The job title is ${role} and requires someone with a ${requiredExperience} experience level. Here is the job description: ${description}`,
       },
       {
         role: "user",
@@ -96,19 +102,23 @@ router.get("/", (req, res, next) => {
 });
 
 router.post("/fetch-questions", async (req, res) => {
-  const { company, role, description } = req.body;
+  const { company, role, description, industry, requiredExperience } = req.body;
 
   console.log("interview.js : Received job details:", {
     company,
     role,
     description,
+    industry,
+    requiredExperience,
   }); // TODO: Include a logger instead of console statement
 
   try {
     const generatedQuestions = await getQuestionsSet(
       company,
       role,
-      description
+      description,
+      industry,
+      requiredExperience
     );
 
     console.log("interview.js : Questions generated successfully!");
@@ -251,6 +261,8 @@ const evaluateResponse = async (req, res, next) => {
     companyName = null,
     jobRole = null,
     jobDescription = null,
+    industry = null,
+    requiredExperience,
   } = requestBody;
 
   if (!questionText) {
@@ -276,8 +288,10 @@ const evaluateResponse = async (req, res, next) => {
 
   const userPrompt = {
     role: "user",
-    content: `Evaluate the following response to the interview question for a job role at ${companyName}. The job title is ${jobRole}. \n Here's the job description: """${jobDescription}""". \n Here's the question and response pair: \n Question: ${questionText} \n Response: ${responseText} \n Note: The Company, Job Role and Description could be empty/null as well`,
+    content: `Evaluate the following response to the interview question for a job role at company: ${companyName}, which operates in the ${industry} industry. The job title is ${jobRole}, and requires someone with an ${requiredExperience} level experience. \n Here's the job description: """${jobDescription}""". \n Here's the question and response pair: \n Question: ${questionText} \n Response: ${responseText} \n Note: The Company, Job Role and Description could be empty/null as well`,
   };
+
+  console.log("Evaluation UserPrompt:", userPrompt); // TODO: TBR - Only for debugging
 
   const getInstructionPrompt = (instruction) => {
     const instructionPrompt = {
