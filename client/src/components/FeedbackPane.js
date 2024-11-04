@@ -137,6 +137,7 @@ const FeedbackPane = ({ feedback, transcription }) => {
                   heading={heading}
                   score={details.score}
                   feedbackPoints={details.waysToImprove}
+                  example={details.exampleResponseExcerpt}
                 />
               )
             )}
