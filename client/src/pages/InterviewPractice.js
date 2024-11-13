@@ -19,6 +19,7 @@ import InterviewService from "../services/interview-service.js";
 import FeedbackPane from "../components/FeedbackPane";
 import { ReactComponent as FeedbackIcon } from "../assets/chat-evaluation.svg";
 import SnackbarAlert from "../components/SnackbarAlert";
+import QuestionProgressView from "../components/QuestionProgressView.js";
 
 const InterviewPractice = () => {
   const location = useLocation();
@@ -206,6 +207,9 @@ const InterviewPractice = () => {
 
       <Grid container spacing={2}>
         <Grid item xs={12} lg={6}>
+          <Box sx={{ mt: "auto", mb: 2 }}>
+            <QuestionProgressView />
+          </Box>
           <Box sx={{ mt: "auto", mb: 0 }}>
             <TranscriptionBox
               transcription={transcription.text}
