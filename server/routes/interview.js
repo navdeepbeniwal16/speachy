@@ -420,7 +420,7 @@ const evaluateResponse = async (req, res, next) => {
             "Notes: The 'waysToImprove' field array should not contain more than 2 bullet points\n" +
             "You must provide the results in the following JSON format:\n" +
             "{" +
-            "relevance (json): { waysToImprove: [examples: 'Mention how you communicated the issue to stakeholders, showing you’re not just a tech wizard but a people person too!', 'Wrap it up with a takeaway or lesson learned to show you’re continuously growing—hiring managers love a learner’s mindset!'], exampleResponseExcerpt: 'We were up against a tight deadline, so I had to figure out the key fixes fast.', score: [float]: A score out of 10}," +
+            "relevance (json): { waysToImprove: [examples: 'Mention how you communicated the issue to stakeholders, showing you’re not just a tech wizard but a people person too!', 'Wrap it up with a takeaway or lesson learned to show you’re continuously growing—hiring managers love a learner’s mindset!'], exampleResponseExcerpt: 'We were up against a tight deadline, so I had to figure out the key fixes fast.', score: [float]: A score out of 10 eg: 4:653}," +
             "}"
         ),
       ],
@@ -445,7 +445,7 @@ const evaluateResponse = async (req, res, next) => {
             "Notes: The 'waysToImprove' field array should not contain more than 2 bullet points\n" +
             "You must provide the results in the following JSON format:\n" +
             "{" +
-            "structure (json): { waysToImprove: [examples: 'Break the response into steps: challenge, approach, solution—makes it easy for anyone to follow.', 'Begin with a one-sentence overview to set the stage', 'Begin with a one-line summary of the solution before diving into the details'], exampleResponseExcerpt: 'First, I tried to make sense of what was happening, then tackled the biggest issues head-on', score: [float]: A score out of 10}," +
+            "structure (json): { waysToImprove: [examples: 'Break the response into steps: challenge, approach, solution—makes it easy for anyone to follow.', 'Begin with a one-sentence overview to set the stage', 'Begin with a one-line summary of the solution before diving into the details'], exampleResponseExcerpt: 'First, I tried to make sense of what was happening, then tackled the biggest issues head-on', score: [float]: A score out of 10 eg: 4:653}," +
             "}"
         ),
       ],
@@ -470,7 +470,7 @@ const evaluateResponse = async (req, res, next) => {
             "Notes: The 'waysToImprove' field array should not contain more than 2 bullet points\n" +
             "You must provide the results in the following JSON format:\n" +
             "{" +
-            "sentiment (json): { waysToImprove: [examples: 'Use more expressive language to boost engagement.', 'Add a relatable touch by sharing personal feelings' ], exampleResponseExcerpt: 'Honestly, it was a bit of a wild ride, but it felt great solving it with the team', score: [float]: A score out of 10}," +
+            "sentiment (json): { waysToImprove: [examples: 'Use more expressive language to boost engagement.', 'Add a relatable touch by sharing personal feelings' ], exampleResponseExcerpt: 'Honestly, it was a bit of a wild ride, but it felt great solving it with the team', score: score: [float]: A score out of 10 eg: 4:653}," +
             "}"
         ),
       ],
@@ -495,7 +495,7 @@ const evaluateResponse = async (req, res, next) => {
             "Notes: The 'waysToImprove' field array should not contain more than 2 bullet points\n" +
             "You must provide the results in the following JSON format:\n" +
             "{" +
-            "authenticity (json): { waysToImprove: [examples: 'Add a brief personal story to highlight your unique approach', 'Use natural, conversational phrasing to make it sound more genuine and engaging'], exampleResponseExcerpt: 'I remember staying late one night, totally wrapped up in it—it kinda turned into an obsession.', score: [float]: A score out of 10}," +
+            "authenticity (json): { waysToImprove: [examples: 'Add a brief personal story to highlight your unique approach', 'Use natural, conversational phrasing to make it sound more genuine and engaging'], exampleResponseExcerpt: 'I remember staying late one night, totally wrapped up in it—it kinda turned into an obsession.', score: [float]: A score out of 10 eg: 4:653}," +
             "}"
         ),
       ],

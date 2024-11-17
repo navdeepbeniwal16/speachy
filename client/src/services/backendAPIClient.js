@@ -3,9 +3,6 @@ import { getAuth } from "firebase/auth";
 
 const backendApiClient = axios.create({
   baseURL: process.env.REACT_APP_API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 // Interceptor to add the token to each request
@@ -15,7 +12,7 @@ backendApiClient.interceptors.request.use(
     const user = auth.currentUser;
 
     if (user) {
-      const idToken = await user.getIdToken(); // Wait for the token
+      const idToken = await user.getIdToken();
       config.headers.Authorization = `Bearer ${idToken}`;
     }
 

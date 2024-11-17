@@ -48,6 +48,13 @@ const InterviewPractice = () => {
   const [alertMessage, setAlertMessage] = useState("");
   const [isAlertOpen, setIsAlertOpen] = useState(false);
 
+  const [responseProgressData, setResponseProgressData] = useState([
+    { name: "relevance", data: [], attemptDateTime: [] },
+    { name: "structure", data: [], attemptDateTime: [] },
+    { name: "sentiment", data: [], attemptDateTime: [] },
+    { name: "authenticity", data: [], attemptDateTime: [] },
+  ]);
+
   const handleVoiceRecordingSubmit = async (audioBlob) => {
     console.log("handleVoiceRecordingSubmit is called...");
     setIsEvaluating(true);
@@ -118,7 +125,9 @@ const InterviewPractice = () => {
 
       const feedback = response.feedback;
       feedback.duration = audioDuration; // Set duration of the audio
+      updateProgressView(feedback);
       const transcription = response.transcription;
+
       setFeedback(feedback);
       setTranscription(transcription);
     } catch (error) {
@@ -128,6 +137,58 @@ const InterviewPractice = () => {
     } finally {
       setIsEvaluating(false);
     }
+  };
+
+  const getCurrentTime = () => {
+    const now = new Date();
+    return now.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  const updateProgressView = (feedbackData) => {
+    console.log("InterviewPractice: updateProgressView() is called");
+    const relevanceScore = feedbackData.summary.relevance.score;
+    const structureScore = feedbackData.summary.structure.score;
+    const sentimentScore = feedbackData.summary.sentiment.score;
+    const authenticityScore = feedbackData.summary.authenticity.score;
+
+    const feedbackTimeStamp = getCurrentTime();
+
+    setResponseProgressData((prevData) =>
+      prevData.map((progress) => {
+        // Create updated progress objects based on feedbackData
+        if (progress.name === "relevance") {
+          return {
+            ...progress,
+            data: [...progress.data, relevanceScore],
+            attemptDateTime: [...progress.attemptDateTime, feedbackTimeStamp],
+          };
+        } else if (progress.name === "structure") {
+          return {
+            ...progress,
+            data: [...progress.data, structureScore],
+            attemptDateTime: [...progress.attemptDateTime, feedbackTimeStamp],
+          };
+        } else if (progress.name === "sentiment") {
+          return {
+            ...progress,
+            data: [...progress.data, sentimentScore],
+            attemptDateTime: [...progress.attemptDateTime, feedbackTimeStamp],
+          };
+        } else if (progress.name === "authenticity") {
+          return {
+            ...progress,
+            data: [...progress.data, authenticityScore],
+            attemptDateTime: [...progress.attemptDateTime, feedbackTimeStamp],
+          };
+        }
+        console.log("InterviewPractice: Progress is updated");
+        return progress;
+      })
+    );
   };
 
   async function urlToBlob(url) {
@@ -206,15 +267,17 @@ const InterviewPractice = () => {
       </Box>
 
       <Grid container spacing={2}>
-        <Grid item xs={12} lg={6}>
-          <Box sx={{ mt: "auto", mb: 2 }}>
-            <QuestionProgressView />
-          </Box>
+        <Grid item xs={12} lg={12}>
           <Box sx={{ mt: "auto", mb: 0 }}>
             <TranscriptionBox
               transcription={transcription.text}
               audioUrl={audioUrl}
             />
+          </Box>
+        </Grid>
+        <Grid item xs={12} lg={6}>
+          <Box sx={{ mt: "auto", mb: 2 }}>
+            <QuestionProgressView seriesData={responseProgressData} />
           </Box>
         </Grid>
 
