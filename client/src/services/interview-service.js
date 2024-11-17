@@ -62,19 +62,20 @@ class InterviewService {
     formData.append("requiredExperience", requiredExperience);
 
     try {
-      const response = await fetch("/interview/evaluate-response-audio", {
-        method: "POST",
-        headers: {},
-        body: formData,
-      });
+      const response = await backendApiClient.post(
+        "/interview/evaluate-response-audio",
+        formData
+      );
 
+      // Directly access the parsed JSON from response.data
       if (response.status !== 200) {
         throw new Error("Request unsuccessful: " + response);
       }
 
-      const data = await response.json();
+      const data = response.data; // Axios automatically parses the JSON response
+
       if (!data.results) {
-        throw new Error("Results not found in response payload: " + response);
+        throw new Error("Results not found in response payload: " + data);
       }
 
       const resultsObj = data.results;

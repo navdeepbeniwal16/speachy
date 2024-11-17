@@ -11,6 +11,7 @@ const morgan = require("morgan");
 const interviewRoute = require("./routes/interview.js");
 const impromptuSpeakingRoute = require("./routes/impromptu-speaking.js");
 const paymentsRoute = require("./routes/payments.js");
+const admin = require("firebase-admin");
 
 // Log requests in 'dev' format
 app.use(morgan("dev"));
@@ -40,11 +41,39 @@ app.use((req, res, next) => {
   }
 });
 
+// Middleware to verify user authentication token fetched from firebase
+const verifyToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  // Check for the Authorization header and its format
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    console.log("Authentication token not found");
+    return res
+      .status(401)
+      .json({ message: "Authorization token missing or malformed" });
+  }
+
+  const idToken = authHeader.split(" ")[1];
+
+  try {
+    // Verify the token using Firebase Admin SDK
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+
+    // Attach decoded token information to the request object
+    req.user = decodedToken;
+
+    next(); // Proceed to the next middleware or route handler
+  } catch (error) {
+    console.error("Error verifying Firebase ID token:", error);
+    res.status(401).json({ message: "Unauthorized - Invalid token" });
+  }
+};
+
 app.get("/", (req, res, next) => {
   res.send("Hello there! Speachy server here, alive and kicking!");
 });
 
-app.use("/interview", interviewRoute);
+app.use("/interview", verifyToken, interviewRoute);
 app.use("/impromptu-speaking", impromptuSpeakingRoute);
 app.use("/payments", paymentsRoute);
 
