@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import { Box, CssBaseline } from "@mui/material";
 import "./App.css";
 import HomePage from "./pages/HomePage";
 import NavigationBar from "./components/NavigationBar";
@@ -20,6 +21,7 @@ import BannerWrapper from "./components/BannerWrapper";
 import PaymentSuccess from "./pages/payments/PaymentSuccess";
 import PaymentCancel from "./pages/payments/PaymentCancel";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import DrawerLeft from "./components/DrawerLeft";
 
 // Function to check if user is authenticated
 const requireAuth = (Component) => {
@@ -46,11 +48,15 @@ const requireAuth = (Component) => {
 
 function App() {
   return (
-    <div style={{ backgroundColor: "#f9f5f4", minHeight: "100vh" }}>
+    <Box
+      sx={{ display: "flex", backgroundColor: "#f9f5f4", minHeight: "100vh" }}
+    >
       <Router>
-        <BannerWrapper></BannerWrapper>
-        <NavigationBar />
-        <PageWrapper>
+        <CssBaseline />
+        <BannerWrapper />
+        <DrawerLeft />
+        {/* <NavigationBar /> */}
+        <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
           <Routes>
             <Route path="/signup" element={<SignUp />} />
             <Route path="/signin" element={<SignIn />} />
@@ -75,7 +81,6 @@ function App() {
               path="/interview/questions/:questionId"
               element={<InterviewPracticeWrapper />}
             />
-
             <Route
               path="/imprompt"
               element={<ImpromptSpeakingPracticeWrapper />}
@@ -84,9 +89,9 @@ function App() {
             {/* Redirect any unknown routes to home */}
             <Route path="*" element={<Navigate to="/signin" />} />
           </Routes>
-        </PageWrapper>
+        </Box>
       </Router>
-    </div>
+    </Box>
   );
 }
 
