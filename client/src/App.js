@@ -57,38 +57,40 @@ function App() {
         <DrawerLeft />
         {/* <NavigationBar /> */}
         <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-          <Routes>
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route
-              path="/payment-success"
-              element={<PaymentSuccessWrapper />}
-            />
-            <Route
-              path="/payment-canceled"
-              element={<PaymentCancelWrapper />}
-            />
+          <PageWrapper>
+            <Routes>
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route
+                path="/payment-success"
+                element={<PaymentSuccessWrapper />}
+              />
+              <Route
+                path="/payment-canceled"
+                element={<PaymentCancelWrapper />}
+              />
 
-            {/* Protected routes */}
-            <Route path="/" element={<HomePageWrapper />} />
-            <Route path="/interview" element={<InterviewHomeWrapper />} />
-            <Route
-              path="/interview/questions"
-              element={<InterviewQuestionsWrapper />}
-            />
-            <Route
-              path="/interview/questions/:questionId"
-              element={<InterviewPracticeWrapper />}
-            />
-            <Route
-              path="/imprompt"
-              element={<ImpromptSpeakingPracticeWrapper />}
-            />
+              {/* Protected routes */}
+              <Route path="/" element={<HomePageWrapper />} />
+              <Route path="/interview" element={<InterviewHomeWrapper />} />
+              <Route
+                path="/interview/questions"
+                element={<InterviewQuestionsWrapper />}
+              />
+              <Route
+                path="/interview/questions/:questionId"
+                element={<InterviewPracticeWrapper />}
+              />
+              <Route
+                path="/imprompt"
+                element={<ImpromptSpeakingPracticeWrapper />}
+              />
 
-            {/* Redirect any unknown routes to home */}
-            <Route path="*" element={<Navigate to="/signin" />} />
-          </Routes>
+              {/* Redirect any unknown routes to home */}
+              <Route path="*" element={<Navigate to="/signin" />} />
+            </Routes>
+          </PageWrapper>
         </Box>
       </Router>
     </Box>
