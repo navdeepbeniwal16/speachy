@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import { Box, CssBaseline } from "@mui/material";
 import "./App.css";
 import HomePage from "./pages/HomePage";
 import NavigationBar from "./components/NavigationBar";
@@ -20,6 +21,12 @@ import BannerWrapper from "./components/BannerWrapper";
 import PaymentSuccess from "./pages/payments/PaymentSuccess";
 import PaymentCancel from "./pages/payments/PaymentCancel";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import DrawerLeft from "./components/DrawerLeft";
+import FAQPage from "./pages/FAQPage";
+import "@fontsource/amaranth";
+import UserProfilePage from "./pages/UserProfilePage";
+import PracticePage from "./pages/PracticePage";
+import ComingSoonPage from "./pages/ComingSoonPage";
 
 // Function to check if user is authenticated
 const requireAuth = (Component) => {
@@ -46,57 +53,68 @@ const requireAuth = (Component) => {
 
 function App() {
   return (
-    <div style={{ backgroundColor: "#f9f5f4", minHeight: "100vh" }}>
+    <Box
+      sx={{ display: "flex", backgroundColor: "#f9f5f4", minHeight: "100vh" }}
+    >
       <Router>
-        <BannerWrapper></BannerWrapper>
-        <NavigationBar />
-        <PageWrapper>
-          <Routes>
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route
-              path="/payment-success"
-              element={<PaymentSuccessWrapper />}
-            />
-            <Route
-              path="/payment-canceled"
-              element={<PaymentCancelWrapper />}
-            />
+        <CssBaseline />
+        <BannerWrapper />
+        <DrawerLeft />
+        {/* <NavigationBar /> */}
+        <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+          <PageWrapper>
+            <Routes>
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route
+                path="/payment-success"
+                element={<PaymentSuccessWrapper />}
+              />
+              <Route
+                path="/payment-canceled"
+                element={<PaymentCancelWrapper />}
+              />
 
-            {/* Protected routes */}
-            <Route path="/" element={<HomePageWrapper />} />
-            <Route path="/interview" element={<InterviewHomeWrapper />} />
-            <Route
-              path="/interview/questions"
-              element={<InterviewQuestionsWrapper />}
-            />
-            <Route
-              path="/interview/questions/:questionId"
-              element={<InterviewPracticeWrapper />}
-            />
+              {/* Protected routes */}
+              <Route path="/" element={<HomePageWrapper />} />
+              <Route path="/interview" element={<InterviewHomeWrapper />} />
+              <Route path="/practice" element={<PracticePageWrapper />} />
+              <Route path="/projects" element={<ComingSoonPage />} />
+              <Route
+                path="/interview/questions"
+                element={<InterviewQuestionsWrapper />}
+              />
+              <Route
+                path="/interview/questions/:questionId"
+                element={<InterviewPracticeWrapper />}
+              />
+              <Route path="/faq" element={<FAQPage />} />
+              <Route
+                path="/imprompt"
+                element={<ImpromptSpeakingPracticeWrapper />}
+              />
+              <Route path="/profile" element={<UserProfilePageWrapper />} />
 
-            <Route
-              path="/imprompt"
-              element={<ImpromptSpeakingPracticeWrapper />}
-            />
-
-            {/* Redirect any unknown routes to home */}
-            <Route path="*" element={<Navigate to="/signin" />} />
-          </Routes>
-        </PageWrapper>
+              {/* Redirect any unknown routes to home */}
+              <Route path="*" element={<Navigate to="/signin" />} />
+            </Routes>
+          </PageWrapper>
+        </Box>
       </Router>
-    </div>
+    </Box>
   );
 }
 
 // Wrappers for protected routes
 const HomePageWrapper = requireAuth(HomePage);
+const PracticePageWrapper = requireAuth(PracticePage);
 const InterviewHomeWrapper = requireAuth(InterviewHome);
 const InterviewQuestionsWrapper = requireAuth(InterviewQuestions);
 const InterviewPracticeWrapper = requireAuth(InterviewPractice);
 const ImpromptSpeakingPracticeWrapper = requireAuth(ImpromptSpeakingPractice);
 const PaymentSuccessWrapper = requireAuth(PaymentSuccess);
 const PaymentCancelWrapper = requireAuth(PaymentCancel);
+const UserProfilePageWrapper = requireAuth(UserProfilePage);
 
 export default App;

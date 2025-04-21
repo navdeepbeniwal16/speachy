@@ -3,39 +3,21 @@ import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
 
-const SnackbarAlert = ({ alertType, alertMessage, isOpen }) => {
-  const [state, setState] = React.useState({
-    open: isOpen,
-    vertical: "bottom",
-    horizontal: "center",
-  });
-  const { vertical, horizontal, open } = state;
-
-  const handleClose = () => {
-    setState({ ...state, open: false });
-  };
-
+const SnackbarAlert = ({ alertType, alertMessage, isOpen, onClose }) => {
   return (
-    <div>
-      <Snackbar
-        open={open}
-        autoHideDuration={6000}
-        onClose={handleClose}
-        anchorOrigin={{ vertical, horizontal }}
-        key={vertical + horizontal}
-      >
-        <Alert
-          onClose={handleClose}
-          severity={alertType}
-          sx={{ width: "100%" }}
-        >
-          <AlertTitle>
-            {alertType[0].toUpperCase() + alertType.substring(1).toLowerCase()}
-          </AlertTitle>
-          {alertMessage}
-        </Alert>
-      </Snackbar>
-    </div>
+    <Snackbar
+      open={isOpen}
+      autoHideDuration={4000}
+      onClose={onClose}
+      anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+    >
+      <Alert severity={alertType} sx={{ width: "100%" }}>
+        {/* <AlertTitle>
+          {alertType[0].toUpperCase() + alertType.substring(1).toLowerCase()}
+        </AlertTitle> */}
+        {alertMessage}
+      </Alert>
+    </Snackbar>
   );
 };
 

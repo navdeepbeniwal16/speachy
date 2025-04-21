@@ -9,6 +9,7 @@ const path = require("path");
 const bodyParser = require("body-parser");
 const morgan = require("morgan");
 const interviewRoute = require("./routes/interview.js");
+const userRoute = require("./routes/user.js");
 const impromptuSpeakingRoute = require("./routes/impromptu-speaking.js");
 const paymentsRoute = require("./routes/payments.js");
 const admin = require("firebase-admin");
@@ -61,6 +62,7 @@ const verifyToken = async (req, res, next) => {
 
     // Attach decoded token information to the request object
     req.user = decodedToken;
+    console.log("Received request for UserId:", req.user.user_id);
 
     next(); // Proceed to the next middleware or route handler
   } catch (error) {
@@ -74,6 +76,7 @@ app.get("/", (req, res, next) => {
 });
 
 app.use("/interview", verifyToken, interviewRoute);
+app.use("/me", verifyToken, userRoute);
 app.use("/impromptu-speaking", impromptuSpeakingRoute);
 app.use("/payments", paymentsRoute);
 

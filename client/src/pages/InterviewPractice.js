@@ -14,6 +14,8 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import BookmarkAddIcon from "@mui/icons-material/BookmarkAdd";
+import BookmarkAddedIcon from "@mui/icons-material/BookmarkAdded";
 import VoiceRecordingTab from "../components/VoiceRecordingTab";
 import InterviewService from "../services/interview-service.js";
 import FeedbackPane from "../components/FeedbackPane";
@@ -43,6 +45,7 @@ const InterviewPractice = () => {
     text: "No response recorded yet",
   });
   const [feedback, setFeedback] = useState(null);
+  const [isBookmarked, setIsBookmarked] = useState(false);
 
   const [alertType, setAlertType] = useState("error");
   const [alertMessage, setAlertMessage] = useState("");
@@ -197,6 +200,26 @@ const InterviewPractice = () => {
     return blob;
   }
 
+  async function handleBookmarkClick() {
+    const questionText = question;
+    const responseText = transcription;
+    const progressStats = [
+      responseProgressData.reduce((acc, item) => {
+        acc[item.name] = item.data[0];
+        return acc;
+      }, {}),
+    ];
+    console.log("Progress:", JSON.stringify(responseProgressData));
+    const saveSuccessful = await InterviewService.saveInterviewQuestion(
+      questionText,
+      responseText,
+      progressStats
+    );
+    console.log("Is bookmark successful? :", saveSuccessful);
+
+    setIsBookmarked(saveSuccessful);
+  }
+
   return (
     <Container component="main" maxWidth="lg">
       <Box sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -238,6 +261,28 @@ const InterviewPractice = () => {
               >
                 {question}
               </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Box></Box>
+                <IconButton
+                  onClick={() => {
+                    // setIsBookmarked(!isBookmarked);
+                    // TODO: Handle bookmark save
+                    handleBookmarkClick();
+                  }}
+                >
+                  {isBookmarked ? (
+                    <BookmarkAddedIcon></BookmarkAddedIcon>
+                  ) : (
+                    <BookmarkAddIcon></BookmarkAddIcon>
+                  )}
+                </IconButton>
+              </Box>
             </Paper>
           ) : (
             <Skeleton
