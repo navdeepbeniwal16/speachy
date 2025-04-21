@@ -200,6 +200,26 @@ const InterviewPractice = () => {
     return blob;
   }
 
+  async function handleBookmarkClick() {
+    const questionText = question;
+    const responseText = transcription;
+    const progressStats = [
+      responseProgressData.reduce((acc, item) => {
+        acc[item.name] = item.data[0];
+        return acc;
+      }, {}),
+    ];
+    console.log("Progress:", JSON.stringify(responseProgressData));
+    const saveSuccessful = await InterviewService.saveInterviewQuestion(
+      questionText,
+      responseText,
+      progressStats
+    );
+    console.log("Is bookmark successful? :", saveSuccessful);
+
+    setIsBookmarked(saveSuccessful);
+  }
+
   return (
     <Container component="main" maxWidth="lg">
       <Box sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -251,7 +271,9 @@ const InterviewPractice = () => {
                 <Box></Box>
                 <IconButton
                   onClick={() => {
-                    setIsBookmarked(!isBookmarked);
+                    // setIsBookmarked(!isBookmarked);
+                    // TODO: Handle bookmark save
+                    handleBookmarkClick();
                   }}
                 >
                   {isBookmarked ? (

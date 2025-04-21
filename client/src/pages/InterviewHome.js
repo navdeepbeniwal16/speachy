@@ -17,6 +17,7 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import InterviewService from "../services/interview-service.js";
 import { getAuth } from "firebase/auth";
+import QuestionsList from "../components/QuestionsList.js";
 
 const InterviewHome = () => {
   const auth = getAuth();
@@ -32,6 +33,7 @@ const InterviewHome = () => {
   const [experience, setExperience] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [user, setUser] = useState(null);
+  const [savedQuestions, setSavedQuestions] = useState([]);
 
   const experienceOptions = [
     { value: "entry", label: "Entry (0-1 years)" },
@@ -42,14 +44,24 @@ const InterviewHome = () => {
   ];
 
   useEffect(() => {
-    const firebaseUser = auth.currentUser;
-    if (firebaseUser) {
-      setUser(firebaseUser);
-    } else {
-      setUser(null);
-    }
+    const fetchData = async () => {
+      const firebaseUser = auth.currentUser;
+      if (firebaseUser) {
+        setUser(firebaseUser);
+        try {
+          const allSavedQuestions =
+            await InterviewService.getAllSavedInterviewQuestions();
+          console.log("Saved Interview Questions:", allSavedQuestions);
+          setSavedQuestions(allSavedQuestions);
+        } catch (error) {
+          console.error("Error fetching saved questions:", error);
+        }
+      } else {
+        setUser(null);
+      }
+    };
 
-    return;
+    fetchData();
   }, []);
 
   const handleUpload = async (event) => {
@@ -410,6 +422,34 @@ const InterviewHome = () => {
                 </Box>
               )}
             </Box>
+          </Paper>
+        </Grid>
+
+        <Grid item xs={12} sm={12} md={12} lg={12} xl={12}>
+          <Paper
+            variant="none"
+            sx={{
+              height: "100%",
+              borderRadius: "10px",
+              backgroundColor: "#FFF",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "left",
+              padding: 3,
+              mt: 2,
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{ pl: 3, pb: 1, pt: 1, textAlign: "left" }}
+              style={{ fontWeight: "bold", color: "#444444" }}
+              gutterBottom
+            >
+              Saved Questions
+            </Typography>
+
+            <QuestionsList questions={savedQuestions}></QuestionsList>
           </Paper>
         </Grid>
       </Grid>

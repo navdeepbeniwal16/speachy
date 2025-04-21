@@ -22,6 +22,11 @@ import PaymentSuccess from "./pages/payments/PaymentSuccess";
 import PaymentCancel from "./pages/payments/PaymentCancel";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import DrawerLeft from "./components/DrawerLeft";
+import FAQPage from "./pages/FAQPage";
+import "@fontsource/amaranth";
+import UserProfilePage from "./pages/UserProfilePage";
+import PracticePage from "./pages/PracticePage";
+import ComingSoonPage from "./pages/ComingSoonPage";
 
 // Function to check if user is authenticated
 const requireAuth = (Component) => {
@@ -74,6 +79,8 @@ function App() {
               {/* Protected routes */}
               <Route path="/" element={<HomePageWrapper />} />
               <Route path="/interview" element={<InterviewHomeWrapper />} />
+              <Route path="/practice" element={<PracticePageWrapper />} />
+              <Route path="/projects" element={<ComingSoonPage />} />
               <Route
                 path="/interview/questions"
                 element={<InterviewQuestionsWrapper />}
@@ -82,10 +89,12 @@ function App() {
                 path="/interview/questions/:questionId"
                 element={<InterviewPracticeWrapper />}
               />
+              <Route path="/faq" element={<FAQPage />} />
               <Route
                 path="/imprompt"
                 element={<ImpromptSpeakingPracticeWrapper />}
               />
+              <Route path="/profile" element={<UserProfilePageWrapper />} />
 
               {/* Redirect any unknown routes to home */}
               <Route path="*" element={<Navigate to="/signin" />} />
@@ -99,11 +108,13 @@ function App() {
 
 // Wrappers for protected routes
 const HomePageWrapper = requireAuth(HomePage);
+const PracticePageWrapper = requireAuth(PracticePage);
 const InterviewHomeWrapper = requireAuth(InterviewHome);
 const InterviewQuestionsWrapper = requireAuth(InterviewQuestions);
 const InterviewPracticeWrapper = requireAuth(InterviewPractice);
 const ImpromptSpeakingPracticeWrapper = requireAuth(ImpromptSpeakingPractice);
 const PaymentSuccessWrapper = requireAuth(PaymentSuccess);
 const PaymentCancelWrapper = requireAuth(PaymentCancel);
+const UserProfilePageWrapper = requireAuth(UserProfilePage);
 
 export default App;

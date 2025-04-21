@@ -85,6 +85,72 @@ class InterviewService {
       return null;
     }
   }
+
+  static async saveInterviewQuestion(
+    questionText,
+    responseText,
+    progressStats
+  ) {
+    try {
+      const response = await backendApiClient.post(
+        "/me/saved-interview-questions",
+        {
+          questionText: questionText,
+          responseText: responseText,
+          stats: progressStats,
+        }
+      );
+
+      console.log("Response:", response);
+
+      const responseData = response.data;
+      if (!responseData) {
+        throw new Error(
+          "Response data not present in the backend '/me/saved-interview-questions' API response"
+        );
+      }
+
+      return true;
+    } catch (error) {
+      console.error(`InterviewService: Error saving question: ${error}`);
+      return false;
+    }
+  }
+
+  static async getAllSavedInterviewQuestions(
+    questionText,
+    responseText,
+    progressStats
+  ) {
+    try {
+      const response = await backendApiClient.get(
+        "/me/saved-interview-questions"
+      );
+
+      console.log("Response:", response);
+
+      const responseData = response.data;
+      if (!responseData) {
+        throw new Error(
+          "Response data not present in the backend '/me/saved-interview-questions' API response"
+        );
+      }
+
+      if (!responseData.savedQuestions) {
+        throw new Error("savedQuestions not present in response data");
+      }
+
+      const allSavedQuestions = responseData.savedQuestions;
+      if (!Array.isArray(allSavedQuestions)) {
+        throw new Error("savedQuestions is not an array");
+      }
+
+      return allSavedQuestions;
+    } catch (error) {
+      console.error(`InterviewService: Error saving question: ${error}`);
+      return null;
+    }
+  }
 }
 
 export default InterviewService;

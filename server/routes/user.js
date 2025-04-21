@@ -1,9 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const { v4: uuidv4 } = require("uuid");
+const firebaseAdmin = require("../configs/firebase-admin.js");
+const { getFirestore } = require("firebase-admin/firestore");
 
 // Mock database
 const savedQuestions = {};
+
+const db = getFirestore(firebaseAdmin);
 
 // API to Save a New Question
 router.post("/saved-interview-questions", (req, res) => {
@@ -196,6 +200,43 @@ router.delete("/saved-interview-questions/:savedQuestionId", (req, res) => {
     message: "Saved question deleted successfully",
     deletedQuestion: deletedQuestion,
   });
+});
+
+router.post("/feedback", async (req, res) => {
+  try {
+    const userId = req.user.user_id;
+    console.log("Saving feedback for userId", userId);
+
+    const { rating, feedbackText } = req.body;
+
+    // Basic validation
+    if (!rating && !feedbackText) {
+      return res.status(400).json({
+        status: "error",
+        message: "At least one of 'rating' or 'feedbackText' is required.",
+      });
+    }
+
+    const feedbackData = {
+      userId,
+      rating: rating || null,
+      message: feedbackText || "",
+      timestamp: new Date().toISOString(),
+    };
+
+    await db.collection("user_feedback").add(feedbackData);
+
+    return res.status(201).json({
+      status: "success",
+      message: "Feedback submitted successfully.",
+    });
+  } catch (error) {
+    console.error("Error saving feedback:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Internal server error.",
+    });
+  }
 });
 
 module.exports = router;

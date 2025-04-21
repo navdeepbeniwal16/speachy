@@ -10,14 +10,13 @@ import {
   ListItemText,
   Badge,
   IconButton,
+  Avatar,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import HomeIcon from "@mui/icons-material/Home";
-import WorkIcon from "@mui/icons-material/Work";
 import MicIcon from "@mui/icons-material/Mic";
 import HelpIcon from "@mui/icons-material/Help";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import LogoutIcon from "@mui/icons-material/Logout";
+import WidgetsIcon from "@mui/icons-material/Widgets";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useTheme, useMediaQuery } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
@@ -39,7 +38,7 @@ export default function DrawerLeft() {
   const isMobile = useMediaQuery(theme.breakpoints.down("md")); // Detect screen size
   const [user, setUser] = useState(null);
   const [isDrawerOpen, setDrawerOpen] = useState(false);
-  const { state, setState } = useContext(AppContext);
+  // const { state, setState } = useContext(AppContext);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -47,20 +46,6 @@ export default function DrawerLeft() {
     });
     return () => unsubscribe();
   }, []);
-
-  const signOut = async () => {
-    try {
-      await auth.signOut();
-      setState((prevState) => ({
-        ...prevState,
-        isImpromptuSpeakingEnabled: false,
-        isInterviewPracticeEnabled: false,
-      }));
-      navigate("/");
-    } catch (error) {
-      console.error("Error signing out: ", error);
-    }
-  };
 
   const navigateToCustomerPaymentPortal = async () => {
     try {
@@ -140,27 +125,27 @@ export default function DrawerLeft() {
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>
-          <ListItemButton component={Link} to="/interview">
+          <ListItemButton component={Link} to="/projects">
             <ListItemIcon>
-              <WorkIcon />
+              <WidgetsIcon />
             </ListItemIcon>
-            <ListItemText primary="Interview" />
+            <ListItemText primary="Projects" />
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>
-          <ListItemButton component={Link} to="/imprompt">
+          <ListItemButton component={Link} to="/practice">
             <ListItemIcon>
               <MicIcon />
             </ListItemIcon>
-            <ListItemText primary="Impromptu" />
+            <ListItemText primary="Practice" />
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>
-          <ListItemButton component={Link} to="/help">
+          <ListItemButton component={Link} to="/faq">
             <ListItemIcon>
               <HelpIcon />
             </ListItemIcon>
-            <ListItemText primary="Help" />
+            <ListItemText primary="FAQs" />
           </ListItemButton>
         </ListItem>
       </List>
@@ -176,17 +161,14 @@ export default function DrawerLeft() {
           <ListItem disablePadding>
             <ListItemButton component={Link} to="/profile">
               <ListItemIcon>
-                <AccountCircleIcon />
+                <Avatar
+                  src={user?.photoURL}
+                  sx={{
+                    cursor: "pointer",
+                  }}
+                />
               </ListItemIcon>
               <ListItemText primary={user.displayName} />
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton onClick={signOut}>
-              <ListItemIcon>
-                <LogoutIcon />
-              </ListItemIcon>
-              <ListItemText primary="Sign Out" />
             </ListItemButton>
           </ListItem>
         </List>

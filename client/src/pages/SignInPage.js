@@ -15,12 +15,19 @@ import {
   Container,
   InputAdornment,
   IconButton,
+  Badge,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { Link } from "react-router-dom";
+
+const logoStyle = {
+  width: "100%",
+  height: "auto",
+  cursor: "pointer",
+};
 
 const SignIn = () => {
   const auth = getAuth();
@@ -117,61 +124,94 @@ const SignIn = () => {
     }
   };
 
+  const getEnvironmentLabel = () => {
+    const env = process.env.REACT_APP_ENV;
+    return env === "local"
+      ? "Local"
+      : env === "development"
+      ? "Development"
+      : env === "production"
+      ? "Early Access"
+      : "Unknown";
+  };
+
   return (
-    <Container>
+    <Container
+      sx={{
+        padding: 0,
+      }}
+    >
       <Grid
         container
         component="main"
         sx={{
-          height: "100%",
+          height: "80vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#f9f5f4",
         }}
       >
         <CssBaseline />
-        <Grid item xs={false} sm={12} md={3} lg={4} />
-        <Grid
-          item
-          xs={12}
-          sm={12}
-          md={6}
-          lg={4}
-          component={Paper}
-          elevation={0}
-          sx={{
-            height: "100%",
-            backgroundColor: "#f7f7f7",
-            overflowY: "auto",
-            zIndex: 1,
-          }}
-        >
+        {/* <Grid item xs={false} sm={12} md={3} lg={4} /> */}
+        <Grid item xs={12} sm={8} md={6} lg={4}>
           {isSigningIn && (
             <Box sx={{ width: "100%", height: "0px" }}>
               <LinearProgress color="warning" />
             </Box>
           )}
+
           <Paper
             variant="elevation"
-            elevation={3}
+            elevation={2}
             sx={{
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
               alignItems: "center",
               height: "100%",
-              padding: 2,
+              padding: 3,
               backgroundColor: "#fff",
             }}
           >
-            <Avatar
+            <Box
               sx={{
-                m: 1,
-                bgcolor: "#000000",
+                marginTop: 5,
+                alignItems: "center",
+                display: "flex",
+                justifyContent: "center",
               }}
             >
-              <LockOutlinedIcon />
-            </Avatar>
-            <Typography component="h1" variant="h6">
-              Sign In
-            </Typography>
+              <Link to="/">
+                <Badge
+                  color="warning"
+                  badgeContent={getEnvironmentLabel()}
+                  anchorOrigin={{ vertical: "top", horizontal: "right" }}
+                >
+                  <img
+                    src="/assets/Speachy_Logo_Full_SVG.svg"
+                    style={logoStyle}
+                    alt="Speachy Logo"
+                  />
+                </Badge>
+              </Link>
+            </Box>
+
+            <Box sx={{ mt: -1, mb: 2, textAlign: "center" }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontFamily: '"Amaranth", "Amaranth Placeholder", sans-serif',
+                  color: "#333",
+                  letterSpacing: 0,
+                  textTransform: "none",
+                  lineHeight: "1.2em",
+                }}
+              >
+                Find your voice
+              </Typography>
+            </Box>
+
             <Box
               component="form"
               sx={{ mt: 1, width: "100%" }}
@@ -226,7 +266,13 @@ const SignIn = () => {
                 }}
               />
               <Typography variant="subtitle2" textAlign={"right"}>
-                <Link to="/forgot-password" style={{ textDecoration: "none" }}>
+                <Link
+                  to="/forgot-password"
+                  style={{
+                    textDecoration: "none",
+                    color: "rgba(228, 71, 36, 0.94)",
+                  }}
+                >
                   Forgot Password?
                 </Link>
               </Typography>
@@ -235,7 +281,20 @@ const SignIn = () => {
                 fullWidth
                 variant="contained"
                 color="warning"
-                sx={{ mt: 3, mb: 2, textTransform: "none" }}
+                sx={{
+                  background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
+                  color: "#fff",
+                  fontWeight: "bold",
+                  px: 4,
+                  py: 1.5,
+                  borderRadius: 2,
+                  mt: 3,
+                  mb: 2,
+                  textTransform: "none",
+                  "&:hover": {
+                    background: "linear-gradient(90deg, #e7610b, #db2037)",
+                  },
+                }}
               >
                 <strong>Sign In</strong>
               </Button>
@@ -265,14 +324,20 @@ const SignIn = () => {
 
               <Typography variant="subtitle2" textAlign={"center"}>
                 Don't have an account?{" "}
-                <Link to="/signup" style={{ textDecoration: "none" }}>
+                <Link
+                  to="/signup"
+                  style={{
+                    textDecoration: "none",
+                    color: "rgba(228, 71, 36, 0.94)",
+                  }}
+                >
                   Sign Up
                 </Link>
               </Typography>
             </Box>
           </Paper>
         </Grid>
-        <Grid item xs={false} sm={12} md={3} lg={4} />
+        {/* <Grid item xs={false} sm={12} md={3} lg={4} /> */}
       </Grid>
 
       {isSignInError && (
