@@ -14,11 +14,14 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import BookmarkAddIcon from "@mui/icons-material/BookmarkAdd";
+import BookmarkAddedIcon from "@mui/icons-material/BookmarkAdded";
 import VoiceRecordingTab from "../components/VoiceRecordingTab";
 import InterviewService from "../services/interview-service.js";
 import FeedbackPane from "../components/FeedbackPane";
 import { ReactComponent as FeedbackIcon } from "../assets/chat-evaluation.svg";
 import SnackbarAlert from "../components/SnackbarAlert";
+import QuestionProgressView from "../components/QuestionProgressView.js";
 
 const InterviewPractice = () => {
   const location = useLocation();
@@ -42,10 +45,18 @@ const InterviewPractice = () => {
     text: "No response recorded yet",
   });
   const [feedback, setFeedback] = useState(null);
+  const [isBookmarked, setIsBookmarked] = useState(false);
 
   const [alertType, setAlertType] = useState("error");
   const [alertMessage, setAlertMessage] = useState("");
   const [isAlertOpen, setIsAlertOpen] = useState(false);
+
+  const [responseProgressData, setResponseProgressData] = useState([
+    { name: "relevance", data: [], attemptDateTime: [] },
+    { name: "structure", data: [], attemptDateTime: [] },
+    { name: "sentiment", data: [], attemptDateTime: [] },
+    { name: "authenticity", data: [], attemptDateTime: [] },
+  ]);
 
   const handleVoiceRecordingSubmit = async (audioBlob) => {
     console.log("handleVoiceRecordingSubmit is called...");
@@ -117,7 +128,9 @@ const InterviewPractice = () => {
 
       const feedback = response.feedback;
       feedback.duration = audioDuration; // Set duration of the audio
+      updateProgressView(feedback);
       const transcription = response.transcription;
+
       setFeedback(feedback);
       setTranscription(transcription);
     } catch (error) {
@@ -129,10 +142,82 @@ const InterviewPractice = () => {
     }
   };
 
+  const getCurrentTime = () => {
+    const now = new Date();
+    return now.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  const updateProgressView = (feedbackData) => {
+    console.log("InterviewPractice: updateProgressView() is called");
+    const relevanceScore = feedbackData.summary.relevance.score;
+    const structureScore = feedbackData.summary.structure.score;
+    const sentimentScore = feedbackData.summary.sentiment.score;
+    const authenticityScore = feedbackData.summary.authenticity.score;
+
+    const feedbackTimeStamp = getCurrentTime();
+
+    setResponseProgressData((prevData) =>
+      prevData.map((progress) => {
+        // Create updated progress objects based on feedbackData
+        if (progress.name === "relevance") {
+          return {
+            ...progress,
+            data: [...progress.data, relevanceScore],
+            attemptDateTime: [...progress.attemptDateTime, feedbackTimeStamp],
+          };
+        } else if (progress.name === "structure") {
+          return {
+            ...progress,
+            data: [...progress.data, structureScore],
+            attemptDateTime: [...progress.attemptDateTime, feedbackTimeStamp],
+          };
+        } else if (progress.name === "sentiment") {
+          return {
+            ...progress,
+            data: [...progress.data, sentimentScore],
+            attemptDateTime: [...progress.attemptDateTime, feedbackTimeStamp],
+          };
+        } else if (progress.name === "authenticity") {
+          return {
+            ...progress,
+            data: [...progress.data, authenticityScore],
+            attemptDateTime: [...progress.attemptDateTime, feedbackTimeStamp],
+          };
+        }
+        console.log("InterviewPractice: Progress is updated");
+        return progress;
+      })
+    );
+  };
+
   async function urlToBlob(url) {
     const response = await fetch(url);
     const blob = await response.blob();
     return blob;
+  }
+
+  async function handleBookmarkClick() {
+    const questionText = question;
+    const responseText = transcription;
+    const progressStats = [
+      responseProgressData.reduce((acc, item) => {
+        acc[item.name] = item.data[0];
+        return acc;
+      }, {}),
+    ];
+    console.log("Progress:", JSON.stringify(responseProgressData));
+    const saveSuccessful = await InterviewService.saveInterviewQuestion(
+      questionText,
+      responseText,
+      progressStats
+    );
+    console.log("Is bookmark successful? :", saveSuccessful);
+
+    setIsBookmarked(saveSuccessful);
   }
 
   return (
@@ -176,6 +261,28 @@ const InterviewPractice = () => {
               >
                 {question}
               </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Box></Box>
+                <IconButton
+                  onClick={() => {
+                    // setIsBookmarked(!isBookmarked);
+                    // TODO: Handle bookmark save
+                    handleBookmarkClick();
+                  }}
+                >
+                  {isBookmarked ? (
+                    <BookmarkAddedIcon></BookmarkAddedIcon>
+                  ) : (
+                    <BookmarkAddIcon></BookmarkAddIcon>
+                  )}
+                </IconButton>
+              </Box>
             </Paper>
           ) : (
             <Skeleton
@@ -205,12 +312,17 @@ const InterviewPractice = () => {
       </Box>
 
       <Grid container spacing={2}>
-        <Grid item xs={12} lg={6}>
+        <Grid item xs={12} lg={12}>
           <Box sx={{ mt: "auto", mb: 0 }}>
             <TranscriptionBox
               transcription={transcription.text}
               audioUrl={audioUrl}
             />
+          </Box>
+        </Grid>
+        <Grid item xs={12} lg={6}>
+          <Box sx={{ mt: "auto", mb: 2 }}>
+            <QuestionProgressView seriesData={responseProgressData} />
           </Box>
         </Grid>
 

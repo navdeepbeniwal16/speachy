@@ -62,25 +62,92 @@ class InterviewService {
     formData.append("requiredExperience", requiredExperience);
 
     try {
-      const response = await fetch("/interview/evaluate-response-audio", {
-        method: "POST",
-        headers: {},
-        body: formData,
-      });
+      const response = await backendApiClient.post(
+        "/interview/evaluate-response-audio",
+        formData
+      );
 
+      // Directly access the parsed JSON from response.data
       if (response.status !== 200) {
         throw new Error("Request unsuccessful: " + response);
       }
 
-      const data = await response.json();
+      const data = response.data; // Axios automatically parses the JSON response
+
       if (!data.results) {
-        throw new Error("Results not found in response payload: " + response);
+        throw new Error("Results not found in response payload: " + data);
       }
 
       const resultsObj = data.results;
       return resultsObj;
     } catch (error) {
       console.error("Failed to fetch audio response feedback:", error);
+      return null;
+    }
+  }
+
+  static async saveInterviewQuestion(
+    questionText,
+    responseText,
+    progressStats
+  ) {
+    try {
+      const response = await backendApiClient.post(
+        "/me/saved-interview-questions",
+        {
+          questionText: questionText,
+          responseText: responseText,
+          stats: progressStats,
+        }
+      );
+
+      console.log("Response:", response);
+
+      const responseData = response.data;
+      if (!responseData) {
+        throw new Error(
+          "Response data not present in the backend '/me/saved-interview-questions' API response"
+        );
+      }
+
+      return true;
+    } catch (error) {
+      console.error(`InterviewService: Error saving question: ${error}`);
+      return false;
+    }
+  }
+
+  static async getAllSavedInterviewQuestions(
+    questionText,
+    responseText,
+    progressStats
+  ) {
+    try {
+      const response = await backendApiClient.get(
+        "/me/saved-interview-questions"
+      );
+
+      console.log("Response:", response);
+
+      const responseData = response.data;
+      if (!responseData) {
+        throw new Error(
+          "Response data not present in the backend '/me/saved-interview-questions' API response"
+        );
+      }
+
+      if (!responseData.savedQuestions) {
+        throw new Error("savedQuestions not present in response data");
+      }
+
+      const allSavedQuestions = responseData.savedQuestions;
+      if (!Array.isArray(allSavedQuestions)) {
+        throw new Error("savedQuestions is not an array");
+      }
+
+      return allSavedQuestions;
+    } catch (error) {
+      console.error(`InterviewService: Error saving question: ${error}`);
       return null;
     }
   }

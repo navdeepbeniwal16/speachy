@@ -87,16 +87,22 @@ const HomePage = () => {
           Welcome{" "}
           <span
             style={{
-              color: "#FA735B",
               fontWeight: "bold",
               paddingLeft: "3px",
               paddingRight: "3px",
+              background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
             }}
           >
             {auth.currentUser.displayName.split(" ")[0]}
           </span>
         </Typography>
-        <Typography variant="h6" sx={{ mb: 4 }} gutterBottom>
+        <Typography
+          variant="subtitle1"
+          sx={{ mb: 4, color: "gray" }}
+          gutterBottom
+        >
           Find your voice and sharpen your skills with Speachy! Whether you're
           preparing for an interview or working on your spontaneous speaking, we
           help your practise and provide personalised & impartial feedback to
