@@ -4,7 +4,6 @@ import {
   IconButton,
   Paper,
   Typography,
-  LinearProgress,
   Skeleton,
   Grid,
   Collapse,
@@ -65,19 +64,17 @@ const InterviewPractice = () => {
     const audioUrl = URL.createObjectURL(audioBlob);
     setAudioUrl(audioUrl);
 
-    // Create an Audio element
     const audio = new Audio(audioUrl);
     audio.preload = "auto";
 
-    // Handle loaded metadata event
-    const duration = await getAudioDuration(audio); // Wait for duration to be fetched
+    const duration = await getAudioDuration(audio);
     console.log("Audio Duration:", duration);
 
-    // Converting the seconds to a whole number
     audioDuration = parseInt(duration);
 
     console.log("Initiate request to get response feedback");
-    getAudioResponseFeedback(audioUrl);
+
+    await getAudioResponseFeedback(audioUrl);
   };
 
   const getAudioDuration = (audio) => {
@@ -337,18 +334,6 @@ const InterviewPractice = () => {
                 overflowY: "auto",
               }}
             >
-              {isEvaluating && (
-                <Box sx={{ width: "100%" }}>
-                  <LinearProgress
-                    sx={{
-                      "& .MuiLinearProgress-bar": {
-                        backgroundColor: "#FA735B", // Custom color for the progress bar
-                      },
-                    }}
-                  />
-                </Box>
-              )}
-
               {feedback ? (
                 <FeedbackPane
                   feedback={feedback}
