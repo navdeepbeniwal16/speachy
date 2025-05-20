@@ -506,17 +506,47 @@ const evaluateResponse = async (req, res, next) => {
     return parseFieldValue(completion, "authenticity");
   };
 
+  const getDetailedaFeedback = async () => {
+    const completion = await openai.chat.completions.create({
+      model: model,
+      messages: [
+        systemPrompt,
+        userPrompt,
+        getInstructionPrompt(
+          "Your response needs to provide a detailed feedback on the whole of the response taking into account the requirements of the role provided. It should include specific examples of areas to improve and suggestions for how the answer could be better. Ensure the detailed feedback is comprehensive and addresses multiple aspects of the response in depth. Use a constructive tone to encourage improvement.\n" +
+            "Notes: The overview field text should be in not more than 30 words\n" +
+            "You must provide the results in the following JSON format:\n" +
+            "{" +
+            'detailedFeedback (string) : "Placeholder for generated detailed feedback"' +
+            "}"
+        ),
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    // Parse 'overview' string value from the response
+    return parseFieldValue(completion, "detailedFeedback");
+  };
+
   try {
     // Run all async functions concurrently
-    const [overview, tip, relevance, structure, sentiment, authenticity] =
-      await Promise.all([
-        getOverview(),
-        getTip(),
-        getRelevance(),
-        getStructure(),
-        getSentiment(),
-        getAuthenticity(),
-      ]);
+    const [
+      overview,
+      tip,
+      relevance,
+      structure,
+      sentiment,
+      authenticity,
+      detailedFeedback,
+    ] = await Promise.all([
+      getOverview(),
+      getTip(),
+      getRelevance(),
+      getStructure(),
+      getSentiment(),
+      getAuthenticity(),
+      getDetailedaFeedback(),
+    ]);
 
     // Set results after both have completed
     const feedback = {
@@ -524,6 +554,7 @@ const evaluateResponse = async (req, res, next) => {
     };
     feedback.overview = overview;
     feedback.tip = tip;
+    feedback.detailedFeedback = detailedFeedback;
     feedback.summary.relevance = relevance;
     feedback.summary.structure = structure;
     feedback.summary.sentiment = sentiment;

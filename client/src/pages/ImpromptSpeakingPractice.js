@@ -4,7 +4,6 @@ import {
   IconButton,
   Paper,
   Typography,
-  LinearProgress,
   Chip,
   Skeleton,
   Grid,
@@ -101,19 +100,16 @@ const ImpromptSpeakingPractice = () => {
     const audioUrl = URL.createObjectURL(audioBlob);
     setAudioUrl(audioUrl);
 
-    // Create an Audio element
     const audio = new Audio(audioUrl);
     audio.preload = "auto";
 
-    // Handle loaded metadata event
-    const duration = await getAudioDuration(audio); // Wait for duration to be fetched
+    const duration = await getAudioDuration(audio);
     console.log("Audio Duration:", duration);
 
-    // Converting the seconds to a whole number
-    audioDuration = parseInt(duration);
+    audioDuration = parseInt(duration); // Trim to whole seconds
 
     console.log("Initiate request to get response feedback");
-    await getAudioResponseFeedback(audioUrl);
+    await getAudioResponseFeedback(audioUrl); // Ensure loader stays until done
   };
 
   const getAudioDuration = (audio) => {
@@ -276,18 +272,6 @@ const ImpromptSpeakingPractice = () => {
                 overflowY: "auto",
               }}
             >
-              {isEvaluating && (
-                <Box sx={{ width: "100%" }}>
-                  <LinearProgress
-                    sx={{
-                      "& .MuiLinearProgress-bar": {
-                        backgroundColor: "#FA735B", // Custom color for the progress bar
-                      },
-                    }}
-                  />
-                </Box>
-              )}
-
               {feedback ? (
                 <FeedbackPane
                   feedback={feedback}
