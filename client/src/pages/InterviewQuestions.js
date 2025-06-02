@@ -4,6 +4,7 @@ import {
   Box,
   Card,
   CardContent,
+  Chip,
   Container,
   IconButton,
   List,
@@ -12,6 +13,7 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 const InterviewQuestions = () => {
   const location = useLocation();
@@ -57,8 +59,68 @@ const InterviewQuestions = () => {
           padding: 1,
         }}
       >
-        <CardContent>
-          <Typography variant="body2">{questionObj.question}</Typography>
+        <CardContent sx={{ width: "96%" }}>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="flex-start"
+          >
+            <Typography variant="body2" sx={{ flex: 1 }}>
+              {questionObj.question}
+            </Typography>
+            {questionObj.isAIGenerated && (
+              <AutoAwesomeIcon
+                fontSize="small"
+                color="warning"
+                sx={{ mt: "2px" }}
+              />
+            )}
+          </Box>
+
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mt: 1,
+            }}
+          >
+            <Chip
+              variant="filled"
+              size="small"
+              label={
+                questionObj.difficultyLevel.charAt(0).toUpperCase() +
+                questionObj.difficultyLevel.slice(1).toLowerCase()
+              }
+            />
+
+            <Box></Box>
+
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "right",
+              }}
+            >
+              {questionObj.tags.map((tag) => {
+                return (
+                  <Chip
+                    variant="outlined"
+                    size="small"
+                    label={
+                      <Typography
+                        fontSize={12}
+                        fontStyle="italic"
+                        color="GrayText"
+                      >{`#${tag}`}</Typography>
+                    }
+                    sx={{ border: "0px" }}
+                  />
+                );
+              })}
+            </Box>
+          </Box>
         </CardContent>
         <Box
           sx={{
