@@ -19,6 +19,116 @@ const openai = new OpenAI({
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
+const getPreSelectedQuestions = () => {
+  const questions = [
+    {
+      question: "Can you tell me about yourself?",
+      tags: ["general"],
+      difficultyLevel: "medium",
+      isAIGenerated: false,
+    },
+    {
+      question: "Why do you want to work here?",
+      tags: ["general"],
+      difficultyLevel: "medium",
+      isAIGenerated: false,
+    },
+    {
+      question: "What are your greatest strengths?",
+      tags: ["general"],
+      difficultyLevel: "medium",
+      isAIGenerated: false,
+    },
+    {
+      question: "Describe your ideal work environment.",
+      tags: ["general"],
+      difficultyLevel: "easy",
+      isAIGenerated: false,
+    },
+    {
+      question: "What motivates you?",
+      tags: ["general"],
+      difficultyLevel: "medium",
+      isAIGenerated: false,
+    },
+    {
+      question: "Where do you see yourself in five years?",
+      tags: ["general"],
+      difficultyLevel: "hard",
+      isAIGenerated: false,
+    },
+    {
+      question: "What makes you a good fit for this role?",
+      tags: ["general"],
+      difficultyLevel: "medium",
+      isAIGenerated: false,
+    },
+    {
+      question: "Can you describe a successful project you worked on?",
+      tags: ["general"],
+      difficultyLevel: "hard",
+      isAIGenerated: false,
+    },
+    {
+      question: "What inspired you to pursue this career?",
+      tags: ["general"],
+      difficultyLevel: "medium",
+      isAIGenerated: false,
+    },
+    {
+      question: "What are you passionate about outside of work?",
+      tags: ["general"],
+      difficultyLevel: "easy",
+      isAIGenerated: false,
+    },
+    {
+      question: "What’s the best advice you’ve ever received?",
+      tags: ["general"],
+      difficultyLevel: "hard",
+      isAIGenerated: false,
+    },
+    {
+      question: "How do you define success?",
+      tags: ["general"],
+      difficultyLevel: "hard",
+      isAIGenerated: false,
+    },
+    {
+      question: "What is your biggest weakness?",
+      tags: ["general"],
+      difficultyLevel: "medium",
+      isAIGenerated: false,
+    },
+    {
+      question: "If you were an animal, which one would you be?",
+      tags: ["curveball"],
+      difficultyLevel: "hard",
+      isAIGenerated: false,
+    },
+    {
+      question: "What would you do if you won the lottery tomorrow?",
+      tags: ["curveball"],
+      difficultyLevel: "hard",
+      isAIGenerated: false,
+    },
+    {
+      question:
+        "What’s the most interesting thing about you that’s not on your resume?",
+      tags: ["curveball"],
+      difficultyLevel: "hard",
+      isAIGenerated: false,
+    },
+    {
+      question: "If you had to give a TED talk, what would it be about?",
+      tags: ["curveball"],
+      difficultyLevel: "hard",
+      isAIGenerated: false,
+    },
+  ];
+
+  return questions;
+};
+
 const getQuestionsSet = async (
   company,
   role,
@@ -40,7 +150,7 @@ const getQuestionsSet = async (
       {
         role: "user",
         content:
-          'Based on the information provided, what are some most probable behavioral interview questions? Please provide them in the following json format: { questions: [{"question": "question string", "tags": [string of associated tags]}] }',
+          'Based on the information provided, what are some most probable behavioral interview questions? Please provide them in the following json format: { questions: [{"question": "question string in one line", "tags": [string of associated tags], "difficultyLevel": "easy | medium | hard"}], isAIGenerated: true,}',
       },
     ],
     model: "gpt-3.5-turbo",
@@ -58,6 +168,8 @@ const getQuestionsSet = async (
 
   const questionsRawJSON = completion.choices[0].message.content;
   const questions = Object(JSON.parse(questionsRawJSON))["questions"];
+
+  questions.map((question) => (question.isAIGenerated = true));
 
   return questions;
 };
@@ -113,6 +225,8 @@ router.post("/fetch-questions", async (req, res) => {
   }); // TODO: Include a logger instead of console statement
 
   try {
+    const predefinedQuestions = getPreSelectedQuestions();
+
     const generatedQuestions = await getQuestionsSet(
       company,
       role,
@@ -121,12 +235,14 @@ router.post("/fetch-questions", async (req, res) => {
       requiredExperience
     );
 
+    const allQuestions = [...predefinedQuestions, ...generatedQuestions];
+
     console.log("interview.js : Questions generated successfully!");
 
     res.status(200).json({
       message: "Questions generated successfully.",
       data: {
-        questions: generatedQuestions,
+        questions: allQuestions,
       },
     });
   } catch (error) {
