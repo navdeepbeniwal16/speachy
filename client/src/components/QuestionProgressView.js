@@ -54,7 +54,7 @@ const QuestionProgressView = ({ seriesData }) => {
               <VictoryChart
                 theme={VictoryTheme.clean}
                 height={200}
-                padding={{ top: 20, left: 50, right: 30, bottom: 40 }}
+                padding={{ top: 20, left: 70, right: 30, bottom: 40 }}
               >
                 <VictoryAxis
                   tickValues={xSlots}
@@ -68,14 +68,16 @@ const QuestionProgressView = ({ seriesData }) => {
                 />
                 <VictoryAxis
                   dependentAxis
-                  tickValues={[4, 6, 8]}
+                  tickValues={[2, 4, 6.5, 9]}
                   tickFormat={(value) =>
-                    value >= 8
+                    value >= 9
                       ? "Excelling"
-                      : value >= 6
+                      : value >= 6.5
                       ? "Progressing"
                       : value >= 4
                       ? "On Track"
+                      : value >= 2
+                      ? "Needs Attention"
                       : ""
                   }
                   style={{
@@ -98,7 +100,7 @@ const QuestionProgressView = ({ seriesData }) => {
                     }}
                   />
                   <VictoryScatter
-                    size={2}
+                    size={3}
                     style={{
                       data: {
                         fill: VictoryTheme.material.palette.qualitative[i],

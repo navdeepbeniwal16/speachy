@@ -258,7 +258,7 @@ const InterviewPractice = () => {
               >
                 {question}
               </Typography>
-              <Box
+              {/* <Box
                 sx={{
                   display: "flex",
                   flexDirection: "row",
@@ -279,7 +279,7 @@ const InterviewPractice = () => {
                     <BookmarkAddIcon></BookmarkAddIcon>
                   )}
                 </IconButton>
-              </Box>
+              </Box> */}
             </Paper>
           ) : (
             <Skeleton

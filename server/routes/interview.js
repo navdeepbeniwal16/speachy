@@ -529,14 +529,42 @@ const evaluateResponse = async (req, res, next) => {
         systemPrompt,
         userPrompt,
         getInstructionPrompt(
-          "Your response needs to provide an expert-level critical evaluation of the response for it's relevance\n" +
+          "You are evaluating how well a candidate’s response answers a given interview question. Focus strictly on **relevance** — not structure, sentiment, tone, or storytelling quality.\n\n" +
+            "Begin by classifying the question type:\n" +
+            "- If the question asks about a specific past experience (e.g., 'Tell me about a time...'), treat it as a **Behavioral** question.\n" +
+            "- If the question is hypothetical, reflective, or about preferences (e.g., 'What motivates you?', 'What would you do if...?'), treat it as a **Non-Behavioral** question.\n\n" +
+            "If the response is **highly relevant** (score of 9.0 or above), you must **not provide any improvement suggestions** — the response is already strong in terms of relevance.\n" +
+            "Do not suggest changes just because something *more* could have been said. If the response clearly answers the question, that is sufficient.\n\n" +
+            "Use the following relevance criteria for your evaluation:\n\n" +
+            "FOR BEHAVIORAL QUESTIONS:\n" +
+            "- Direct Match: Does the response clearly address the specific behavior or trait asked about?\n" +
+            "- Trait Demonstration: Does the candidate’s action in the response reflect the target skill or competency?\n" +
+            "- Context Fit: Is the situation appropriate in scale and setting (e.g., workplace, team challenge)?\n" +
+            "- Completeness: If the question has multiple parts, are they all answered?\n" +
+            "- Specificity: Is the response a real story (not vague habits or general traits)?\n\n" +
+            "FOR NON-BEHAVIORAL QUESTIONS:\n" +
+            "- Directness: Does the response clearly address the intent of the question?\n" +
+            "- Conceptual Fit: Is the content topically appropriate (e.g., a motivation question discusses what drives them)?\n" +
+            "- Completeness: Are all parts of the question addressed?\n" +
+            "- Content Relevance: Is the answer focused and on-topic?\n" +
+            "- Avoidance of Buzzwords: Does the answer avoid filler or vague, generic phrases?\n\n" +
             "Approach to follow:\n" +
-            "Step 1: Extract a maximum of three highlights around what's currently making the response less relevant to the question being asked. Notes: 1. Judge the response from the eyes of a Hiring Manager 2. Don't include problems that are quite minor 3. There should be no more than 3 bullet points\n" +
-            "Step 2: Based on the highlights extracted in Step 1, suggest a 'ways to improve' each of the problem in a very brief bullet point. NOTE: 1. There should be no more than bullet points than the highlights generated in Step 1 2. The tone of the text should be warm, humane, and humorous occsionally 3. Each bullet point should have no more than 25 words\n" +
-            "Notes: The 'waysToImprove' field array should not contain more than 2 bullet points\n" +
-            "You must provide the results in the following JSON format:\n" +
-            "{" +
-            "relevance (json): { waysToImprove: [examples: 'Mention how you communicated the issue to stakeholders, showing you’re not just a tech wizard but a people person too!', 'Wrap it up with a takeaway or lesson learned to show you’re continuously growing—hiring managers love a learner’s mindset!'], exampleResponseExcerpt: 'We were up against a tight deadline, so I had to figure out the key fixes fast.', score: [float]: A score out of 10 eg: 4:653}," +
+            "Step 1: If the response has meaningful relevance gaps (based on the criteria above), list up to 3 bullet points identifying the issues. If no meaningful gaps exist, skip this step entirely.\n" +
+            "Step 2: For each issue in Step 1, provide a brief, warm, and practical improvement suggestion (max 25 words). Use a constructive, occasionally witty tone.\n\n" +
+            "Important:\n" +
+            "- Do NOT provide suggestions if the score is 8.0 or higher — treat it as a strong, sufficiently relevant answer.\n" +
+            "- Do NOT generate feedback just because more could have been said — only respond when something **is missing** based on the criteria.\n" +
+            "- Only critique if the response fails to directly and clearly answer the question.\n" +
+            "- Do NOT suggest linking to job role, company, or mission unless the question explicitly asks for it.\n" +
+            "- Do NOT critique clarity, storytelling, phrasing, delivery style, grammar, emotional tone, or authenticity.\n" +
+            "- Do NOT provide more than 2 improvement suggestions, even if 3 issues are listed.\n\n" +
+            "Your output must be in the following JSON format:\n" +
+            "{\n" +
+            '  "relevance": {\n' +
+            '    "waysToImprove": ["...", "..."],\n' +
+            '    "exampleResponseExcerpt": "Excerpt that shows the relevance issue",\n' +
+            '    "score": float (0–10, e.g., 8.5)\n' +
+            "  }\n" +
             "}"
         ),
       ],

@@ -101,7 +101,7 @@ const FeedbackCard = ({ heading, feedbackPoints = [], score = 0, example }) => {
             </Typography>
           )}
         </Box>
-        {example && (
+        {/* {example && (
           <Paper
             variant="outlined"
             sx={{ mt: 1, p: 2, borderRadius: "10px" }}
@@ -111,7 +111,7 @@ const FeedbackCard = ({ heading, feedbackPoints = [], score = 0, example }) => {
               ..{example}..
             </Typography>
           </Paper>
-        )}
+        )} */}
       </Collapse>
     </Paper>
   );
