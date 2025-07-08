@@ -58,10 +58,11 @@ function App() {
     >
       <Router>
         <CssBaseline />
-        <BannerWrapper />
         <DrawerLeft />
+
         {/* <NavigationBar /> */}
-        <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        <Box component="main" sx={{ flexGrow: 1, p: 0 }}>
+          <BannerWrapper />
           <PageWrapper>
             <Routes>
               <Route path="/signup" element={<SignUp />} />
