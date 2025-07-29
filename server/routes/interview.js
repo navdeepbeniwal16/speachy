@@ -582,14 +582,38 @@ const evaluateResponse = async (req, res, next) => {
         systemPrompt,
         userPrompt,
         getInstructionPrompt(
-          "Your response needs to provide an expert-level critical evaluation of the structure, flow and storytelling aspects of the answer to the question\n" +
-            "Approach to follow:\n" +
-            "Step 1: Find a maximum of two highlights (Only if possible, and not nitpicking) around what's currently making the response structure less impactful. Notes: 1. Judge the response from the eyes of a Hiring Manager 2. Don't include problems that are quite minor 3. There should be no more than 2 bullet points\n" +
-            "Step 2: Based on the highlights extracted in Step 1, suggest a way to improve each of the problem in a very brief bullet point. NOTE: 1. There should be no more than bullet points than the highlights generated in Step 1 2. The bullet point should not include suggestions related to response 'Relevancy'', as they would be covered in different prompts 3. Don't repeat the suggestions 4. The tone of the text should be warm, humane, and humorous occsionally 3. Each bullet point should have no more than 20 words.\n" +
-            "Notes: The 'waysToImprove' field array should not contain more than 2 bullet points\n" +
-            "You must provide the results in the following JSON format:\n" +
-            "{" +
-            "structure (json): { waysToImprove: [examples: 'Break the response into steps: challenge, approach, solution—makes it easy for anyone to follow.', 'Begin with a one-sentence overview to set the stage', 'Begin with a one-line summary of the solution before diving into the details'], exampleResponseExcerpt: 'First, I tried to make sense of what was happening, then tackled the biggest issues head-on', score: [float]: A score out of 10 eg: 4:653}," +
+          "You are evaluating how well-structured a candidate’s response is to an interview question. Focus **only on structure** — this includes logical flow, storytelling coherence, and emotional alignment. Do **not** evaluate content relevance, language quality, or tone beyond what’s required for structure.\n\n" +
+            "Start by identifying the question type:\n" +
+            "- If the question asks about a specific past experience (e.g., 'Tell me about a time...'), treat it as a **Behavioral** question.\n" +
+            "- If the question is reflective, motivational, or hypothetical (e.g., 'What motivates you?', 'What would you do if...?'), treat it as a **Non-Behavioral** question.\n\n" +
+            "Use the following criteria to evaluate structure:\n\n" +
+            "FOR BEHAVIORAL QUESTIONS:\n" +
+            "- **Logical Flow**: Does the response follow a clear beginning-to-end sequence (e.g., STAR or similar)?\n" +
+            "- **Focused Narrative**: Does it stay on one cohesive story without losing direction?\n" +
+            "- **Clear Transitions**: Are there smooth connections between different stages of the story?\n" +
+            "- **Detail and Pacing**: Are key moments fleshed out while avoiding unnecessary tangents?\n" +
+            "- **Emotional Alignment**: Does the reflection and tone match the situation being described?\n\n" +
+            "FOR NON-BEHAVIORAL QUESTIONS:\n" +
+            "- **Clarity of Thought**: Is the response organized from introduction to conclusion?\n" +
+            "- **Thematic Consistency**: Does it stay focused on a central idea without drifting?\n" +
+            "- **Progression**: Does it build meaningfully toward an insight or realization?\n" +
+            "- **Balance of Depth**: Are ideas explained with enough detail without rambling?\n" +
+            "- **Tone Resonance**: Does the emotional tone support the message being conveyed?\n\n" +
+            "Evaluation Approach:\n" +
+            "Step 1: If there are structural issues, identify up to 3 in a bullet list. If the structure is **clearly strong**, skip this step.\n" +
+            "Step 2: For each issue, provide a short and practical suggestion (max 25 words). Keep the tone constructive and warm.\n\n" +
+            "Important Rules:\n" +
+            "- If the score is **8.0 or above**, do **not** suggest improvements. The structure is solid — let it be.\n" +
+            "- Only point out issues that are **noticeable or disruptive**. Don’t nitpick just because a sentence could be tighter.\n" +
+            "- Focus strictly on structural aspects — don’t judge clarity of speech, grammar, or relevance.\n" +
+            "- Never suggest more than **2 improvements**, even if you listed 3 issues.\n\n" +
+            "Your response must follow this JSON format:\n" +
+            "{\n" +
+            '  "structure": {\n' +
+            '    "waysToImprove": ["...", "..."],\n' +
+            '    "exampleResponseExcerpt": "Excerpt that shows the structure issue",\n' +
+            '    "score": float (0–10, e.g., 7.5)\n' +
+            "  }\n" +
             "}"
         ),
       ],
@@ -632,14 +656,37 @@ const evaluateResponse = async (req, res, next) => {
         systemPrompt,
         userPrompt,
         getInstructionPrompt(
-          "Your response should provide an expert-level critical evaluation of the authenticity and personality alignment of the given answer to the question.\n" +
-            "Approach to follow:\n" +
-            "Step 1: Identify up to two key issues that affect how authentically and personally the response is presented, including how well it highlights the individual’s unique character. Notes: 1. Judge the response from the eyes of a Hiring Manager 2. Don't include problems that are quite minor 3. There should be no more than 2 bullet points\n" +
-            "Step 2: Based on the highlights extracted in Step 1, suggest a way to improve each of the problem in a very brief bullet point. NOTE: 1. There should be no more than bullet points than the highlights generated in Step 1 2. The bullet point should not include suggestions related to response Relevancy, Structure, or Sentiment', as they would be covered in different prompts 3. Don't repeat the suggestions 4. The tone of the text should be warm, humane, and humorous occsionally 3. Each bullet point should have no more than 20 words.\n" +
-            "Notes: The 'waysToImprove' field array should not contain more than 2 bullet points\n" +
-            "You must provide the results in the following JSON format:\n" +
-            "{" +
-            "authenticity (json): { waysToImprove: [examples: 'Add a brief personal story to highlight your unique approach', 'Use natural, conversational phrasing to make it sound more genuine and engaging'], exampleResponseExcerpt: 'I remember staying late one night, totally wrapped up in it—it kinda turned into an obsession.', score: [float]: A score out of 10 eg: 4:653}," +
+          "You are evaluating the **authenticity and personality alignment** of a candidate’s response to an interview question. Focus **only on authenticity** — this includes how genuine, personal, and uniquely individual the response feels. Do **not** evaluate structure, relevance, grammar, or sentiment.\n\n" +
+            "Start by identifying the question type:\n" +
+            "- If the question asks about a specific past experience (e.g., 'Tell me about a time...'), treat it as a **Behavioral** question.\n" +
+            "- If the question is reflective, motivational, or hypothetical (e.g., 'What motivates you?', 'What would you do if...?'), treat it as a **Non-Behavioral** question.\n\n" +
+            "Use the following criteria to evaluate authenticity:\n\n" +
+            "FOR BEHAVIORAL QUESTIONS:\n" +
+            "- **Personal Anchoring**: Does the story include specific moments, feelings, or details that make it feel lived and personal?\n" +
+            "- **Unique Voice**: Does the speaker express the experience in a way that reflects their personality, not just a textbook or AI generated answer?\n" +
+            "- **Emotional Honesty**: Does the response reflect real emotions, motivations, or convictions — not just what they think the interviewer wants to hear?\n" +
+            "- **Avoids Clichés**: Is the language grounded in real experience instead of vague phrases like 'I’m a team player'?\n\n" +
+            "FOR NON-BEHAVIORAL QUESTIONS:\n" +
+            "- **Personal Motivation**: Are there clear, authentic reasons or stories behind what the speaker believes or chooses?\n" +
+            "- **Distinct Perspective**: Does the answer feel like something only *this* person would say?\n" +
+            "- **Conversational Warmth**: Is the tone human and relaxed, not overly polished or stiff?\n" +
+            "- **Realism & Humility**: Does the speaker show honest self-awareness — not trying to sound perfect?\n" +
+            "- **Buzzword-Free**: Does it avoid relying on generic or corporate phrases that could apply to anyone?\n\n" +
+            "Evaluation Approach:\n" +
+            "Step 1: If there are authenticity issues, identify up to **2** in a bullet list. If the response feels **genuinely authentic**, skip this step.\n" +
+            "Step 2: For each issue, provide a short and helpful suggestion (max 20 words). Keep the tone warm, supportive, and slightly human.\n\n" +
+            "Important Rules:\n" +
+            "- If the score is **8.0 or above**, do **not** suggest improvements. The authenticity is strong — let it breathe.\n" +
+            "- Only flag things that **genuinely hurt authenticity or make it feel generic**. Don’t nitpick.\n" +
+            "- Stay focused on **personal expression and voice** — do not critique structure, storytelling, or factual accuracy.\n" +
+            "- Never suggest more than **2 improvements**, even if multiple issues are found.\n\n" +
+            "Your response must follow this JSON format:\n" +
+            "{\n" +
+            '  "authenticity": {\n' +
+            '    "waysToImprove": ["...", "..."],\n' +
+            '    "exampleResponseExcerpt": "Excerpt that shows the authenticity issue",\n' +
+            '    "score": float (0–10, e.g., 7.5)\n' +
+            "  }\n" +
             "}"
         ),
       ],
@@ -679,7 +726,7 @@ const evaluateResponse = async (req, res, next) => {
       tip,
       relevance,
       structure,
-      sentiment,
+      // sentiment,
       authenticity,
       detailedFeedback,
     ] = await Promise.all([
@@ -687,7 +734,7 @@ const evaluateResponse = async (req, res, next) => {
       getTip(),
       getRelevance(),
       getStructure(),
-      getSentiment(),
+      // getSentiment(),
       getAuthenticity(),
       getDetailedaFeedback(),
     ]);
@@ -701,7 +748,7 @@ const evaluateResponse = async (req, res, next) => {
     feedback.detailedFeedback = detailedFeedback;
     feedback.summary.relevance = relevance;
     feedback.summary.structure = structure;
-    feedback.summary.sentiment = sentiment;
+    // feedback.summary.sentiment = sentiment;
     feedback.summary.authenticity = authenticity;
 
     req.results = feedback;

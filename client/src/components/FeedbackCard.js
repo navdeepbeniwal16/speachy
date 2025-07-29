@@ -76,7 +76,7 @@ const FeedbackCard = ({ heading, feedbackPoints = [], score = 0, example }) => {
           height: 4,
           borderRadius: 5,
           [`& .MuiLinearProgress-bar`]: {
-            backgroundColor: "#FA735B",
+            background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
           },
         }}
       />

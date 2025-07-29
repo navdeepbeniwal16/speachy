@@ -16,6 +16,13 @@ import { getAuth } from "firebase/auth";
 import Pricing from "../components/Pricing.js";
 import PaymentsService from "../services/payments-service.js";
 import { AppContext } from "../components/AppContext.js";
+import TrackChangesIcon from "@mui/icons-material/TrackChanges";
+import PersonIcon from "@mui/icons-material/Person";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import StackedLineChartIcon from "@mui/icons-material/StackedLineChart";
+import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
+import MicIcon from "@mui/icons-material/Mic";
+import { VictoryChart, VictoryLine, VictoryAxis, VictoryTheme } from "victory";
 
 const HomePage = () => {
   const auth = getAuth();
@@ -80,166 +87,294 @@ const HomePage = () => {
     navigate("/imprompt");
   };
 
+  // Demo data for stats and streak
+  const stats = {
+    sessions: 23,
+    confidence: 8.4,
+    time: 12, // hours
+    streak: 7,
+    streakData: [2, 3, 2, 4, 3, 2, 5],
+    days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  };
+
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, pt: 4, pb: 4, fontFamily: "Roboto" }}>
-      <Box sx={{ textAlign: "center", mb: 8 }}>
-        <Typography variant="h3" gutterBottom>
-          Welcome{" "}
-          <span
-            style={{
-              fontWeight: "bold",
-              paddingLeft: "3px",
-              paddingRight: "3px",
-              background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            {auth.currentUser.displayName.split(" ")[0]}
+    <Container
+      maxWidth="lg"
+      sx={{
+        mt: 4,
+        pt: 4,
+        pb: 4,
+        fontFamily: "Roboto",
+        background: "#faf6f4",
+        minHeight: "100vh",
+      }}
+      disableGutters
+    >
+      {/* Header Section */}
+      <Box sx={{ textAlign: "center", mb: 4 }}>
+        <img
+          src={process.env.PUBLIC_URL + "/assets/Speachy_Logo_Full_SVG.svg"}
+          alt="Speachy Logo"
+          style={{ height: 76, marginBottom: 8 }}
+        />
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 500, mb: 0.5, color: "#333" }}
+        >
+          Good afternoon,{" "}
+          {auth.currentUser?.displayName?.split(" ")[0] || "User"}!{" "}
+          <span role="img" aria-label="wave">
+            👋
           </span>
         </Typography>
-        <Typography
-          variant="subtitle1"
-          sx={{ mb: 4, color: "gray" }}
-          gutterBottom
-        >
-          Find your voice and sharpen your skills with Speachy! Whether you're
-          preparing for an interview or working on your spontaneous speaking, we
-          help your practise and provide personalised & impartial feedback to
-          help you improve.
+        <Typography variant="subtitle1" sx={{ color: "#757575", mb: 2 }}>
+          Ready to enhance your communication skills? Let's make today another
+          step forward in your speaking journey.
         </Typography>
       </Box>
 
-      <Box sx={{ mb: 8 }}>
-        <Typography
-          variant="h4"
-          sx={{ textAlign: "center", mb: 4 }}
-          gutterBottom
-        >
-          What are we working on today?
-        </Typography>
-
-        <Grid id="catalogue" container spacing={2}>
-          <Grid item xs={0} sm={0} md={1}></Grid>
-          <Grid item xs={12} sm={12} md={5}>
-            <Card
-              variant="elevation"
-              sx={{
-                display: "flex",
-                borderRadius: "10px",
-                flexDirection: "row",
-                minHeight: "110px",
-                maxHeight: "130px",
-              }}
+      {/* Stats Row */}
+      <Grid container spacing={3} sx={{ mb: 4 }} justifyContent="center">
+        <Grid item xs={12} sm={4} md={4}>
+          <Box
+            sx={{
+              background: "#fff",
+              borderRadius: 2,
+              border: "1px solid #f0f0f0",
+              p: 3,
+              textAlign: "center",
+            }}
+          >
+            <TrackChangesIcon sx={{ color: "#ff8350", fontSize: 36, mb: 1 }} />
+            <Typography variant="h5" sx={{ fontWeight: 700, color: "#333333" }}>
+              {stats.sessions}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ color: "#757575", fontWeight: 500 }}
             >
-              <CardActionArea
-                // disabled={!state.isImpromptuSpeakingEnabled}
-                onClick={navigateToImpromptSpeakingPracticePage}
-                sx={{ display: "flex", width: "100%" }}
-              >
-                <CardContent
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Typography
-                    gutterBottom
-                    variant="h5"
-                    component="div"
-                    textAlign={"center"}
-                  >
-                    🎤 Impromptu Speaking
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ textAlign: "center" }}
-                    gutterBottom
-                  >
-                    Boost your impromptu speaking with practise and feedback!
-                  </Typography>
-                  {/* {!state.isImpromptuSpeakingEnabled && (
-                    <Typography
-                      variant="subtitle2"
-                      color="text.primary"
-                      sx={{ textAlign: "center", margin: 1 }}
-                    >
-                      🔒 This is a paid feature
-                    </Typography>
-                  )} */}
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={12} md={5}>
-            <Card
-              variant="elevation"
-              sx={{
-                display: "flex",
-                borderRadius: "10px",
-                flexDirection: "row",
-                minHeight: "110px",
-                maxHeight: "130px",
-              }}
-            >
-              <CardActionArea
-                // disabled={!state.isInterviewPracticeEnabled}
-                onClick={() => navigate("/interview")}
-                sx={{ display: "flex", width: "100%" }}
-              >
-                <CardContent
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Typography
-                    gutterBottom
-                    variant="h5"
-                    component="div"
-                    textAlign={"center"}
-                  >
-                    👔 Job Interview Preparation
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ textAlign: "center" }}
-                  >
-                    Ace your interviews with practise questions and response
-                    analysis!
-                  </Typography>
-                  {/* {!state.isImpromptuSpeakingEnabled && (
-                    <Typography
-                      variant="subtitle2"
-                      color="text.primary"
-                      sx={{ textAlign: "center", margin: 1 }}
-                    >
-                      🔒 This is a paid feature
-                    </Typography>
-                  )} */}
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          </Grid>
-          <Grid item xs={0} sm={0} md={1}></Grid>
+              Sessions Completed
+            </Typography>
+          </Box>
         </Grid>
-      </Box>
+        <Grid item xs={12} sm={4} md={4}>
+          <Box
+            sx={{
+              background: "#fff",
+              borderRadius: 2,
+              border: "1px solid #f0f0f0",
+              p: 3,
+              textAlign: "center",
+            }}
+          >
+            <PersonIcon sx={{ color: "#ff8350", fontSize: 36, mb: 1 }} />
+            <Typography variant="h5" sx={{ fontWeight: 700, color: "#333333" }}>
+              {stats.confidence}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ color: "#757575", fontWeight: 500 }}
+            >
+              Avg. Confidence Score
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid item xs={12} sm={4} md={4}>
+          <Box
+            sx={{
+              background: "#fff",
+              borderRadius: 2,
+              border: "1px solid #f0f0f0",
+              p: 3,
+              textAlign: "center",
+            }}
+          >
+            <AccessTimeIcon sx={{ color: "#ff8350", fontSize: 36, mb: 1 }} />
+            <Typography variant="h5" sx={{ fontWeight: 700, color: "#333333" }}>
+              {stats.time}h
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ color: "#757575", fontWeight: 500 }}
+            >
+              Total Practice Time
+            </Typography>
+          </Box>
+        </Grid>
+      </Grid>
 
-      <Box>
-        <Typography
-          variant="subtitle1"
-          sx={{ fontStyle: "italic", textAlign: "center" }}
-        >
-          Stay tuned for new features and scenarios coming soon!
-        </Typography>
-      </Box>
+      {/* Main Content Grid */}
+      <Grid container spacing={3} justifyContent="center">
+        {/* 7-Day Streak Section */}
+        <Grid item xs={12} md={6}>
+          <Box
+            sx={{
+              background: "#fff",
+              borderRadius: 2,
+              border: "1px solid #f0f0f0",
+              p: 3,
+              height: "100%",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+              <StackedLineChartIcon sx={{ color: "#333333", mr: 1 }} />
+              <Typography
+                variant="subtitle1"
+                sx={{ fontWeight: 700, color: "#222" }}
+              >
+                Your 7-Day Streak
+              </Typography>
+            </Box>
+            <Typography
+              variant="h4"
+              sx={{ fontWeight: 700, color: "#ff8350", mb: 0.5 }}
+            >
+              {stats.streak}{" "}
+              <span style={{ fontSize: 18, fontWeight: 400, color: "#ff8350" }}>
+                days strong!
+              </span>
+            </Typography>
+            <Box sx={{ height: 180, mt: 2 }}>
+              <VictoryChart
+                theme={VictoryTheme.material}
+                height={160}
+                padding={{ top: 10, left: 40, right: 20, bottom: 30 }}
+                domain={{ y: [0, 8] }}
+              >
+                <VictoryAxis
+                  tickValues={stats.days.map((_, i) => i)}
+                  tickFormat={stats.days}
+                  style={{
+                    tickLabels: { fontSize: 12, angle: 0, fill: "#ff8350" },
+                    axis: { stroke: "#e0e0e0" },
+                    grid: { stroke: "#f0f0f0" },
+                  }}
+                />
+                <VictoryAxis
+                  dependentAxis
+                  tickFormat={(y) => (Number.isInteger(y) ? y : null)}
+                  style={{
+                    tickLabels: { fontSize: 12, fill: "#757575" },
+                    axis: { stroke: "#e0e0e0" },
+                    grid: { stroke: "#f0f0f0" },
+                  }}
+                />
+                <VictoryLine
+                  data={stats.streakData.map((y, x) => ({ x, y }))}
+                  style={{ data: { stroke: "#ff8350", strokeWidth: 2 } }}
+                  interpolation="monotoneX"
+                />
+              </VictoryChart>
+            </Box>
+            <Typography variant="caption" sx={{ color: "#757575" }}>
+              Practice sessions completed this week
+            </Typography>
+          </Box>
+        </Grid>
 
-      {/* {!loading && !state.isImpromptuSpeakingEnabled && <Pricing></Pricing>} */}
+        {/* Focus Area Cards Section */}
+        <Grid item xs={12} md={6}>
+          <Box
+            sx={{
+              background: "#fff",
+              borderRadius: 2,
+              border: "1px solid #f0f0f0",
+              p: 3,
+              height: "100%",
+            }}
+          >
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 700, color: "#222", mb: 2 }}
+            >
+              What are you working on today?
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    mb: 1,
+                    borderRadius: 2,
+                    cursor: "pointer",
+                    border: "1px solid #e0e0e0",
+                    background: "#fff",
+                    transition: "box-shadow 0.2s, border-color 0.2s",
+                    "&:hover": {
+                      borderColor: "#ff8350",
+                    },
+                    p: 2,
+                  }}
+                  onClick={() => navigate("/interview")}
+                >
+                  <WorkOutlineIcon
+                    sx={{ color: "#ff8350", fontSize: 28, mr: 2 }}
+                  />
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography
+                      variant="body1"
+                      sx={{ fontWeight: 700, color: "#333333" }}
+                    >
+                      Job Interview Preparation
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "#757575" }}>
+                      Practice interview questions and improve your responses
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: "right" }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "#ff8350", fontWeight: 700 }}
+                    >
+                      15-30 min
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+              <Grid item xs={12}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    borderRadius: 2,
+                    cursor: "pointer",
+                    border: "1px solid #e0e0e0",
+                    background: "#fff",
+                    transition: "box-shadow 0.2s, border-color 0.2s",
+                    "&:hover": { borderColor: "#ff8350" },
+                    p: 2,
+                  }}
+                  onClick={navigateToImpromptSpeakingPracticePage}
+                >
+                  <MicIcon sx={{ color: "#ff8350", fontSize: 28, mr: 2 }} />
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography
+                      variant="body1"
+                      sx={{ fontWeight: 700, color: "#333333" }}
+                    >
+                      Impromptu Speaking
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "#757575" }}>
+                      Build confidence in spontaneous communication situations
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: "right" }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "#ff8350", fontWeight: 700 }}
+                    >
+                      10-20 min
+                    </Typography>
+                  </Box>
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
+        </Grid>
+      </Grid>
 
+      {/* Loading Backdrop */}
       <div>
         <Backdrop
           sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}

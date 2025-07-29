@@ -30,7 +30,10 @@ const PracticePage = () => {
 
       <Grid container spacing={4} justifyContent="flex-start" mt={4}>
         <Grid item xs={12} sm={6} md={5}>
-          <Card elevation={1} sx={{ borderRadius: 2, padding: 2 }}>
+          <Card
+            elevation={1}
+            sx={{ borderRadius: 2, padding: 2, background: "" }}
+          >
             <CardHeader
               title={
                 <Typography
@@ -43,8 +46,10 @@ const PracticePage = () => {
             />
 
             <CardMedia
-              sx={{ height: 250, bgcolor: "#ddd" }}
-              title="Impromptu Speaking"
+              component="img"
+              image={process.env.PUBLIC_URL + "/assets/impromptu_speaking.jpeg"}
+              alt="Impromptu Speaking"
+              sx={{ height: 250, objectFit: "scale-down" }}
             />
             <CardActions sx={{ justifyContent: "center", p: 2 }}>
               <Button
@@ -82,8 +87,10 @@ const PracticePage = () => {
               }
             />
             <CardMedia
-              sx={{ height: 250, bgcolor: "#ddd" }}
-              title="Job Interview"
+              component="img"
+              image={process.env.PUBLIC_URL + "/assets/job_interview.jpeg"}
+              alt="Impromptu Speaking"
+              sx={{ height: 250, objectFit: "scale-down" }}
             />
             <CardActions sx={{ justifyContent: "center", p: 2 }}>
               <Button

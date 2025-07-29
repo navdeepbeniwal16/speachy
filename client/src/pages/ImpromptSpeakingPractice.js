@@ -149,7 +149,15 @@ const ImpromptSpeakingPractice = () => {
           audioBlob
         );
 
+      if (!response) {
+        throw new Error("No response received from the server");
+      }
+
       const feedbackResponse = response.feedback;
+      if (!feedbackResponse) {
+        throw new Error("No feedback data received from the server");
+      }
+
       feedbackResponse.duration = audioDuration;
 
       setFeedback(feedbackResponse);

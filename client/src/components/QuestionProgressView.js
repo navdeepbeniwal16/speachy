@@ -86,6 +86,22 @@ const QuestionProgressView = ({ seriesData }) => {
                     grid: { stroke: "#e0e0e0", strokeDasharray: "3,3" },
                   }}
                 />
+                {s.data.slice(-maxEntries).map((_, idx) => (
+                  <VictoryLine
+                    key={`grid-${idx}`}
+                    data={[
+                      { x: idx, y: 0 },
+                      { x: idx, y: 10 },
+                    ]}
+                    style={{
+                      data: {
+                        stroke: "#e0e0e0",
+                        strokeWidth: 1,
+                        strokeDasharray: "2,2",
+                      },
+                    }}
+                  />
+                ))}
                 <VictoryGroup
                   data={s.data
                     .slice(-maxEntries)
