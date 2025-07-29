@@ -122,7 +122,15 @@ const InterviewPractice = () => {
 
       console.log("Audio Evaluation Results:", response);
 
+      if (!response) {
+        throw new Error("No response received from the server");
+      }
+
       const feedback = response.feedback;
+      if (!feedback) {
+        throw new Error("No feedback data received from the server");
+      }
+
       feedback.duration = audioDuration; // Set duration of the audio
       updateProgressView(feedback);
       const transcription = response.transcription;

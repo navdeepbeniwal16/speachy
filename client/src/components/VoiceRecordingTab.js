@@ -14,6 +14,13 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
   const intervalRef = useRef(null);
   let chunks = [];
 
+  // Format timer to show minutes and seconds
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
   const handleRecordInner = () => {
     setIsRecording(true);
     startTimer();
@@ -117,7 +124,7 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
     >
       <TimerOutlinedIcon fontSize="large" sx={{ color: "gray", mr: "-20px" }} />
       <Typography variant="h5" sx={{ color: "gray" }}>
-        <strong>{`${timer}s`}</strong>
+        <strong>{formatTime(timer)}</strong>
       </Typography>
 
       {isLoading ? (
@@ -131,8 +138,16 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
         <Button
           variant="contained"
           onClick={isRecording ? handleSubmitInner : handleRecordInner}
-          sx={{ minWidth: "10%", textTransform: "none" }}
-          style={{ backgroundColor: "#FA735B" }}
+          sx={{
+            minWidth: "10%",
+            textTransform: "none",
+            background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
+            color: "#fff",
+            fontWeight: "bold",
+            "&:hover": {
+              background: "linear-gradient(90deg, #e7610b, #db2037)",
+            },
+          }}
         >
           <strong>{isRecording ? "Submit" : "Record"}</strong>
         </Button>

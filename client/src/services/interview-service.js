@@ -82,7 +82,7 @@ class InterviewService {
       return resultsObj;
     } catch (error) {
       console.error("Failed to fetch audio response feedback:", error);
-      return null;
+      throw error; // Re-throw the error instead of returning null
     }
   }
 
