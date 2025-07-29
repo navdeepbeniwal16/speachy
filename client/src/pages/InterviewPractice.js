@@ -53,7 +53,6 @@ const InterviewPractice = () => {
   const [responseProgressData, setResponseProgressData] = useState([
     { name: "relevance", data: [], attemptDateTime: [] },
     { name: "structure", data: [], attemptDateTime: [] },
-    { name: "sentiment", data: [], attemptDateTime: [] },
     { name: "authenticity", data: [], attemptDateTime: [] },
   ]);
 
@@ -152,7 +151,6 @@ const InterviewPractice = () => {
     console.log("InterviewPractice: updateProgressView() is called");
     const relevanceScore = feedbackData.summary.relevance.score;
     const structureScore = feedbackData.summary.structure.score;
-    const sentimentScore = feedbackData.summary.sentiment.score;
     const authenticityScore = feedbackData.summary.authenticity.score;
 
     const feedbackTimeStamp = getCurrentTime();
@@ -170,12 +168,6 @@ const InterviewPractice = () => {
           return {
             ...progress,
             data: [...progress.data, structureScore],
-            attemptDateTime: [...progress.attemptDateTime, feedbackTimeStamp],
-          };
-        } else if (progress.name === "sentiment") {
-          return {
-            ...progress,
-            data: [...progress.data, sentimentScore],
             attemptDateTime: [...progress.attemptDateTime, feedbackTimeStamp],
           };
         } else if (progress.name === "authenticity") {
