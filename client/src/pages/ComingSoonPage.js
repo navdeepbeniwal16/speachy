@@ -21,7 +21,7 @@ const ComingSoonPage = () => {
         align="center"
         gutterBottom
         sx={{
-          background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
+          background: "linear-gradient(90deg, #FA735B 20%, #FF8E53 90%)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
         }}

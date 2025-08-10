@@ -157,8 +157,10 @@ const InterviewHome = () => {
             sx={{
               overflowY: "auto",
               zIndex: 1,
-              borderRadius: "10px",
+              // borderRadius: "10px",
               mt: 2,
+              borderRadius: 2,
+              border: "1px solid #f0f0f0",
             }}
           >
             {isUploading && (
@@ -354,7 +356,7 @@ const InterviewHome = () => {
             variant="none"
             sx={{
               height: "100%",
-              borderRadius: "10px",
+              // borderRadius: "10px",
               backgroundColor: "#FFF",
               display: "flex",
               flexDirection: "column",
@@ -362,6 +364,8 @@ const InterviewHome = () => {
               alignItems: "center",
               padding: 3,
               mt: 2,
+              borderRadius: 2,
+              border: "1px solid #f0f0f0",
             }}
           >
             <Box
@@ -425,7 +429,7 @@ const InterviewHome = () => {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} sm={12} md={12} lg={12} xl={12}>
+        {/* <Grid item xs={12} sm={12} md={12} lg={12} xl={12}>
           <Paper
             variant="none"
             sx={{
@@ -451,7 +455,7 @@ const InterviewHome = () => {
 
             <QuestionsList questions={savedQuestions}></QuestionsList>
           </Paper>
-        </Grid>
+        </Grid> */}
       </Grid>
     </Container>
   );

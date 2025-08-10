@@ -204,7 +204,7 @@ const SignUp = () => {
           )}
           <Paper
             variant="elevation"
-            elevation={3}
+            elevation={2}
             sx={{
               display: "flex",
               flexDirection: "column",
@@ -213,6 +213,8 @@ const SignUp = () => {
               height: "100%",
               padding: 3,
               backgroundColor: "#fff",
+              border: "1px solid #f0f0f0",
+              borderRadius: 2,
             }}
           >
             <Box
@@ -332,28 +334,26 @@ const SignUp = () => {
                 label={
                   <Typography
                     variant="body2"
-                    sx={{
-                      fontSize: "0.875rem",
-                    }}
+                    component="span"
+                    sx={{ fontSize: "0.95rem" }}
                   >
                     I agree to the{" "}
-                    <MuiLink
-                      component="button"
-                      variant="body2"
-                      onClick={handleTermsDialogOpen}
+                    <Box
+                      component="span"
                       sx={{
                         color: "rgba(228, 71, 36, 0.94)",
                         textDecoration: "none",
-                        "&:hover": {
-                          textDecoration: "underline",
-                        },
+                        cursor: "pointer",
+                        fontSize: "0.95rem",
+                        "&:hover": { textDecoration: "underline" },
                       }}
+                      onClick={handleTermsDialogOpen}
                     >
                       Terms and Conditions
-                    </MuiLink>
+                    </Box>
                   </Typography>
                 }
-                sx={{ mt: 2, mb: 1, alignItems: "center" }}
+                sx={{ mt: 2, mb: 1 }}
               />
               {errors.terms && (
                 <Typography
@@ -370,7 +370,6 @@ const SignUp = () => {
                 variant="contained"
                 color="warning"
                 sx={{
-                  background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
                   color: "#fff",
                   fontWeight: "bold",
                   px: 4,
@@ -379,8 +378,11 @@ const SignUp = () => {
                   mt: 3,
                   mb: 2,
                   textTransform: "none",
+                  backgroundColor: "#FA735B",
+                  background:
+                    "linear-gradient(90deg, #FF8E53 20%, #FA735B 90%)",
                   "&:hover": {
-                    background: "linear-gradient(90deg, #e7610b, #db2037)",
+                    filter: "brightness(0.95)",
                   },
                 }}
               >

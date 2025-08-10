@@ -21,7 +21,7 @@ const UserProfilePage = () => {
   const auth = getAuth();
   const user = auth.currentUser;
 
-  const avatarSeeds = ["NB", "GR", "AK", "ZZ", "SH", "PS", "EM", "CK"];
+  const avatarSeeds = ["NB", "GR", "AK", "ZZ", "SH", "PS", "EM", "CK", "LL"];
   const [selectedAvatar, setSelectedAvatar] = useState(0);
   const [fullName, setFullName] = useState(user?.displayName || "");
 
@@ -91,7 +91,7 @@ const UserProfilePage = () => {
       <Box
         sx={{
           minHeight: "100vh",
-          backgroundColor: "#f5f5f5",
+          // backgroundColor: "#f5f5f5",
           display: "flex",
           flexDirection: "column",
           // p: { xs: 2, md: 4 },
@@ -160,13 +160,17 @@ const UserProfilePage = () => {
         <Button
           variant="contained"
           sx={{
-            background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
+            backgroundColor: "#FA735B",
+            background: "linear-gradient(90deg, #FF8E53 20%, #FA735B 90%)",
+            "&:hover": {
+              filter: "brightness(0.95)",
+            },
             color: "#fff",
             fontWeight: "bold",
             textTransform: "none",
-            borderRadius: 2,
+            // borderRadius: 2,
             px: 4,
-            py: 1.5,
+            py: 1,
             width: "fit-content",
           }}
           onClick={updateUserDetails}

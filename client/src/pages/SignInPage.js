@@ -172,6 +172,8 @@ const SignIn = () => {
               height: "100%",
               padding: 3,
               backgroundColor: "#fff",
+              border: "1px solid #f0f0f0",
+              borderRadius: 2,
             }}
           >
             <Box
@@ -282,7 +284,7 @@ const SignIn = () => {
                 variant="contained"
                 color="warning"
                 sx={{
-                  background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
+                  // background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
                   color: "#fff",
                   fontWeight: "bold",
                   px: 4,
@@ -291,8 +293,11 @@ const SignIn = () => {
                   mt: 3,
                   mb: 2,
                   textTransform: "none",
+                  backgroundColor: "#FA735B",
+                  background:
+                    "linear-gradient(90deg, #FF8E53 20%, #FA735B 90%)",
                   "&:hover": {
-                    background: "linear-gradient(90deg, #e7610b, #db2037)",
+                    filter: "brightness(0.95)",
                   },
                 }}
               >

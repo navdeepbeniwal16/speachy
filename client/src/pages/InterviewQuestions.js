@@ -212,7 +212,7 @@ const InterviewQuestions = () => {
           mb: 3,
           py: 2,
           background: "#fff",
-          borderRadius: "16px", // match dashboard
+          // borderRadius: "16px", // match dashboard
           boxShadow: "0 2px 8px rgba(250, 115, 91, 0.04)",
           border: "1px solid #f0e6e1",
           display: "flex",
@@ -220,6 +220,8 @@ const InterviewQuestions = () => {
           alignItems: { xs: "flex-start", sm: "center" },
           gap: 3,
           justifyContent: { xs: "flex-start", sm: "space-between" },
+          borderRadius: 2,
+          // border: "1px solid #f0f0f0",
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>

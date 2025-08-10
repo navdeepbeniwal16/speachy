@@ -104,7 +104,8 @@ const FAQPage = () => {
         align="center"
         gutterBottom
         sx={{
-          background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
+          // background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
+          background: "linear-gradient(90deg, #FA735B 20%, #FF8E53 90%)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
         }}
@@ -196,15 +197,17 @@ const FAQPage = () => {
           onClick={() => uploadUserFeedback(rating, userFeedback)}
           disabled={!rating && userFeedback.trim() === ""}
           sx={{
-            background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
+            // background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
             color: "#fff",
             fontWeight: "bold",
             px: 4,
-            py: 1.5,
-            borderRadius: 2,
+            py: 1,
+            // borderRadius: 2,
             textTransform: "none",
+            backgroundColor: "#FA735B",
+            background: "linear-gradient(90deg, #FF8E53 20%, #FA735B 90%)",
             "&:hover": {
-              background: "linear-gradient(90deg, #e7610b, #db2037)",
+              filter: "brightness(0.95)",
             },
           }}
         >

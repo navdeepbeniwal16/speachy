@@ -31,8 +31,13 @@ const PracticePage = () => {
       <Grid container spacing={4} justifyContent="flex-start" mt={4}>
         <Grid item xs={12} sm={6} md={5}>
           <Card
-            elevation={1}
-            sx={{ borderRadius: 2, padding: 2, background: "" }}
+            elevation={0}
+            sx={{
+              border: "1px solid #f0f0f0",
+              borderRadius: 2,
+              padding: 2,
+              background: "",
+            }}
           >
             <CardHeader
               title={
@@ -47,7 +52,7 @@ const PracticePage = () => {
 
             <CardMedia
               component="img"
-              image={process.env.PUBLIC_URL + "/assets/impromptu_speaking.jpeg"}
+              image={process.env.PUBLIC_URL + "/assets/impromptu_speaking.png"}
               alt="Impromptu Speaking"
               sx={{ height: 250, objectFit: "scale-down" }}
             />
@@ -56,15 +61,17 @@ const PracticePage = () => {
                 variant="contained"
                 onClick={() => navigate("/imprompt")}
                 sx={{
-                  background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
                   color: "#fff",
                   fontWeight: "bold",
                   px: 4,
-                  py: 1.5,
-                  borderRadius: 2,
+                  py: 1,
                   textTransform: "none",
+                  backgroundColor: "#FA735B",
+                  background:
+                    "linear-gradient(90deg, #FF8E53 20%, #FA735B 90%)",
                   "&:hover": {
-                    background: "linear-gradient(90deg, #e7610b, #db2037)",
+                    background:
+                      "linear-gradient(90deg, #FA735B 20%, #FF8E53 90%)",
                   },
                 }}
               >
@@ -75,7 +82,10 @@ const PracticePage = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={5}>
-          <Card elevation={1} sx={{ borderRadius: 2, padding: 2 }}>
+          <Card
+            elevation={0}
+            sx={{ border: "1px solid #f0f0f0", borderRadius: 2, padding: 2 }}
+          >
             <CardHeader
               title={
                 <Typography
@@ -88,24 +98,29 @@ const PracticePage = () => {
             />
             <CardMedia
               component="img"
-              image={process.env.PUBLIC_URL + "/assets/job_interview.jpeg"}
+              image={process.env.PUBLIC_URL + "/assets/job_interview.png"}
               alt="Impromptu Speaking"
               sx={{ height: 250, objectFit: "scale-down" }}
             />
             <CardActions sx={{ justifyContent: "center", p: 2 }}>
               <Button
                 variant="contained"
+                elevation={0}
                 onClick={() => navigate("/interview")}
                 sx={{
-                  background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
+                  // background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
                   color: "#fff",
                   fontWeight: "bold",
                   px: 4,
-                  py: 1.5,
-                  borderRadius: 2,
+                  py: 1,
+
                   textTransform: "none",
+                  backgroundColor: "#FA735B",
+                  background:
+                    "linear-gradient(90deg, #FF8E53 20%, #FA735B 90%)",
                   "&:hover": {
-                    background: "linear-gradient(90deg, #e7610b, #db2037)",
+                    background:
+                      "linear-gradient(90deg, #FA735B 20%, #FF8E53 90%)",
                   },
                 }}
               >

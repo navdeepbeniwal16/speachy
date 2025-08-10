@@ -92,7 +92,7 @@ const HomePage = () => {
     sessions: 23,
     confidence: 8.4,
     time: 12, // hours
-    streak: 7,
+    streak: 5,
     streakData: [2, 3, 2, 4, 3, 2, 5],
     days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
   };
@@ -118,7 +118,8 @@ const HomePage = () => {
           style={{ height: 76, marginBottom: 8 }}
         />
         <Typography
-          variant="h6"
+          variant="h5"
+          fontWeight="bold"
           sx={{ fontWeight: 500, mb: 0.5, color: "#333" }}
         >
           Good afternoon,{" "}
@@ -222,14 +223,22 @@ const HomePage = () => {
                 variant="subtitle1"
                 sx={{ fontWeight: 700, color: "#222" }}
               >
-                Your 7-Day Streak
+                Your Weekly Streak
               </Typography>
             </Box>
             <Typography
               variant="h4"
               sx={{ fontWeight: 700, color: "#ff8350", mb: 0.5 }}
             >
-              {stats.streak}{" "}
+              <span
+                style={{
+                  color: "linear-gradient(90deg, #FA735B 20%, #FF8E53 90%)",
+                }}
+              >
+                {" "}
+                {stats.streak}{" "}
+              </span>
+
               <span style={{ fontSize: 18, fontWeight: 400, color: "#ff8350" }}>
                 days strong!
               </span>
