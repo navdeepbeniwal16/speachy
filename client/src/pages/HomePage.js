@@ -87,6 +87,18 @@ const HomePage = () => {
     navigate("/imprompt");
   };
 
+  // Function to get time-based greeting
+  const getTimeBasedGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) {
+      return "Good morning";
+    } else if (hour < 17) {
+      return "Good afternoon";
+    } else {
+      return "Good evening";
+    }
+  };
+
   // Demo data for stats and streak
   const stats = {
     sessions: 23,
@@ -122,8 +134,12 @@ const HomePage = () => {
           fontWeight="bold"
           sx={{ fontWeight: 500, mb: 0.5, color: "#333" }}
         >
-          Good afternoon,{" "}
-          {auth.currentUser?.displayName?.split(" ")[0] || "User"}!{" "}
+          {getTimeBasedGreeting()},{" "}
+          {(auth.currentUser?.displayName?.split(" ")[0] || "User")
+            .charAt(0)
+            .toUpperCase() +
+            (auth.currentUser?.displayName?.split(" ")[0] || "User").slice(1)}
+          !{" "}
           <span role="img" aria-label="wave">
             👋
           </span>
@@ -176,7 +192,7 @@ const HomePage = () => {
               variant="body2"
               sx={{ color: "#757575", fontWeight: 500 }}
             >
-              Avg. Confidence Score
+              Avg. Communication Score
             </Typography>
           </Box>
         </Grid>
