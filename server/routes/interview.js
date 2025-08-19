@@ -34,7 +34,26 @@ const getPreSelectedQuestions = () => {
       isAIGenerated: false,
     },
     {
-      question: "What are your greatest strengths?",
+      question: "What are your expectations of this role?",
+      tags: ["general"],
+      difficultyLevel: "medium",
+      isAIGenerated: false,
+    },
+    {
+      question:
+        "Describe a difficult work situation/project and how you overcame it",
+      tags: ["general"],
+      difficultyLevel: "medium",
+      isAIGenerated: false,
+    },
+    {
+      question: "What are your strengths?",
+      tags: ["general"],
+      difficultyLevel: "medium",
+      isAIGenerated: false,
+    },
+    {
+      question: "What is your greatest weakness?",
       tags: ["general"],
       difficultyLevel: "medium",
       isAIGenerated: false,
@@ -762,13 +781,49 @@ const evaluateResponse = async (req, res, next) => {
   }
 };
 
-router.post("/evaluate-response-text", evaluateResponse, (req, res, next) => {
-  const results = req.results;
-  res.json({
-    message: "Question response successfully evaluated",
-    results: results,
-  });
-});
+router.post(
+  "/evaluate-response-text",
+  evaluateResponse,
+  async (req, res, next) => {
+    const results = req.results;
+    const { questionText } = req.body;
+
+    // Record session after successful evaluation
+    try {
+      const sessionResponse = await fetch(
+        `${req.protocol}://${req.get("host")}/user/sessions/record`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: req.headers.authorization,
+          },
+          body: JSON.stringify({
+            sessionType: "interview",
+            questionText: questionText,
+          }),
+        }
+      );
+
+      if (sessionResponse.ok) {
+        const sessionData = await sessionResponse.json();
+        console.log("Session recorded successfully:", sessionData);
+      } else {
+        console.warn(
+          "Failed to record session, but evaluation completed successfully"
+        );
+      }
+    } catch (error) {
+      console.error("Error recording session:", error);
+      // Don't fail the evaluation if session recording fails
+    }
+
+    res.json({
+      message: "Question response successfully evaluated",
+      results: results,
+    });
+  }
+);
 
 router.post(
   "/evaluate-response-audio",
@@ -780,9 +835,41 @@ router.post(
     next();
   },
   evaluateResponse,
-  (req, res, next) => {
+  async (req, res, next) => {
     const feedback = req.results;
     const transcription = req.transcription;
+    const { questionText } = req.body;
+
+    // Record session after successful evaluation
+    try {
+      const sessionResponse = await fetch(
+        `${req.protocol}://${req.get("host")}/user/sessions/record`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: req.headers.authorization,
+          },
+          body: JSON.stringify({
+            sessionType: "interview",
+            questionText: questionText,
+          }),
+        }
+      );
+
+      if (sessionResponse.ok) {
+        const sessionData = await sessionResponse.json();
+        console.log("Session recorded successfully:", sessionData);
+      } else {
+        console.warn(
+          "Failed to record session, but evaluation completed successfully"
+        );
+      }
+    } catch (error) {
+      console.error("Error recording session:", error);
+      // Don't fail the evaluation if session recording fails
+    }
+
     res.json({
       message: "Question response successfully evaluated",
       results: {
