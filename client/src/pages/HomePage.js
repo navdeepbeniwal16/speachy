@@ -19,10 +19,10 @@ import { AppContext } from "../components/AppContext.js";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import PersonIcon from "@mui/icons-material/Person";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import StackedLineChartIcon from "@mui/icons-material/StackedLineChart";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import MicIcon from "@mui/icons-material/Mic";
-import { VictoryChart, VictoryLine, VictoryAxis, VictoryTheme } from "victory";
+// Streak calendar view (scaffold)
+import StreakCalendar from "../components/StreakCalendar";
 
 const HomePage = () => {
   const auth = getAuth();
@@ -99,14 +99,37 @@ const HomePage = () => {
     }
   };
 
-  // Demo data for stats and streak
+  // Demo data for stats and streak calendar
+  // Generate some active dates over the last 8 weeks with a current 5-day streak
+  const dateToYMD = (d) => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
+  const addDays = (date, delta) => {
+    const d = new Date(date);
+    d.setDate(d.getDate() + delta);
+    return d;
+  };
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const activeDates = (() => {
+    const set = new Set();
+    // Ensure a current 5-day streak (includes today)
+    for (let i = 0; i < 5; i++) {
+      set.add(dateToYMD(addDays(today, -i)));
+    }
+    // Sprinkle a few other actives in the last ~40 days
+    const offsets = [7, 9, 12, 15, 18, 20, 24, 28, 31, 34, 38, 41, 45];
+    offsets.forEach((o) => set.add(dateToYMD(addDays(today, -o))));
+    return Array.from(set);
+  })();
+
   const stats = {
     sessions: 23,
     confidence: 8.4,
     time: 12, // hours
-    streak: 5,
-    streakData: [2, 3, 2, 4, 3, 2, 5],
-    days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
   };
 
   return (
@@ -222,7 +245,7 @@ const HomePage = () => {
 
       {/* Main Content Grid */}
       <Grid container spacing={3} justifyContent="center">
-        {/* 7-Day Streak Section */}
+        {/* Streak Calendar Section */}
         <Grid item xs={12} md={6}>
           <Box
             sx={{
@@ -233,66 +256,14 @@ const HomePage = () => {
               height: "100%",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-              <StackedLineChartIcon sx={{ color: "#333333", mr: 1 }} />
-              <Typography
-                variant="subtitle1"
-                sx={{ fontWeight: 700, color: "#222" }}
-              >
-                Your Weekly Streak
-              </Typography>
-            </Box>
-            <Typography
-              variant="h4"
-              sx={{ fontWeight: 700, color: "#ff8350", mb: 0.5 }}
-            >
-              <span
-                style={{
-                  color: "linear-gradient(90deg, #FA735B 20%, #FF8E53 90%)",
-                }}
-              >
-                {" "}
-                {stats.streak}{" "}
-              </span>
-
-              <span style={{ fontSize: 18, fontWeight: 400, color: "#ff8350" }}>
-                days strong!
-              </span>
-            </Typography>
-            <Box sx={{ height: 180, mt: 2 }}>
-              <VictoryChart
-                theme={VictoryTheme.material}
-                height={160}
-                padding={{ top: 10, left: 40, right: 20, bottom: 30 }}
-                domain={{ y: [0, 8] }}
-              >
-                <VictoryAxis
-                  tickValues={stats.days.map((_, i) => i)}
-                  tickFormat={stats.days}
-                  style={{
-                    tickLabels: { fontSize: 12, angle: 0, fill: "#ff8350" },
-                    axis: { stroke: "#e0e0e0" },
-                    grid: { stroke: "#f0f0f0" },
-                  }}
-                />
-                <VictoryAxis
-                  dependentAxis
-                  tickFormat={(y) => (Number.isInteger(y) ? y : null)}
-                  style={{
-                    tickLabels: { fontSize: 12, fill: "#757575" },
-                    axis: { stroke: "#e0e0e0" },
-                    grid: { stroke: "#f0f0f0" },
-                  }}
-                />
-                <VictoryLine
-                  data={stats.streakData.map((y, x) => ({ x, y }))}
-                  style={{ data: { stroke: "#ff8350", strokeWidth: 2 } }}
-                  interpolation="monotoneX"
-                />
-              </VictoryChart>
-            </Box>
-            <Typography variant="caption" sx={{ color: "#757575" }}>
-              Practice sessions completed this week
+            <StreakCalendar
+              title="Your Weekly Streak"
+              activeDates={activeDates}
+              showLegend
+              highlightCurrentStreak
+            />
+            <Typography variant="caption" sx={{ color: "#757575", display: "block", mt: 1 }}>
+              Activity over the last 8 weeks
             </Typography>
           </Box>
         </Grid>
