@@ -7,9 +7,24 @@ const OpenAI = require("openai");
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
+const winston = require("winston");
+const firebaseAdmin = require("../configs/firebase-admin.js");
+const { getFirestore } = require("firebase-admin/firestore");
 
 // Constants
 const TEMPORARY_AUDIO_FILENAME = "temp_audio_file.mp3";
+
+// Firestore constants for preselected questions
+const INTERVIEW_QUESTIONS_COLLECTION = "interview_questions";
+
+// Logging setup (aligned with impromptu-speaking route)
+const LOG_LEVEL = process.env.LOG_LEVEL || "info";
+const logger = winston.createLogger({
+  level: LOG_LEVEL,
+  format: winston.format.json(),
+  defaultMeta: { service: "interview" },
+  transports: [new winston.transports.Console({ format: winston.format.simple() })],
+});
 
 // Initialise services
 const openai = new OpenAI({
@@ -18,133 +33,55 @@ const openai = new OpenAI({
 });
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
+// Firestore db
+const db = getFirestore(firebaseAdmin);
 
-const getPreSelectedQuestions = () => {
-  const questions = [
-    {
-      question: "Can you tell me about yourself?",
-      tags: ["general"],
-      difficultyLevel: "medium",
-      isAIGenerated: false,
-    },
-    {
-      question: "Why do you want to work here?",
-      tags: ["general"],
-      difficultyLevel: "medium",
-      isAIGenerated: false,
-    },
-    {
-      question: "What are your expectations of this role?",
-      tags: ["general"],
-      difficultyLevel: "medium",
-      isAIGenerated: false,
-    },
-    {
-      question:
-        "Describe a difficult work situation/project and how you overcame it",
-      tags: ["general"],
-      difficultyLevel: "medium",
-      isAIGenerated: false,
-    },
-    {
-      question: "What are your strengths?",
-      tags: ["general"],
-      difficultyLevel: "medium",
-      isAIGenerated: false,
-    },
-    {
-      question: "What is your greatest weakness?",
-      tags: ["general"],
-      difficultyLevel: "medium",
-      isAIGenerated: false,
-    },
-    {
-      question: "Describe your ideal work environment.",
-      tags: ["general"],
-      difficultyLevel: "easy",
-      isAIGenerated: false,
-    },
-    {
-      question: "What motivates you?",
-      tags: ["general"],
-      difficultyLevel: "medium",
-      isAIGenerated: false,
-    },
-    {
-      question: "Where do you see yourself in five years?",
-      tags: ["general"],
-      difficultyLevel: "hard",
-      isAIGenerated: false,
-    },
-    {
-      question: "What makes you a good fit for this role?",
-      tags: ["general"],
-      difficultyLevel: "medium",
-      isAIGenerated: false,
-    },
-    {
-      question: "Can you describe a successful project you worked on?",
-      tags: ["general"],
-      difficultyLevel: "hard",
-      isAIGenerated: false,
-    },
-    {
-      question: "What inspired you to pursue this career?",
-      tags: ["general"],
-      difficultyLevel: "medium",
-      isAIGenerated: false,
-    },
-    {
-      question: "What are you passionate about outside of work?",
-      tags: ["general"],
-      difficultyLevel: "easy",
-      isAIGenerated: false,
-    },
-    {
-      question: "What’s the best advice you’ve ever received?",
-      tags: ["general"],
-      difficultyLevel: "hard",
-      isAIGenerated: false,
-    },
-    {
-      question: "How do you define success?",
-      tags: ["general"],
-      difficultyLevel: "hard",
-      isAIGenerated: false,
-    },
-    {
-      question: "What is your biggest weakness?",
-      tags: ["general"],
-      difficultyLevel: "medium",
-      isAIGenerated: false,
-    },
-    {
-      question: "If you were an animal, which one would you be?",
-      tags: ["curveball"],
-      difficultyLevel: "hard",
-      isAIGenerated: false,
-    },
-    {
-      question: "What would you do if you won the lottery tomorrow?",
-      tags: ["curveball"],
-      difficultyLevel: "hard",
-      isAIGenerated: false,
-    },
-    {
-      question:
-        "What’s the most interesting thing about you that’s not on your resume?",
-      tags: ["curveball"],
-      difficultyLevel: "hard",
-      isAIGenerated: false,
-    },
-    {
-      question: "If you had to give a TED talk, what would it be about?",
-      tags: ["curveball"],
-      difficultyLevel: "hard",
-      isAIGenerated: false,
-    },
-  ];
+// Fetch preselected questions from Firestore (single collection, optional rank ordering)
+const DEFAULT_PRESELECTED_LIMIT = Number(
+  process.env.INTERVIEW_PRESELECTED_LIMIT || 50
+);
 
+const normalizeQuestion = (q) => {
+  if (!q || typeof q.question !== "string" || q.question.trim() === "") {
+    return null;
+  }
+  return {
+    question: q.question,
+    tags: Array.isArray(q.tags) ? q.tags : ["general"],
+    difficultyLevel:
+      typeof q.difficultyLevel === "string" ? q.difficultyLevel : "medium",
+    isAIGenerated: false,
+  };
+};
+
+const getPreSelectedQuestions = async () => {
+  logger.debug("Fetching curated interview questions from Firestore...");
+  let snapshot;
+  try {
+    // Preferred: active == true ordered by rank
+    snapshot = await db
+      .collection(INTERVIEW_QUESTIONS_COLLECTION)
+      .where("active", "==", true)
+      .orderBy("rank")
+      .limit(DEFAULT_PRESELECTED_LIMIT)
+      .get();
+  } catch (err) {
+    logger.warn(
+      "Rank ordering unavailable or index missing; falling back to basic active filter.",
+      { error: err.message }
+    );
+    snapshot = await db
+      .collection(INTERVIEW_QUESTIONS_COLLECTION)
+      .where("active", "==", true)
+      .limit(DEFAULT_PRESELECTED_LIMIT)
+      .get();
+  }
+
+  const questions = snapshot.docs
+    .map((d) => normalizeQuestion(d.data()))
+    .filter((q) => q !== null);
+
+  logger.info(`Fetched ${questions.length} curated interview questions.`);
   return questions;
 };
 
@@ -244,7 +181,7 @@ router.post("/fetch-questions", async (req, res) => {
   }); // TODO: Include a logger instead of console statement
 
   try {
-    const predefinedQuestions = getPreSelectedQuestions();
+    const predefinedQuestions = await getPreSelectedQuestions();
 
     const generatedQuestions = await getQuestionsSet(
       company,
