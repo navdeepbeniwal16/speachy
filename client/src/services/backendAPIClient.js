@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getAuth } from "firebase/auth";
+import { auth } from "./firebase";
 
 const backendApiClient = axios.create({
   baseURL: process.env.REACT_APP_API_BASE_URL,
@@ -8,7 +8,6 @@ const backendApiClient = axios.create({
 // Interceptor to add the token to each request
 backendApiClient.interceptors.request.use(
   async (config) => {
-    const auth = getAuth();
     const user = auth.currentUser;
 
     if (user) {

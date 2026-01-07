@@ -8,6 +8,7 @@ import {
   Skeleton,
   Grid,
   Collapse,
+  Stack,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +22,14 @@ import FeedbackPane from "../components/FeedbackPane";
 import { ReactComponent as FeedbackIcon } from "../assets/chat-evaluation.svg";
 import SnackbarAlert from "../components/SnackbarAlert";
 
+const PAGE_BG = "#fff4ef";
+const SURFACE_BG = "#ffffff";
+const SURFACE_BORDER = "1px solid rgba(252,150,120,0.14)";
+const SURFACE_SHADOW = "0 18px 36px rgba(252,150,120,0.12)";
+const HEADING_COLOR = "#2f170f";
+const BODY_COLOR = "rgba(60,32,25,0.78)";
+const ACCENT_COLOR = "#FA735B";
+
 const TranscriptionBox = ({ transcription, audioUrl }) => {
   const [showText, setShowText] = useState(false);
 
@@ -29,35 +38,39 @@ const TranscriptionBox = ({ transcription, audioUrl }) => {
   };
 
   return (
-    <Box sx={{ bgcolor: "#fff", py: 2, px: 2, borderRadius: "10px" }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Typography variant="h6" sx={{ width: "100%" }}>
+    <Paper
+      elevation={0}
+      sx={{
+        backgroundColor: SURFACE_BG,
+        border: SURFACE_BORDER,
+        boxShadow: SURFACE_SHADOW,
+        borderRadius: 3,
+        p: 3,
+      }}
+    >
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="center">
+        <Typography
+          variant="h6"
+          sx={{ color: HEADING_COLOR, fontWeight: 600, flexShrink: 0 }}
+        >
           Transcription
         </Typography>
-
         <audio
           src={audioUrl}
           controls
-          style={{ width: "100%", marginRight: "5px" }}
+          style={{ width: "100%", maxWidth: "360px" }}
         />
-
-        <IconButton onClick={handleToggleText}>
+        <IconButton onClick={handleToggleText} color="inherit">
           {showText ? <ExpandLessIcon /> : <ExpandMoreIcon />}
         </IconButton>
-      </Box>
+      </Stack>
 
       <Collapse in={showText}>
-        <Typography variant="body2" sx={{ mt: 2 }}>
+        <Typography variant="body2" sx={{ mt: 2, color: BODY_COLOR }}>
           {transcription}
         </Typography>
       </Collapse>
-    </Box>
+    </Paper>
   );
 };
 
@@ -177,144 +190,184 @@ const ImpromptSpeakingPractice = () => {
   };
 
   return (
-    <Container component="main" maxWidth="lg">
-      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-        <IconButton onClick={() => navigate("/")}>
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography variant="h6" gutterBottom>
-          🎤 Impromptu Speaking
-        </Typography>
-        <Box></Box>
-      </Box>
-
-      <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <Box>
-          {prompt ? (
-            <Paper
-              variant="rounded"
-              sx={{
-                p: 2,
-                my: 2,
-                borderRadius: "10px",
-                backgroundColor: "#fff",
-              }}
-            >
-              <Typography
-                variant="body"
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  fontWeight: "bold",
-                  color: "#333333",
-                }}
-              >
-                {prompt.question}
-              </Typography>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  mt: 1,
-                }}
-              >
-                <Chip
-                  variant="filled"
-                  size="small"
-                  label={
-                    prompt.difficulty.charAt(0).toUpperCase() +
-                    prompt.difficulty.slice(1).toLowerCase()
-                  }
-                />
-                <IconButton onClick={fetchPrompt}>
-                  <RefreshIcon sx={{ height: "20px", color: "gray" }} />
-                </IconButton>
-              </Box>
-            </Paper>
-          ) : (
-            <Skeleton
-              variant="rectangular"
-              sx={{ mx: 1, mt: 2, borderRadius: "10px" }}
-              height={118}
-            />
-          )}
-
-          <Box
-            sx={{
-              flexGrow: 1,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              mt: 2,
-              mb: 3,
-            }}
+    <Box
+      sx={{
+        minHeight: "100vh",
+        backgroundColor: PAGE_BG,
+        py: { xs: 4, md: 6 },
+      }}
+    >
+      <Container component="main" maxWidth="lg">
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+          }}
+        >
+          <IconButton
+            onClick={() => navigate("/")}
+            sx={{ color: HEADING_COLOR, borderRadius: 2 }}
           >
-            <VoiceRecordingTab
-              handleRecord={() => console.log("Handle record is pressed...")}
-              handleSubmit={handleVoiceRecordingSubmit}
-              style={{ width: "100%" }}
-            />
-          </Box>
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography
+            variant="h6"
+            sx={{ color: HEADING_COLOR, fontWeight: 600 }}
+          >
+            🎤 Impromptu Speaking
+          </Typography>
+          <Box sx={{ width: 40 }} />
         </Box>
-      </Box>
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} lg={6}>
-          <Box sx={{ mt: "auto", mb: 0 }}>
-            <TranscriptionBox
-              transcription={transcription.text}
-              audioUrl={audioUrl}
-            />
-          </Box>
-        </Grid>
-
-        <Grid item xs={12} lg={6}>
-          <Box sx={{ minHeight: "40vh" }}>
-            <Paper
-              variant="elevation"
-              elevation={0}
-              sx={{
-                borderRadius: "10px",
-                height: "100%",
-                overflowY: "auto",
-              }}
-            >
-              {feedback ? (
-                <FeedbackPane
-                  feedback={feedback}
-                  transcription={transcription}
-                />
-              ) : (
+        <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+          <Box>
+            {prompt ? (
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  my: 2,
+                  borderRadius: 3,
+                  backgroundColor: SURFACE_BG,
+                  border: SURFACE_BORDER,
+                  boxShadow: SURFACE_SHADOW,
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    fontWeight: 600,
+                    color: HEADING_COLOR,
+                  }}
+                >
+                  {prompt.question}
+                </Typography>
                 <Box
                   sx={{
                     display: "flex",
-                    flexDirection: "column",
+                    justifyContent: "space-between",
                     alignItems: "center",
-                    justifyContent: "center",
-                    p: 3,
+                    mt: 1,
                   }}
                 >
-                  <FeedbackIcon
-                    style={{ width: 300, height: 300, marginBottom: 8 }}
+                  <Chip
+                    variant="filled"
+                    size="small"
+                    sx={{
+                      backgroundColor: "#ffe3d6",
+                      color: "#f46a32",
+                      fontWeight: 600,
+                    }}
+                    label={
+                      prompt.difficulty.charAt(0).toUpperCase() +
+                      prompt.difficulty.slice(1).toLowerCase()
+                    }
                   />
-                  <Typography variant="subtitle2" sx={{ textAlign: "center" }}>
-                    {isEvaluating
-                      ? "Hang tight! We're processing your response..."
-                      : "Your personalised feedback will be shown here..."}
-                  </Typography>
+                  <IconButton onClick={fetchPrompt}>
+                    <RefreshIcon sx={{ height: 20, color: "#b07a6a" }} />
+                  </IconButton>
                 </Box>
-              )}
-            </Paper>
-            <SnackbarAlert
-              alertType={alertType}
-              alertMessage={alertMessage}
-              isOpen={isAlertOpen}
-            />
+              </Paper>
+            ) : (
+              <Skeleton
+                variant="rectangular"
+                sx={{
+                  mx: 1,
+                  mt: 2,
+                  borderRadius: 3,
+                  backgroundColor: SURFACE_BG,
+                }}
+                height={118}
+              />
+            )}
+
+            <Box
+              sx={{
+                flexGrow: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                mt: 2,
+                mb: 3,
+              }}
+            >
+              <VoiceRecordingTab
+                handleRecord={() =>
+                  console.log("Handle record is pressed...")
+                }
+                handleSubmit={handleVoiceRecordingSubmit}
+                style={{ width: "100%" }}
+              />
+            </Box>
           </Box>
+        </Box>
+
+        <Grid container spacing={3}>
+          <Grid item xs={12} lg={6}>
+            <Box sx={{ mt: "auto", mb: 0 }}>
+              <TranscriptionBox
+                transcription={transcription.text}
+                audioUrl={audioUrl}
+              />
+            </Box>
+          </Grid>
+
+          <Grid item xs={12} lg={6}>
+            <Box sx={{ minHeight: "40vh" }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  borderRadius: 3,
+                  height: "100%",
+                  overflowY: "auto",
+                  backgroundColor: SURFACE_BG,
+                  border: SURFACE_BORDER,
+                  boxShadow: SURFACE_SHADOW,
+                }}
+              >
+                {feedback ? (
+                  <FeedbackPane
+                    feedback={feedback}
+                    transcription={transcription}
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      p: 3,
+                    }}
+                  >
+                    <FeedbackIcon
+                      style={{ width: 260, height: 260, marginBottom: 8 }}
+                    />
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ textAlign: "center", color: BODY_COLOR }}
+                    >
+                      {isEvaluating
+                        ? "Hang tight! We're processing your response..."
+                        : "Your personalised feedback will be shown here..."}
+                    </Typography>
+                  </Box>
+                )}
+              </Paper>
+              <SnackbarAlert
+                alertType={alertType}
+                alertMessage={alertMessage}
+                isOpen={isAlertOpen}
+              />
+            </Box>
+          </Grid>
         </Grid>
-      </Grid>
-    </Container>
+      </Container>
+    </Box>
   );
 };
 

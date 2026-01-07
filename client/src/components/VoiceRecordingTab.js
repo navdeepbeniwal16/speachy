@@ -141,11 +141,15 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
           sx={{
             minWidth: "10%",
             textTransform: "none",
-            background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
+            backgroundColor: "#FA735B",
             color: "#fff",
             fontWeight: "bold",
+            boxShadow:
+              "0px 12px 24px -12px rgba(250,115,91,0.7), 0px 10px 18px -14px rgba(49,30,20,0.35)",
             "&:hover": {
-              background: "linear-gradient(90deg, #e7610b, #db2037)",
+              backgroundColor: "#f8643f",
+              boxShadow:
+                "0px 14px 26px -12px rgba(250,115,91,0.8), 0px 12px 18px -14px rgba(49,30,20,0.35)",
             },
           }}
         >

@@ -25,6 +25,8 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
+const NAV_ICON_SX = { color: "#2f170f", borderRadius: 2 };
+
 const InterviewQuestions = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -195,7 +197,7 @@ const InterviewQuestions = () => {
           justifyContent: "space-between",
         }}
       >
-        <IconButton onClick={() => navigate("/interview")}>
+        <IconButton onClick={() => navigate("/interview")} sx={NAV_ICON_SX}>
           <ArrowBackIcon></ArrowBackIcon>
         </IconButton>
         <Typography variant="h6" gutterBottom>

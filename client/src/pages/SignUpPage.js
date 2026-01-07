@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Avatar,
   Button,
   TextField,
   Paper,
@@ -9,6 +8,9 @@ import {
   Grid,
   Typography,
   Container,
+  CssBaseline,
+  Stack,
+  Chip,
   LinearProgress,
   Snackbar,
   Alert,
@@ -21,11 +23,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Link as MuiLink,
 } from "@mui/material";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -179,255 +180,366 @@ const SignUp = () => {
   };
 
   return (
-    <Container
+    <Box
       sx={{
-        padding: 0,
+        minHeight: "100vh",
+        background:
+          "linear-gradient(135deg, #fff8f5 0%, #ffe4db 40%, #fff9f5 100%)",
+        position: "relative",
+        overflow: "hidden",
+        py: { xs: 6, md: 10 },
       }}
     >
-      <Grid
-        container
-        component="main"
+      <CssBaseline />
+      <Box
         sx={{
-          height: "80vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#f9f5f4",
+          position: "absolute",
+          width: 420,
+          height: 420,
+          top: -160,
+          right: -140,
+          background: "rgba(250, 115, 91, 0.18)",
+          filter: "blur(60px)",
+          borderRadius: "50%",
         }}
-      >
-        {/* <Grid item xs={false} sm={12} md={3} lg={4} /> */}
-        <Grid item xs={12} sm={12} md={6} lg={4}>
-          {isSigningUp && (
-            <Box sx={{ width: "100%" }}>
-              <LinearProgress color="warning" />
-            </Box>
-          )}
-          <Paper
-            variant="elevation"
-            elevation={2}
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "100%",
-              padding: 3,
-              backgroundColor: "#fff",
-              border: "1px solid #f0f0f0",
-              borderRadius: 2,
-            }}
-          >
-            <Box
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          width: 360,
+          height: 360,
+          bottom: -140,
+          left: -120,
+          background: "rgba(255, 180, 130, 0.16)",
+          filter: "blur(70px)",
+          borderRadius: "50%",
+        }}
+      />
+      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
+        <Grid
+          container
+          spacing={{ xs: 6, md: 10 }}
+          alignItems="center"
+          justifyContent="space-between"
+        >
+          <Grid item xs={12} md={6}>
+            <Chip
+              label="Early access • Help shape Speachy"
+              color="warning"
               sx={{
-                marginTop: 5,
-                // backgroundColor: "#f9f5f4",
-                alignItems: "center",
-                display: "flex",
-                justifyContent: "center",
+                background:
+                  "linear-gradient(90deg, rgba(255,142,83,0.9) 0%, rgba(250,115,91,0.9) 100%)",
+                color: "#fff",
+                fontWeight: 600,
+                mb: 3,
+              }}
+            />
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 700,
+                color: "#2d1b16",
+                lineHeight: 1.15,
+                mb: 2,
               }}
             >
-              <Link to="/">
-                <Badge
-                  color="warning"
-                  badgeContent={getEnvironmentLabel()}
-                  anchorOrigin={{ vertical: "top", horizontal: "right" }}
-                >
-                  <img
-                    src="/assets/Speachy_Logo_Full_SVG.svg"
-                    style={logoStyle}
-                    alt="Speachy Logo"
-                  />
-                </Badge>
-              </Link>
-            </Box>
-
-            <Box sx={{ mt: -1, mb: 2, textAlign: "center" }}>
-              <Typography
-                variant="h6"
-                sx={{
-                  fontFamily: '"Amaranth", "Amaranth Placeholder", sans-serif',
-                  color: "#333",
-                  letterSpacing: 0,
-                  textTransform: "none",
-                  lineHeight: "1.2em",
-                }}
-              >
-                Find your voice
-              </Typography>
-            </Box>
-
-            <Box
-              component="form"
-              sx={{ mt: 1, width: "100%" }}
-              noValidate
-              onSubmit={handleSubmit}
+              Find your voice with Speachy
+            </Typography>
+            <Typography
+              variant="h6"
+              sx={{ color: "rgba(55, 34, 26, 0.7)", fontWeight: 400, mb: 4 }}
             >
-              <TextField
-                variant="outlined"
-                margin="normal"
-                required
-                fullWidth
-                id="name"
-                label="Full Name"
-                name="name"
-                autoComplete="off"
-                autoFocus
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                error={!!errors.name}
-                helperText={errors.name}
-              />
-              <TextField
-                variant="outlined"
-                margin="normal"
-                required
-                fullWidth
-                id="email"
-                label="Email"
-                name="email"
-                autoComplete="off"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                error={!!errors.email}
-                helperText={errors.email}
-              />
-              <TextField
-                variant="outlined"
-                margin="normal"
-                required
-                fullWidth
-                name="password"
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                id="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                error={!!errors.password}
-                helperText={errors.password}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={handleClickShowPassword}
-                        edge="end"
-                      >
-                        {showPassword ? (
-                          <VisibilityOffIcon />
-                        ) : (
-                          <VisibilityIcon />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={acceptedTerms}
-                    onChange={(e) => setAcceptedTerms(e.target.checked)}
-                    color="warning"
-                  />
-                }
-                label={
-                  <Typography
-                    variant="body2"
-                    component="span"
-                    sx={{ fontSize: "0.95rem" }}
-                  >
-                    I agree to the{" "}
-                    <Box
-                      component="span"
-                      sx={{
-                        color: "rgba(228, 71, 36, 0.94)",
-                        textDecoration: "none",
-                        cursor: "pointer",
-                        fontSize: "0.95rem",
-                        "&:hover": { textDecoration: "underline" },
-                      }}
-                      onClick={handleTermsDialogOpen}
-                    >
-                      Terms and Conditions
-                    </Box>
-                  </Typography>
-                }
-                sx={{ mt: 2, mb: 1 }}
-              />
-              {errors.terms && (
-                <Typography
-                  variant="caption"
-                  color="error"
-                  sx={{ ml: 4, display: "block" }}
+              Start your practice with AI feedback that listens for the story
+              you are trying to tell. We’re a tiny team crafting a welcoming
+              space to rehearse for upcoming interviews, impromptu drills to
+              keep you warmed up, and more.
+            </Typography>
+            <Stack spacing={2.5}>
+              {[
+                "Jump into interview and impromptu prompts with AI reflections that highlight what's working and what to try next.",
+                "See exactly where to strengthen your story with gentle suggestions after every answer.",
+                "Tell us where communication feels hard, and we’ll focus on easing that moment for you.",
+              ].map((item) => (
+                <Box
+                  key={item}
+                  sx={{ display: "flex", alignItems: "center", gap: 2 }}
                 >
-                  {errors.terms}
-                </Typography>
-              )}
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                color="warning"
-                sx={{
-                  color: "#fff",
-                  fontWeight: "bold",
-                  px: 4,
-                  py: 1.5,
-                  borderRadius: 2,
-                  mt: 3,
-                  mb: 2,
-                  textTransform: "none",
-                  backgroundColor: "#FA735B",
-                  background:
-                    "linear-gradient(90deg, #FF8E53 20%, #FA735B 90%)",
-                  "&:hover": {
-                    filter: "brightness(0.95)",
-                  },
-                }}
-              >
-                <strong>Sign Up</strong>
-              </Button>
-              {/* <Typography sx={{ textAlign: "center" }}>or</Typography>
-              <Button
-                fullWidth
-                variant="contained"
-                sx={{
-                  mt: 1,
-                  mb: 1,
-                  backgroundColor: "#db4437",
-                  color: "white",
-                  "&:hover": {
-                    backgroundColor: "#c23321",
-                  },
-                }}
-                startIcon={
-                  <img
-                    src="https://img.icons8.com/color/16/000000/google-logo.png"
-                    alt="Google logo"
+                  <CheckCircleRoundedIcon
+                    sx={{ color: "rgba(250, 115, 91, 0.9)" }}
                   />
-                }
-                onClick={() => console.log("Google Sign-In Clicked")}
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ color: "rgba(55, 34, 26, 0.85)" }}
+                  >
+                    {item}
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
+            <Box
+              sx={{
+                mt: 5,
+                p: 3,
+                backgroundColor: "#fff",
+                borderRadius: 3,
+                boxShadow:
+                  "0px 20px 45px -28px rgba(250, 115, 91, 0.6), 0px 18px 40px -24px rgba(49, 30, 20, 0.18)",
+              }}
+            >
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  color: "#2d1b16",
+                  fontWeight: 600,
+                  mb: 1.5,
+                }}
               >
-                Sign Up with Google
-              </Button> */}
-              <Typography variant="subtitle2" textAlign={"center"}>
-                Already have an account?{" "}
-                <Link
-                  to="/signin"
-                  style={{
-                    textDecoration: "none",
-                    color: "rgba(228, 71, 36, 0.94)",
+                On our immediate roadmap
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {[
+                  "Mock interviews",
+                  "Projects creation",
+                  "Tongue twister drills",
+                ].map((label) => (
+                  <Chip
+                    key={label}
+                    label={label}
+                    variant="outlined"
+                    sx={{
+                      borderColor: "rgba(250, 115, 91, 0.35)",
+                      color: "rgba(55,34,26,0.75)",
+                      fontWeight: 500,
+                    }}
+                  />
+                ))}
+              </Stack>
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            {isSigningUp && (
+              <Box sx={{ width: "100%", mb: 2 }}>
+                <LinearProgress
+                  color="warning"
+                  sx={{
+                    height: 6,
+                    borderRadius: 3,
+                  }}
+                />
+              </Box>
+            )}
+            <Paper
+              elevation={0}
+              sx={{
+                backdropFilter: "blur(18px)",
+                backgroundColor: "rgba(255, 255, 255, 0.92)",
+                borderRadius: 4,
+                px: { xs: 3, sm: 4 },
+                py: { xs: 4, sm: 5 },
+                boxShadow:
+                  "0px 24px 60px -32px rgba(250, 115, 91, 0.55), 0px 28px 70px -40px rgba(49, 30, 20, 0.25)",
+              }}
+            >
+              <Box
+                sx={{
+                  alignItems: "center",
+                  display: "flex",
+                  justifyContent: "center",
+                  mb: 3,
+                }}
+              >
+                <Link to="/">
+                  <Badge
+                    color="warning"
+                    badgeContent={getEnvironmentLabel()}
+                    anchorOrigin={{ vertical: "top", horizontal: "right" }}
+                  >
+                    <img
+                      src="/assets/Speachy_Logo_Full_SVG.svg"
+                      style={logoStyle}
+                      alt="Speachy Logo"
+                    />
+                  </Badge>
+                </Link>
+              </Box>
+              <Box sx={{ textAlign: "center", mb: 3 }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 700,
+                    color: "#2d1b16",
+                    mb: 1,
                   }}
                 >
-                  Sign In
-                </Link>
-              </Typography>
-            </Box>
-          </Paper>
+                  Create your Speachy account
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ color: "rgba(55, 34, 26, 0.7)" }}
+                >
+                  Start with free practice sessions and graduate to full
+                  insights as you grow.
+                </Typography>
+              </Box>
+
+              <Box
+                component="form"
+                sx={{ mt: 1 }}
+                noValidate
+                onSubmit={handleSubmit}
+              >
+                <TextField
+                  variant="outlined"
+                  margin="normal"
+                  required
+                  fullWidth
+                  id="name"
+                  label="Full Name"
+                  name="name"
+                  autoComplete="off"
+                  autoFocus
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  error={!!errors.name}
+                  helperText={errors.name}
+                  InputProps={{
+                    sx: { borderRadius: 2 },
+                  }}
+                />
+                <TextField
+                  variant="outlined"
+                  margin="normal"
+                  required
+                  fullWidth
+                  id="email"
+                  label="Email"
+                  name="email"
+                  autoComplete="off"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  error={!!errors.email}
+                  helperText={errors.email}
+                  InputProps={{
+                    sx: { borderRadius: 2 },
+                  }}
+                />
+                <TextField
+                  variant="outlined"
+                  margin="normal"
+                  required
+                  fullWidth
+                  name="password"
+                  label="Password"
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  error={!!errors.password}
+                  helperText={errors.password}
+                  InputProps={{
+                    sx: { borderRadius: 2 },
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={handleClickShowPassword}
+                          edge="end"
+                        >
+                          {showPassword ? (
+                            <VisibilityOffIcon />
+                          ) : (
+                            <VisibilityIcon />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={acceptedTerms}
+                      onChange={(e) => setAcceptedTerms(e.target.checked)}
+                      color="warning"
+                    />
+                  }
+                  label={
+                    <Typography
+                      variant="body2"
+                      component="span"
+                      sx={{ fontSize: "0.95rem" }}
+                    >
+                      I agree to the{" "}
+                      <Box
+                        component="span"
+                        sx={{
+                          color: "rgba(228, 71, 36, 0.94)",
+                          textDecoration: "none",
+                          cursor: "pointer",
+                          fontSize: "0.95rem",
+                          "&:hover": { textDecoration: "underline" },
+                        }}
+                        onClick={handleTermsDialogOpen}
+                      >
+                        Terms and Conditions
+                      </Box>
+                    </Typography>
+                  }
+                  sx={{ mt: 2, mb: 1 }}
+                />
+                {errors.terms && (
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    sx={{ ml: 4, display: "block" }}
+                  >
+                    {errors.terms}
+                  </Typography>
+                )}
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  color="warning"
+                  sx={{
+                    color: "#fff",
+                    fontWeight: "bold",
+                    px: 4,
+                    py: 1.8,
+                    borderRadius: 3,
+                    mt: 3,
+                    mb: 3,
+                    textTransform: "none",
+                    fontSize: "1rem",
+                    background:
+                      "linear-gradient(90deg, #FF8E53 0%, #FA735B 100%)",
+                    boxShadow:
+                      "0px 12px 24px -12px rgba(250, 115, 91, 0.7), 0px 10px 18px -14px rgba(49, 30, 20, 0.35)",
+                    "&:hover": {
+                      filter: "brightness(0.95)",
+                    },
+                  }}
+                >
+                  <strong>Join the early access</strong>
+                </Button>
+                <Typography variant="subtitle2" textAlign={"center"}>
+                  Already have an account?{" "}
+                  <Link
+                    to="/signin"
+                    style={{
+                      textDecoration: "none",
+                      color: "rgba(228, 71, 36, 0.94)",
+                    }}
+                  >
+                    Sign In
+                  </Link>
+                </Typography>
+              </Box>
+            </Paper>
+          </Grid>
         </Grid>
-        {/* <Grid item xs={false} sm={12} md={4} lg={4} /> */}
-      </Grid>
+      </Container>
       {isSignUpError && (
         <Snackbar
           open={isSignUpError}
@@ -601,15 +713,17 @@ const SignUp = () => {
             variant="contained"
             color="warning"
             sx={{
-              background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
               color: "#fff",
               fontWeight: "bold",
-              px: 3,
-              py: 1,
-              borderRadius: 2,
+              px: 4,
+              py: 1.4,
+              borderRadius: 3,
               textTransform: "none",
+              boxShadow:
+                "0px 12px 24px -12px rgba(250, 115, 91, 0.7), 0px 10px 18px -14px rgba(49, 30, 20, 0.35)",
+              background: "linear-gradient(90deg, #FF8E53 0%, #FA735B 100%)",
               "&:hover": {
-                background: "linear-gradient(90deg, #e7610b, #db2037)",
+                filter: "brightness(0.95)",
               },
             }}
           >
@@ -617,7 +731,7 @@ const SignUp = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 

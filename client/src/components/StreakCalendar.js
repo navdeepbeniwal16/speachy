@@ -49,6 +49,9 @@ function computeCurrentStreak(activeSet) {
 }
 
 const WEEKS = 8;
+const INACTIVE_COLOR = { bg: "#f1e7e0", border: "#e2d3ca" };
+const ACTIVE_COLOR = { bg: "#ffd9c6", border: "#ffc3a8" };
+const CURRENT_COLOR = { bg: "#ff9b6c", border: "#ff9b6c" };
 
 const StreakCalendar = ({
   activeDates = [],
@@ -108,9 +111,9 @@ const StreakCalendar = ({
   }, [activeSet]);
 
   const getColor = (isActive, isCurrentStreak) => {
-    if (!isActive) return "#eaeaea"; // inactive
-    if (highlightCurrentStreak && isCurrentStreak) return "#ff6a33"; // highlight ongoing streak
-    return "#ffb089"; // active but not in current streak
+    if (!isActive) return INACTIVE_COLOR;
+    if (highlightCurrentStreak && isCurrentStreak) return CURRENT_COLOR;
+    return ACTIVE_COLOR;
   };
 
   return (
@@ -144,12 +147,20 @@ const StreakCalendar = ({
             </Box>
           ))}
         </Box>
-
-        {/* Grid */}
-        <Box sx={{ display: "grid", gridTemplateColumns: `repeat(${WEEKS}, ${cell}px)`, gridAutoRows: `${cell}px`, gap: `${gap}px` }}>
-          {days.map((d, idx) => {
+        {/* Grid: fill by columns (weeks), 7 rows (days Sun-Sat) */}
+        <Box
+          sx={{
+            display: "grid",
+            gridAutoFlow: "column",
+            gridTemplateRows: `repeat(7, ${cell}px)`,
+            gridTemplateColumns: `repeat(${WEEKS}, ${cell}px)`,
+            columnGap: `${gap}px`,
+            rowGap: `${gap}px`,
+          }}
+        >
+          {days.map((d) => {
             const isCurrent = currentStreakKeys.has(d.key);
-            const bg = getColor(d.active, isCurrent);
+            const { bg, border } = getColor(d.active, isCurrent);
             const title = `${d.key}${d.active ? " • active" : ""}`;
             return (
               <Box
@@ -160,7 +171,7 @@ const StreakCalendar = ({
                   height: cell,
                   borderRadius: 3,
                   backgroundColor: bg,
-                  border: d.active ? "1px solid #ff946a" : "1px solid #e3e3e3",
+                  border: `1px solid ${border}`,
                   boxSizing: "border-box",
                 }}
               />
@@ -172,15 +183,15 @@ const StreakCalendar = ({
       {showLegend && (
         <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1.5, flexWrap: "wrap" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Box sx={{ width: 12, height: 12, borderRadius: 3, background: "#eaeaea", border: "1px solid #e3e3e3" }} />
+            <Box sx={{ width: 12, height: 12, borderRadius: 3, background: INACTIVE_COLOR.bg, border: `1px solid ${INACTIVE_COLOR.border}` }} />
             <Typography variant="caption" sx={{ color: "#777" }}>No activity</Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Box sx={{ width: 12, height: 12, borderRadius: 3, background: "#ffb089", border: "1px solid #ff946a" }} />
+            <Box sx={{ width: 12, height: 12, borderRadius: 3, background: ACTIVE_COLOR.bg, border: `1px solid ${ACTIVE_COLOR.border}` }} />
             <Typography variant="caption" sx={{ color: "#777" }}>Active day</Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Box sx={{ width: 12, height: 12, borderRadius: 3, background: "#ff6a33", border: "1px solid #ff6a33" }} />
+            <Box sx={{ width: 12, height: 12, borderRadius: 3, background: CURRENT_COLOR.bg, border: `1px solid ${CURRENT_COLOR.border}` }} />
             <Typography variant="caption" sx={{ color: "#777" }}>Current streak</Typography>
           </Box>
         </Box>

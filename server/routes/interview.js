@@ -728,17 +728,14 @@ router.post(
     // Record session after successful evaluation
     try {
       const sessionResponse = await fetch(
-        `${req.protocol}://${req.get("host")}/user/sessions/record`,
+        `${req.protocol}://${req.get("host")}/sessions/record`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: req.headers.authorization,
           },
-          body: JSON.stringify({
-            sessionType: "interview",
-            questionText: questionText,
-          }),
+          body: JSON.stringify({ sessionType: "interview" }),
         }
       );
 
@@ -780,17 +777,14 @@ router.post(
     // Record session after successful evaluation
     try {
       const sessionResponse = await fetch(
-        `${req.protocol}://${req.get("host")}/user/sessions/record`,
+        `${req.protocol}://${req.get("host")}/sessions/record`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: req.headers.authorization,
           },
-          body: JSON.stringify({
-            sessionType: "interview",
-            questionText: questionText,
-          }),
+          body: JSON.stringify({ sessionType: "interview" }),
         }
       );
 

@@ -1,40 +1,106 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   Typography,
   Container,
-  Link,
   Box,
   Grid,
-  Card,
-  CardActionArea,
-  CardContent,
   Backdrop,
   CircularProgress,
+  Stack,
+  Chip,
+  Paper,
+  Button,
+  Avatar,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { getAuth } from "firebase/auth";
-import Pricing from "../components/Pricing.js";
 import PaymentsService from "../services/payments-service.js";
 import { AppContext } from "../components/AppContext.js";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
-import PersonIcon from "@mui/icons-material/Person";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
 import MicIcon from "@mui/icons-material/Mic";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 // Streak calendar view (scaffold)
 import StreakCalendar from "../components/StreakCalendar";
+import StreakService from "../services/streak-service.js";
+import SessionService from "../services/session-service.js";
+
+const FETCH_INTERVAL_MS = 5 * 60 * 1000; // avoid refetching more than once every 5 minutes
+const PAGE_BG = "#fff4ef";
+const SURFACE_BG = "#ffffff";
+const SURFACE_BORDER = "1px solid rgba(252, 150, 120, 0.12)";
+const SURFACE_SHADOW = "0 18px 36px rgba(252, 150, 120, 0.15)";
+const HEADING_COLOR = "#2f170f";
+const BODY_COLOR = "rgba(60,32,25,0.78)";
+const MUTED_COLOR = "rgba(60,32,25,0.45)";
+
+const MemoizedStreakCalendar = React.memo(StreakCalendar);
+
+const StatHighlights = React.memo(({ stats }) => (
+  <Stack
+    direction={{ xs: "column", sm: "row" }}
+    spacing={4}
+    sx={{ mb: { xs: 2, md: 0 } }}
+  >
+    {stats.map((item) => (
+      <Stack key={item.label} direction="row" alignItems="center" spacing={2}>
+        <Box
+          sx={{
+            width: 48,
+            height: 48,
+            borderRadius: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#ffe3d6",
+            color: "#f46a32",
+          }}
+        >
+          {item.icon}
+        </Box>
+        <Box>
+          <Typography
+            variant="h5"
+            sx={{ color: HEADING_COLOR, fontWeight: 700, mb: 0.3 }}
+          >
+            {item.value}
+          </Typography>
+          <Typography variant="body2" sx={{ color: BODY_COLOR }}>
+            {item.label}
+          </Typography>
+        </Box>
+      </Stack>
+    ))}
+  </Stack>
+));
 
 const HomePage = () => {
   const auth = getAuth();
-  const { state, setState } = useContext(AppContext);
+  const { setState } = useContext(AppContext);
   const [loading, setLoading] = useState(true);
+  const entitlementsFetchRef = useRef(0);
+  const streakFetchRef = useRef(0);
+  const sessionsFetchRef = useRef(0);
 
   const navigate = useNavigate();
+  const userId = auth.currentUser?.uid;
 
   const getUserEntitlements = async () => {
     const currentUserUID = auth.currentUser?.uid;
 
     if (currentUserUID) {
+      const now = Date.now();
+      if (now - entitlementsFetchRef.current < FETCH_INTERVAL_MS) {
+        setLoading(false);
+        return;
+      }
+      entitlementsFetchRef.current = now;
       try {
         const response = await PaymentsService.fetchActiveEntitlements(
           currentUserUID
@@ -49,7 +115,6 @@ const HomePage = () => {
         let isInterviewPracticeEnabled = false;
 
         for (const entitlement of entitlements) {
-          console.log("Entitlement:", entitlement); // TBR for production
           if (entitlement.lookup_key === "impromptu_speaking_01") {
             isImpromptuSpeakingEnabled = true;
           }
@@ -63,8 +128,6 @@ const HomePage = () => {
           isImpromptuSpeakingEnabled,
           isInterviewPracticeEnabled,
         }));
-
-        console.log("Entitlement managed locally:", state); // TBR for production
       } catch (error) {
         console.error("Error fetching/assigning entitlements: ", error);
       } finally {
@@ -81,7 +144,7 @@ const HomePage = () => {
     } else {
       setLoading(false);
     }
-  }, [auth.currentUser]);
+  }, [userId]);
 
   const navigateToImpromptSpeakingPracticePage = () => {
     navigate("/imprompt");
@@ -99,9 +162,32 @@ const HomePage = () => {
     }
   };
 
-  // Demo data for stats and streak calendar
-  // Generate some active dates over the last 8 weeks with a current 5-day streak
-  const dateToYMD = (d) => {
+  // Streak calendar data
+  const [activeDates, setActiveDates] = useState([]);
+  const [sessionsCount, setSessionsCount] = useState(0);
+  const totalPracticeHours = 12; // placeholder until analytics service lands
+  const activeDaysCount = activeDates.length;
+  const statHighlightsData = useMemo(
+    () => [
+      {
+        icon: <TrackChangesIcon sx={{ fontSize: 28 }} />,
+        label: "Sessions completed",
+        value: sessionsCount,
+      },
+      {
+        icon: <CalendarMonthIcon sx={{ fontSize: 28 }} />,
+        label: "Active practice days",
+        value: activeDaysCount,
+      },
+      {
+        icon: <AccessTimeIcon sx={{ fontSize: 28 }} />,
+        label: "Total time spoken",
+        value: `${totalPracticeHours}h`,
+      },
+    ],
+    [sessionsCount, activeDaysCount, totalPracticeHours]
+  );
+  const ymd = (d) => {
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     const dd = String(d.getDate()).padStart(2, "0");
@@ -112,275 +198,392 @@ const HomePage = () => {
     d.setDate(d.getDate() + delta);
     return d;
   };
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const activeDates = (() => {
-    const set = new Set();
-    // Ensure a current 5-day streak (includes today)
-    for (let i = 0; i < 5; i++) {
-      set.add(dateToYMD(addDays(today, -i)));
-    }
-    // Sprinkle a few other actives in the last ~40 days
-    const offsets = [7, 9, 12, 15, 18, 20, 24, 28, 31, 34, 38, 41, 45];
-    offsets.forEach((o) => set.add(dateToYMD(addDays(today, -o))));
-    return Array.from(set);
-  })();
-
-  const stats = {
-    sessions: 23,
-    confidence: 8.4,
-    time: 12, // hours
+  const computeRange = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    // Align grid start to Sunday for 8 weeks back
+    const start = addDays(today, -7 * (8 - 1));
+    const gridStart = addDays(start, -start.getDay()); // move back to Sun
+    return { from: ymd(gridStart), to: ymd(today) };
   };
 
+  useEffect(() => {
+    const loadActivity = async () => {
+      if (!auth.currentUser) return;
+      const now = Date.now();
+      if (now - streakFetchRef.current < FETCH_INTERVAL_MS) return;
+      streakFetchRef.current = now;
+      try {
+        const { from, to } = computeRange();
+        const data = await StreakService.activity(from, to);
+        setActiveDates(Array.isArray(data.dates) ? data.dates : []);
+      } catch (e) {
+        console.warn("Failed to fetch streak activity:", e);
+      }
+    };
+    loadActivity();
+  }, [userId]);
+
+  useEffect(() => {
+    const loadSessionsStats = async () => {
+      if (!auth.currentUser) return;
+      const now = Date.now();
+      if (now - sessionsFetchRef.current < FETCH_INTERVAL_MS) return;
+      sessionsFetchRef.current = now;
+      try {
+        const data = await SessionService.stats();
+        setSessionsCount(Number(data?.totalSessions) || 0);
+      } catch (e) {
+        console.warn("Failed to fetch sessions stats:", e);
+      }
+    };
+    loadSessionsStats();
+  }, [userId]);
+
   return (
-    <Container
-      maxWidth="lg"
+    <Box
       sx={{
-        mt: 4,
-        pt: 4,
-        pb: 4,
-        fontFamily: "Roboto",
-        background: "#faf6f4",
         minHeight: "100vh",
+        backgroundColor: PAGE_BG,
+        position: "relative",
+        overflow: "hidden",
+        py: { xs: 6, md: 8 },
       }}
-      disableGutters
     >
-      {/* Header Section */}
-      <Box sx={{ textAlign: "center", mb: 4 }}>
-        <img
-          src={process.env.PUBLIC_URL + "/assets/Speachy_Logo_Full_SVG.svg"}
-          alt="Speachy Logo"
-          style={{ height: 76, marginBottom: 8 }}
-        />
-        <Typography
-          variant="h5"
-          fontWeight="bold"
-          sx={{ fontWeight: 500, mb: 0.5, color: "#333" }}
+      <Container maxWidth="xl" sx={{ position: "relative", zIndex: 1 }}>
+        <Stack
+          spacing={{ xs: 4, md: 5 }}
+          sx={{
+            px: { xs: 0, md: 2 },
+          }}
         >
-          {getTimeBasedGreeting()},{" "}
-          {(auth.currentUser?.displayName?.split(" ")[0] || "User")
-            .charAt(0)
-            .toUpperCase() +
-            (auth.currentUser?.displayName?.split(" ")[0] || "User").slice(1)}
-          !{" "}
-          <span role="img" aria-label="wave">
-            👋
-          </span>
-        </Typography>
-        <Typography variant="subtitle1" sx={{ color: "#757575", mb: 2 }}>
-          Ready to enhance your communication skills? Let's make today another
-          step forward in your speaking journey.
-        </Typography>
-      </Box>
-
-      {/* Stats Row */}
-      <Grid container spacing={3} sx={{ mb: 4 }} justifyContent="center">
-        <Grid item xs={12} sm={4} md={4}>
-          <Box
+          {/* Hero / Greeting */}
+          <Paper
+            elevation={0}
             sx={{
-              background: "#fff",
-              borderRadius: 2,
-              border: "1px solid #f0f0f0",
-              p: 3,
-              textAlign: "center",
+              backgroundColor: SURFACE_BG,
+              borderRadius: 4,
+              px: { xs: 3, md: 4 },
+              py: { xs: 4, md: 5 },
+              border: SURFACE_BORDER,
+              boxShadow: SURFACE_SHADOW,
             }}
           >
-            <TrackChangesIcon sx={{ color: "#ff8350", fontSize: 36, mb: 1 }} />
-            <Typography variant="h5" sx={{ fontWeight: 700, color: "#333333" }}>
-              {stats.sessions}
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{ color: "#757575", fontWeight: 500 }}
-            >
-              Sessions Completed
-            </Typography>
-          </Box>
-        </Grid>
-        <Grid item xs={12} sm={4} md={4}>
-          <Box
-            sx={{
-              background: "#fff",
-              borderRadius: 2,
-              border: "1px solid #f0f0f0",
-              p: 3,
-              textAlign: "center",
-            }}
-          >
-            <PersonIcon sx={{ color: "#ff8350", fontSize: 36, mb: 1 }} />
-            <Typography variant="h5" sx={{ fontWeight: 700, color: "#333333" }}>
-              {stats.confidence}
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{ color: "#757575", fontWeight: 500 }}
-            >
-              Avg. Communication Score
-            </Typography>
-          </Box>
-        </Grid>
-        <Grid item xs={12} sm={4} md={4}>
-          <Box
-            sx={{
-              background: "#fff",
-              borderRadius: 2,
-              border: "1px solid #f0f0f0",
-              p: 3,
-              textAlign: "center",
-            }}
-          >
-            <AccessTimeIcon sx={{ color: "#ff8350", fontSize: 36, mb: 1 }} />
-            <Typography variant="h5" sx={{ fontWeight: 700, color: "#333333" }}>
-              {stats.time}h
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{ color: "#757575", fontWeight: 500 }}
-            >
-              Total Practice Time
-            </Typography>
-          </Box>
-        </Grid>
-      </Grid>
-
-      {/* Main Content Grid */}
-      <Grid container spacing={3} justifyContent="center">
-        {/* Streak Calendar Section */}
-        <Grid item xs={12} md={6}>
-          <Box
-            sx={{
-              background: "#fff",
-              borderRadius: 2,
-              border: "1px solid #f0f0f0",
-              p: 3,
-              height: "100%",
-            }}
-          >
-            <StreakCalendar
-              title="Your Weekly Streak"
-              activeDates={activeDates}
-              showLegend
-              highlightCurrentStreak
-            />
-            <Typography variant="caption" sx={{ color: "#757575", display: "block", mt: 1 }}>
-              Activity over the last 8 weeks
-            </Typography>
-          </Box>
-        </Grid>
-
-        {/* Focus Area Cards Section */}
-        <Grid item xs={12} md={6}>
-          <Box
-            sx={{
-              background: "#fff",
-              borderRadius: 2,
-              border: "1px solid #f0f0f0",
-              p: 3,
-              height: "100%",
-            }}
-          >
-            <Typography
-              variant="subtitle1"
-              sx={{ fontWeight: 700, color: "#222", mb: 2 }}
-            >
-              What are you working on today?
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    mb: 1,
-                    borderRadius: 2,
-                    cursor: "pointer",
-                    border: "1px solid #e0e0e0",
-                    background: "#fff",
-                    transition: "box-shadow 0.2s, border-color 0.2s",
-                    "&:hover": {
-                      borderColor: "#ff8350",
-                    },
-                    p: 2,
-                  }}
-                  onClick={() => navigate("/interview")}
-                >
-                  <WorkOutlineIcon
-                    sx={{ color: "#ff8350", fontSize: 28, mr: 2 }}
+            <Grid container spacing={{ xs: 4, md: 6 }} alignItems="stretch">
+              <Grid item xs={12} md={7}>
+                <Stack spacing={2.5} sx={{ height: "100%" }}>
+                  <Chip
+                    label="Daily progress"
+                    color="warning"
+                    sx={{
+                      alignSelf: "flex-start",
+                      backgroundColor: "#FA735B",
+                      color: "#fff",
+                      fontWeight: 600,
+                      letterSpacing: 0.3,
+                    }}
                   />
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography
-                      variant="body1"
-                      sx={{ fontWeight: 700, color: "#333333" }}
-                    >
-                      Job Interview Preparation
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: "#757575" }}>
-                      Practice interview questions and improve your responses
-                    </Typography>
-                  </Box>
-                  <Box sx={{ textAlign: "right" }}>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: "#ff8350", fontWeight: 700 }}
-                    >
-                      15-30 min
-                    </Typography>
-                  </Box>
-                </Box>
+                  <Typography
+                    variant="h3"
+                    sx={{
+                      fontWeight: 700,
+                      color: HEADING_COLOR,
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    {getTimeBasedGreeting()},{" "}
+                    {(auth.currentUser?.displayName?.split(" ")[0] || "Speaker")
+                      .charAt(0)
+                      .toUpperCase() +
+                      (
+                        auth.currentUser?.displayName?.split(" ")[0] ||
+                        "Speaker"
+                      ).slice(1)}
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: BODY_COLOR,
+                      fontWeight: 400,
+                      mb: 3,
+                    }}
+                  >
+                    Ready to take your communication skills to the next level?
+                    Let's make today another step forward in your speaking
+                    journey.
+                  </Typography>
+                  <StatHighlights stats={statHighlightsData} />
+                </Stack>
               </Grid>
-              <Grid item xs={12}>
-                <Box
+              <Grid item xs={12} md={5}>
+                <Paper
+                  elevation={0}
                   sx={{
+                    height: "100%",
+                    borderRadius: 4,
+                    px: 3,
+                    py: 3,
+                    backgroundColor: SURFACE_BG,
+                    border: SURFACE_BORDER,
+                    boxShadow: SURFACE_SHADOW,
                     display: "flex",
-                    alignItems: "center",
-                    borderRadius: 2,
-                    cursor: "pointer",
-                    border: "1px solid #e0e0e0",
-                    background: "#fff",
-                    transition: "box-shadow 0.2s, border-color 0.2s",
-                    "&:hover": { borderColor: "#ff8350" },
-                    p: 2,
+                    flexDirection: "column",
                   }}
-                  onClick={navigateToImpromptSpeakingPracticePage}
                 >
-                  <MicIcon sx={{ color: "#ff8350", fontSize: 28, mr: 2 }} />
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ color: BODY_COLOR, fontWeight: 600, mb: 1 }}
+                  >
+                    Your practice streak
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{ color: HEADING_COLOR, fontWeight: 600, mb: 2 }}
+                  >
+                    A quick look at recent activity.
+                  </Typography>
                   <Box sx={{ flexGrow: 1 }}>
-                    <Typography
-                      variant="body1"
-                      sx={{ fontWeight: 700, color: "#333333" }}
-                    >
-                      Impromptu Speaking
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: "#757575" }}>
-                      Build confidence in spontaneous communication situations
-                    </Typography>
+                    <MemoizedStreakCalendar
+                      title=""
+                      activeDates={activeDates}
+                      showLegend
+                      highlightCurrentStreak
+                    />
                   </Box>
-                  <Box sx={{ textAlign: "right" }}>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: "#ff8350", fontWeight: 700 }}
-                    >
-                      10-20 min
-                    </Typography>
-                  </Box>
-                </Box>
+                </Paper>
               </Grid>
             </Grid>
-          </Box>
-        </Grid>
-      </Grid>
+          </Paper>
+
+          {/* Main Grid */}
+          <Grid container spacing={{ xs: 4, md: 0 }}>
+            <Grid item xs={12} md={6} sx={{ display: "flex" }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: 4,
+                  px: { xs: 3, md: 4 },
+                  py: { xs: 4, md: 4.5 },
+                  backgroundColor: SURFACE_BG,
+                  border: SURFACE_BORDER,
+                  boxShadow: SURFACE_SHADOW,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  gap: 3,
+                  margin: 2,
+                }}
+              >
+                <Stack spacing={1.5}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ color: BODY_COLOR, fontWeight: 600 }}
+                  >
+                    Recommended next step
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{ color: HEADING_COLOR, fontWeight: 600 }}
+                  >
+                    Pick up with impromptu warm-ups
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: BODY_COLOR }}>
+                    A focused warm-up to get your voice moving.
+                  </Typography>
+                </Stack>
+                <Stack spacing={2.5} sx={{ flexGrow: 1 }}>
+                  <Box
+                    component="img"
+                    src="/assets/impromptu_speaking.png"
+                    alt="Impromptu speaking focus"
+                    loading="lazy"
+                    decoding="async"
+                    sx={{
+                      width: "100%",
+                      maxWidth: 260,
+                      maxHeight: 160,
+                      objectFit: "contain",
+                      mx: { xs: 0, md: "auto" },
+                    }}
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={navigateToImpromptSpeakingPracticePage}
+                    sx={{
+                      alignSelf: "flex-start",
+                      textTransform: "none",
+                      fontWeight: 600,
+                      px: 3.5,
+                      py: 1.4,
+                      borderRadius: 2,
+                      backgroundColor: "#FA735B",
+                      boxShadow:
+                        "0px 12px 24px -12px rgba(250,115,91,0.7), 0px 10px 18px -14px rgba(49,30,20,0.35)",
+                      "&:hover": {
+                        backgroundColor: "#f8643f",
+                        boxShadow:
+                          "0px 14px 26px -12px rgba(250,115,91,0.8), 0px 12px 18px -14px rgba(49,30,20,0.35)",
+                      },
+                    }}
+                  >
+                    Resume practice
+                  </Button>
+                </Stack>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} md={6} sx={{ display: "flex" }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: 4,
+                  px: { xs: 3, md: 4 },
+                  py: { xs: 4, md: 4.5 },
+                  backgroundColor: SURFACE_BG,
+                  border: SURFACE_BORDER,
+                  boxShadow: SURFACE_SHADOW,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  gap: 2.5,
+                  margin: 2,
+                }}
+              >
+                <Box>
+                  <Typography
+                    variant="h6"
+                    sx={{ color: HEADING_COLOR, fontWeight: 700, mb: 0.5 }}
+                  >
+                    What do you want to work on today?
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: BODY_COLOR }}>
+                    Choose a practice lane whenever you're ready.
+                  </Typography>
+                </Box>
+                <List disablePadding sx={{ flexGrow: 1 }}>
+                  {[
+                    {
+                      title: "Job interview practice",
+                      description:
+                        "Work through targeted questions, capture AI feedback, and refine replies.",
+                      iconColor: "rgba(250,115,91,0.95)",
+                      icon: (
+                        <WorkOutlineIcon
+                          sx={{ color: "inherit", fontSize: 24 }}
+                        />
+                      ),
+                      duration: "15-30 min",
+                      action: () => navigate("/interview"),
+                    },
+                    {
+                      title: "Impromptu speaking reps",
+                      description:
+                        "Stay comfortable with spontaneous prompts and soft skills drills.",
+                      iconColor: "rgba(250,115,91,0.95)",
+                      icon: <MicIcon sx={{ color: "inherit", fontSize: 24 }} />,
+                      duration: "10-20 min",
+                      action: navigateToImpromptSpeakingPracticePage,
+                    },
+                  ].map((item) => (
+                    <ListItem
+                      key={item.title}
+                      onClick={item.action}
+                      sx={{
+                        borderRadius: 3,
+                        mb: 1.5,
+                        px: 2.5,
+                        py: 2,
+                        backgroundColor: "#fff8f4",
+                        border: SURFACE_BORDER,
+                        cursor: "pointer",
+                        transition:
+                          "transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease",
+                        "&:hover": {
+                          transform: "translateY(-2px)",
+                          boxShadow: SURFACE_SHADOW,
+                          borderColor: "rgba(252, 150, 120, 0.3)",
+                        },
+                      }}
+                      secondaryAction={
+                        <Stack alignItems="flex-end" spacing={0.5}>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: "rgba(250,115,91,0.9)",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {item.duration}
+                          </Typography>
+                          <ArrowForwardIosIcon
+                            fontSize="small"
+                            sx={{ color: MUTED_COLOR }}
+                          />
+                        </Stack>
+                      }
+                    >
+                      <ListItemAvatar>
+                        <Avatar
+                          sx={{
+                            bgcolor: "rgba(250,115,91,0.12)",
+                            color: item.iconColor,
+                            width: 48,
+                            height: 48,
+                          }}
+                        >
+                          {item.icon}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Typography
+                            variant="subtitle1"
+                            sx={{ color: HEADING_COLOR, fontWeight: 600 }}
+                          >
+                            {item.title}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography
+                            variant="body2"
+                            sx={{ color: BODY_COLOR }}
+                          >
+                            {item.description}
+                          </Typography>
+                        }
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+                <Button
+                  variant="text"
+                  sx={{
+                    alignSelf: "flex-start",
+                    color: "rgba(228, 71, 36, 0.94)",
+                    fontWeight: 600,
+                    textTransform: "none",
+                  }}
+                  onClick={() => navigate("/projects")}
+                >
+                  Explore upcoming practice modes ->
+                </Button>
+              </Paper>
+            </Grid>
+          </Grid>
+        </Stack>
+      </Container>
 
       {/* Loading Backdrop */}
-      <div>
-        <Backdrop
-          sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
-          open={loading}
-          onClick={() => console.log("Backdrop is closed.")}
-        >
-          <CircularProgress color="inherit" />
-        </Backdrop>
-      </div>
-    </Container>
+      <Backdrop
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={loading}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
+    </Box>
   );
 };
 

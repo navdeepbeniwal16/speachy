@@ -366,9 +366,30 @@ router.post(
     next();
   },
   evaluateResponse,
-  (req, res, next) => {
+  async (req, res, next) => {
     const feedback = req.results;
     const transcription = req.transcription;
+
+    // Record session after successful evaluation (best-effort)
+    try {
+      const sessionResponse = await fetch(
+        `${req.protocol}://${req.get("host")}/sessions/record`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: req.headers.authorization,
+          },
+          body: JSON.stringify({ sessionType: "impromptu" }),
+        }
+      );
+      if (!sessionResponse.ok) {
+        console.warn("Failed to record session (impromptu)");
+      }
+    } catch (err) {
+      console.error("Error recording session (impromptu):", err);
+    }
+
     res.json({
       message: "Prompt response successfully evaluated",
       results: {
