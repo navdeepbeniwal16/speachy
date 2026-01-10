@@ -5,6 +5,10 @@ import {
   Button,
   Container,
   Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Paper,
   TextField,
   Typography,
@@ -29,6 +33,7 @@ const UserProfilePage = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarType, setSnackbarType] = useState("success");
+  const [signOutDialogOpen, setSignOutDialogOpen] = useState(false);
 
   const triggerSnackbar = (type, message) => {
     setSnackbarOpen(false); // reset if open
@@ -86,97 +91,147 @@ const UserProfilePage = () => {
     }
   };
 
+  const openSignOutDialog = () => {
+    setSignOutDialogOpen(true);
+  };
+
+  const closeSignOutDialog = () => {
+    setSignOutDialogOpen(false);
+  };
+
+  const confirmSignOut = async () => {
+    setSignOutDialogOpen(false);
+    await signOut();
+  };
+
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, pt: 4, pb: 4, fontFamily: "Roboto" }}>
+    <Box sx={{ backgroundColor: "#fff4ef", minHeight: "100vh" }}>
+      <Container
+        maxWidth="lg"
+        sx={{ mt: 0, pt: { xs: 4, md: 6 }, pb: 6, fontFamily: "Roboto" }}
+      >
       <Box
         sx={{
-          minHeight: "100vh",
-          // backgroundColor: "#f5f5f5",
           display: "flex",
           flexDirection: "column",
           // p: { xs: 2, md: 4 },
         }}
       >
-        <Typography variant="h5" fontWeight="bold" mb={3}>
+        <Typography
+          variant="h5"
+          fontWeight="bold"
+          mb={3}
+          sx={{ color: "rgba(36, 20, 14, 0.9)" }}
+        >
           Your profile
         </Typography>
 
-        <Typography variant="subtitle1" mb={1} sx={{ fontWeight: "bold" }}>
-          Avatar
-        </Typography>
-        <Box display="flex" alignItems="center" gap={2} mb={3}>
-          {avatarSeeds.map((seed, index) => (
-            <Avatar
-              key={index}
-              src={`https://api.dicebear.com/9.x/identicon/svg?seed=${seed}`}
-              sx={{
-                width: 56,
-                height: 56,
-                cursor: "pointer",
-                border:
-                  selectedAvatar === index
-                    ? "2px solid #ff7a18"
-                    : "2px solid transparent",
-              }}
-              onClick={() => setSelectedAvatar(index)}
-            />
-          ))}
-        </Box>
-
-        <Box maxWidth="400px" mb={2}>
-          <Typography
-            variant="subtitle1"
-            sx={{ fontWeight: "bold" }}
-            gutterBottom
-          >
-            Full Name
-          </Typography>
-          <TextField
-            fullWidth
-            size="small"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            variant="outlined"
-          />
-        </Box>
-
-        <Box maxWidth="400px" mb={3}>
-          <Typography
-            variant="subtitle1"
-            sx={{ fontWeight: "bold" }}
-            gutterBottom
-          >
-            Email Address
-          </Typography>
-          <TextField
-            fullWidth
-            size="small"
-            value={user?.email}
-            variant="outlined"
-            disabled
-          />
-        </Box>
-
-        <Button
-          variant="contained"
+        <Paper
+          elevation={0}
           sx={{
-            backgroundColor: "#FA735B",
-            background: "linear-gradient(90deg, #FF8E53 20%, #FA735B 90%)",
-            "&:hover": {
-              filter: "brightness(0.95)",
-            },
-            color: "#fff",
-            fontWeight: "bold",
-            textTransform: "none",
-            // borderRadius: 2,
-            px: 4,
-            py: 1,
-            width: "fit-content",
+            p: { xs: 3, md: 4 },
+            borderRadius: 2,
+            backgroundColor: "#fff",
+            border: "1px solid #f0e6e1",
+            boxShadow: "0 2px 8px rgba(250, 115, 91, 0.06)",
           }}
-          onClick={updateUserDetails}
         >
-          Update details
-        </Button>
+          <Typography
+            variant="subtitle2"
+            mb={1.5}
+            sx={{
+              fontWeight: 700,
+              letterSpacing: 0.2,
+              textTransform: "uppercase",
+              color: "rgba(60,32,25,0.72)",
+            }}
+          >
+            Avatar
+          </Typography>
+          <Box display="flex" alignItems="center" gap={2} mb={3}>
+            {avatarSeeds.map((seed, index) => (
+              <Avatar
+                key={index}
+                src={`https://api.dicebear.com/9.x/identicon/svg?seed=${seed}`}
+                sx={{
+                  width: 56,
+                  height: 56,
+                  cursor: "pointer",
+                  border:
+                    selectedAvatar === index
+                      ? "2px solid #ff7a18"
+                      : "2px solid transparent",
+                }}
+                onClick={() => setSelectedAvatar(index)}
+              />
+            ))}
+          </Box>
+
+          <Box maxWidth="400px" mb={2.5}>
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 700,
+                letterSpacing: 0.2,
+                textTransform: "uppercase",
+                color: "rgba(60,32,25,0.72)",
+              }}
+              gutterBottom
+            >
+              Full Name
+            </Typography>
+            <TextField
+              fullWidth
+              size="small"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              variant="outlined"
+            />
+          </Box>
+
+          <Box maxWidth="400px" mb={3}>
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 700,
+                letterSpacing: 0.2,
+                textTransform: "uppercase",
+                color: "rgba(60,32,25,0.72)",
+              }}
+              gutterBottom
+            >
+              Email Address
+            </Typography>
+            <TextField
+              fullWidth
+              size="small"
+              value={user?.email}
+              variant="outlined"
+              disabled
+            />
+          </Box>
+
+          <Button
+            variant="contained"
+            sx={{
+              backgroundColor: "#FA735B",
+              background: "linear-gradient(90deg, #FF8E53 20%, #FA735B 90%)",
+              "&:hover": {
+                filter: "brightness(0.95)",
+              },
+              color: "#fff",
+              fontWeight: "bold",
+              textTransform: "none",
+              borderRadius: 3,
+              px: 4,
+              py: 1,
+              width: "fit-content",
+            }}
+            onClick={updateUserDetails}
+          >
+            Update details
+          </Button>
+        </Paper>
 
         <Box position="relative" mt={6}>
           <Divider />
@@ -184,7 +239,6 @@ const UserProfilePage = () => {
 
         <Box mt={4} maxWidth="500px">
           {[
-            "Upgrade your plan", // TODO: Include this for paid versions
             "Forgot your password?",
             "Delete your account",
           ].map((label, idx) => (
@@ -196,9 +250,11 @@ const UserProfilePage = () => {
                 mb: 2,
                 borderRadius: 2,
                 backgroundColor: "#fff",
+                border: "1px solid #f0e6e1",
+                boxShadow: "0 1px 4px rgba(250, 115, 91, 0.04)",
                 cursor: "pointer",
                 "&:hover": {
-                  backgroundColor: "#f0f0f0",
+                  backgroundColor: "#fff4ef",
                 },
                 display: "flex",
                 justifyContent: "space-between",
@@ -220,15 +276,17 @@ const UserProfilePage = () => {
               mb: 2,
               borderRadius: 2,
               backgroundColor: "#fff",
+              border: "1px solid #f0e6e1",
+              boxShadow: "0 1px 4px rgba(250, 115, 91, 0.04)",
               cursor: "pointer",
               "&:hover": {
-                backgroundColor: "#f0f0f0",
+                backgroundColor: "#fff4ef",
               },
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
             }}
-            onClick={signOut}
+            onClick={openSignOutDialog}
           >
             <Typography>Sign Out</Typography>
             <ArrowForwardIosIcon
@@ -238,6 +296,86 @@ const UserProfilePage = () => {
           </Paper>
         </Box>
 
+        <Dialog
+          open={signOutDialogOpen}
+          onClose={closeSignOutDialog}
+          maxWidth="xs"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 2,
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{
+              backgroundColor: "#fff",
+              borderBottom: "1px solid #f0e6e1",
+              fontWeight: "bold",
+              py: 2.2,
+            }}
+          >
+            Sign out of Speachy?
+          </DialogTitle>
+          <DialogContent sx={{ p: 3 }}>
+            <Typography variant="body1" sx={{ color: "text.secondary", lineHeight: 1.6 }}>
+              Are you sure you want to sign out of your account?
+            </Typography>
+          </DialogContent>
+          <DialogActions
+            sx={{
+              p: 3,
+              backgroundColor: "#fff",
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 1.5,
+            }}
+          >
+            <Button
+              onClick={closeSignOutDialog}
+              variant="outlined"
+              sx={{
+                fontWeight: "bold",
+                textTransform: "none",
+                borderRadius: 3,
+                px: 3.5,
+                py: 1,
+                minWidth: 120,
+                borderColor: "#e1cfc6",
+                color: "#5c4033",
+                "&:hover": {
+                  borderColor: "#d4bfb5",
+                  backgroundColor: "#fff4ef",
+                },
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmSignOut}
+              variant="contained"
+              color="warning"
+              sx={{
+                color: "#fff",
+                fontWeight: "bold",
+                px: 4,
+                py: 1,
+                borderRadius: 3,
+                minWidth: 140,
+                textTransform: "none",
+                boxShadow:
+                  "0px 12px 24px -12px rgba(250, 115, 91, 0.7), 0px 10px 18px -14px rgba(49, 30, 20, 0.35)",
+                background: "linear-gradient(90deg, #FF8E53 0%, #FA735B 100%)",
+                "&:hover": {
+                  filter: "brightness(0.95)",
+                },
+              }}
+            >
+              Sign out
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         <SnackbarAlert
           alertType={snackbarType}
           alertMessage={snackbarMessage}
@@ -245,7 +383,8 @@ const UserProfilePage = () => {
           onClose={handleSnackbarClose}
         />
       </Box>
-    </Container>
+      </Container>
+    </Box>
   );
 };
 
