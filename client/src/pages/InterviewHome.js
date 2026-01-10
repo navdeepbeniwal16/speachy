@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -18,6 +18,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import InterviewService from "../services/interview-service.js";
 import { getAuth } from "firebase/auth";
 import QuestionsList from "../components/QuestionsList.js";
+import { AppContext } from "../components/AppContext.js";
 
 const PAGE_BG = "#fff4ef";
 const SURFACE_BG = "#ffffff";
@@ -28,6 +29,7 @@ const BODY_COLOR = "rgba(60,32,25,0.78)";
 
 const InterviewHome = () => {
   const auth = getAuth();
+  const { showSnackbar } = useContext(AppContext);
   const navigate = useNavigate();
   const [isStarting, setIsStarting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -116,46 +118,64 @@ const InterviewHome = () => {
 
     setIsUploading(true);
 
-    const questions = await InterviewService.fetchBehaviouralQuestions(
-      companyName,
-      jobRole,
-      jobDescription,
-      industry,
-      experience
-    );
-    console.log("Questions (fetched from backend api):", questions);
+    try {
+      const questions = await InterviewService.fetchBehaviouralQuestions(
+        companyName,
+        jobRole,
+        jobDescription,
+        industry,
+        experience
+      );
+      console.log("Questions (fetched from backend api):", questions);
 
-    navigate("/interview/questions", {
-      state: {
-        questions: questions,
-        companyName: companyName,
-        jobRole: jobRole,
-        jobDescription: jobDescription,
-        industry: industry,
-        requiredExperience: experience,
-      },
-    });
+      navigate("/interview/questions", {
+        state: {
+          questions: questions,
+          companyName: companyName,
+          jobRole: jobRole,
+          jobDescription: jobDescription,
+          industry: industry,
+          requiredExperience: experience,
+        },
+      });
+    } catch (error) {
+      const message =
+        error?.userMessage ||
+        "Unable to generate questions right now. Please try again.";
+      showSnackbar("error", message);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleStart = async (event) => {
     event.preventDefault();
     setIsStarting(true);
 
-    const questions = await InterviewService.fetchBehaviouralQuestions(
-      null,
-      null,
-      null
-    );
-    console.log("Questions (fetched from backend api):", questions);
+    try {
+      const questions = await InterviewService.fetchBehaviouralQuestions(
+        null,
+        null,
+        null
+      );
+      console.log("Questions (fetched from backend api):", questions);
 
-    navigate("/interview/questions", {
-      state: {
-        questions: questions,
-        companyName: companyName,
-        jobRole: jobRole,
-        jobDescription: jobDescription,
-      },
-    });
+      navigate("/interview/questions", {
+        state: {
+          questions: questions,
+          companyName: companyName,
+          jobRole: jobRole,
+          jobDescription: jobDescription,
+        },
+      });
+    } catch (error) {
+      const message =
+        error?.userMessage ||
+        "Unable to generate questions right now. Please try again.";
+      showSnackbar("error", message);
+    } finally {
+      setIsStarting(false);
+    }
   };
 
   return (

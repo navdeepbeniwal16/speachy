@@ -53,7 +53,7 @@ const requireAuth = (Component) => {
 function App() {
   return (
     <Box
-      sx={{ display: "flex", backgroundColor: "#f9f5f4", minHeight: "100vh" }}
+      sx={{ display: "flex", backgroundColor: "#fff4ef", minHeight: "100vh" }}
     >
       <Router>
         <CssBaseline />
