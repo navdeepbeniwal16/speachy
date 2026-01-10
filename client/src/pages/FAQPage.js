@@ -18,6 +18,21 @@ import UserService from "../services/user-service";
 
 const FAQPage = () => {
   const email = "contact@speachy.com";
+  const primaryButtonSx = {
+    textTransform: "none",
+    fontWeight: 600,
+    px: 3.5,
+    py: 1.4,
+    borderRadius: 2,
+    backgroundColor: "#FA735B",
+    boxShadow:
+      "0px 12px 24px -12px rgba(250,115,91,0.7), 0px 10px 18px -14px rgba(49,30,20,0.35)",
+    "&:hover": {
+      backgroundColor: "#f8643f",
+      boxShadow:
+        "0px 14px 26px -12px rgba(250,115,91,0.8), 0px 12px 18px -14px rgba(49,30,20,0.35)",
+    },
+  };
 
   const faqs = [
     {
@@ -212,20 +227,7 @@ const FAQPage = () => {
           variant="contained"
           onClick={() => uploadUserFeedback(rating, userFeedback)}
           disabled={!rating && userFeedback.trim() === ""}
-          sx={{
-            // background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
-            color: "#fff",
-            fontWeight: "bold",
-            px: 4,
-            py: 1,
-            // borderRadius: 2,
-            textTransform: "none",
-            backgroundColor: "#FA735B",
-            background: "linear-gradient(90deg, #FF8E53 20%, #FA735B 90%)",
-            "&:hover": {
-              filter: "brightness(0.95)",
-            },
-          }}
+          sx={primaryButtonSx}
         >
           Send feedback
         </Button>

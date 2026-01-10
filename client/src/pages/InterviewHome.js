@@ -57,6 +57,21 @@ const InterviewHome = () => {
       },
     },
   };
+  const primaryButtonSx = {
+    textTransform: "none",
+    fontWeight: 600,
+    px: 3.5,
+    py: 1.4,
+    borderRadius: 2,
+    backgroundColor: "#FA735B",
+    boxShadow:
+      "0px 12px 24px -12px rgba(250,115,91,0.7), 0px 10px 18px -14px rgba(49,30,20,0.35)",
+    "&:hover": {
+      backgroundColor: "#f8643f",
+      boxShadow:
+        "0px 14px 26px -12px rgba(250,115,91,0.8), 0px 12px 18px -14px rgba(49,30,20,0.35)",
+    },
+  };
 
   const experienceOptions = [
     { value: "entry", label: "Entry (0-1 years)" },
@@ -339,20 +354,7 @@ const InterviewHome = () => {
                       type="submit"
                       fullWidth
                       variant="contained"
-                      sx={{
-                        mt: 2,
-                        mb: 2,
-                        textTransform: "none",
-                        fontWeight: 600,
-                        backgroundColor: "#FA735B",
-                        boxShadow:
-                          "0px 12px 24px -12px rgba(250,115,91,0.7), 0px 10px 18px -14px rgba(49,30,20,0.35)",
-                        "&:hover": {
-                          backgroundColor: "#f8643f",
-                          boxShadow:
-                            "0px 14px 26px -12px rgba(250,115,91,0.8), 0px 12px 18px -14px rgba(49,30,20,0.35)",
-                        },
-                      }}
+                      sx={{ ...primaryButtonSx, mt: 2, mb: 2 }}
                       disabled={isUploading}
                     >
                       Let's go!
@@ -410,18 +412,7 @@ const InterviewHome = () => {
                 variant="contained"
                 onClick={handleStart}
                 disabled={isStarting}
-                sx={{
-                  textTransform: "none",
-                  fontWeight: 600,
-                  backgroundColor: "#FA735B",
-                  boxShadow:
-                    "0px 12px 24px -12px rgba(250,115,91,0.7), 0px 10px 18px -14px rgba(49,30,20,0.35)",
-                  "&:hover": {
-                    backgroundColor: "#f8643f",
-                    boxShadow:
-                      "0px 14px 26px -12px rgba(250,115,91,0.8), 0px 12px 18px -14px rgba(49,30,20,0.35)",
-                  },
-                }}
+                sx={primaryButtonSx}
               >
                 Jump In
               </Button>
