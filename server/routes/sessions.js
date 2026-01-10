@@ -115,10 +115,25 @@ router.get("/stats", async (req, res) => {
 
     const snap = await db.collection(STATS_COLLECTION).doc(uid).get();
     const data = snap.exists ? snap.data() : {};
-    return res.status(200).json({
+    const response = {
       totalSessions: Number(data.totalSessions) || 0,
       lastSessionAt: data.lastSessionAt || null,
-    });
+    };
+
+    const { from, to } = req.query || {};
+    if (from && to && typeof from === "string" && typeof to === "string") {
+      const eventsRef = db.collection(SESSIONS_COLLECTION).doc(uid).collection("events");
+      const rangeQuery = eventsRef
+        .where("streakDate", ">=", from)
+        .where("streakDate", "<=", to)
+        .orderBy("streakDate");
+
+      const rangeSnap = await rangeQuery.get();
+      response.rangeSessions = rangeSnap.size;
+      response.range = { from, to };
+    }
+
+    return res.status(200).json(response);
   } catch (err) {
     logger.error("Error fetching session stats", { error: err.message });
     return res.status(500).json({ message: "Internal server error" });
@@ -126,4 +141,3 @@ router.get("/stats", async (req, res) => {
 });
 
 module.exports = router;
-

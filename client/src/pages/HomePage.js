@@ -60,18 +60,27 @@ const StatHighlights = React.memo(({ stats }) => (
             justifyContent: "center",
             backgroundColor: "#ffe3d6",
             color: "#f46a32",
+            transform: "translateY(-2px)",
           }}
         >
           {item.icon}
         </Box>
         <Box>
           <Typography
-            variant="h5"
-            sx={{ color: HEADING_COLOR, fontWeight: 700, mb: 0.3 }}
+            variant="h6"
+            sx={{
+              color: HEADING_COLOR,
+              fontWeight: 700,
+              mb: 0.2,
+              lineHeight: 1.1,
+            }}
           >
             {item.value}
           </Typography>
-          <Typography variant="body2" sx={{ color: BODY_COLOR }}>
+          <Typography
+            variant="body2"
+            sx={{ color: BODY_COLOR, lineHeight: 1.2 }}
+          >
             {item.label}
           </Typography>
         </Box>
@@ -165,8 +174,41 @@ const HomePage = () => {
   // Streak calendar data
   const [activeDates, setActiveDates] = useState([]);
   const [sessionsCount, setSessionsCount] = useState(0);
+  const ymd = (d) => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
+  const addDays = (date, delta) => {
+    const d = new Date(date);
+    d.setDate(d.getDate() + delta);
+    return d;
+  };
+  const computeRange = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    // Align grid start to Sunday for 8 weeks back
+    const start = addDays(today, -7 * (8 - 1));
+    const gridStart = addDays(start, -start.getDay()); // move back to Sun
+    return { from: ymd(gridStart), to: ymd(today) };
+  };
+
+  const computeWeekRange = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dayOfWeek = today.getDay(); // 0 (Sun) - 6 (Sat)
+    const daysSinceMonday = (dayOfWeek + 6) % 7;
+    const monday = addDays(today, -daysSinceMonday);
+    return { from: ymd(monday), to: ymd(today) };
+  };
   const totalPracticeHours = 12; // placeholder until analytics service lands
-  const activeDaysCount = activeDates.length;
+  const { from: weekFrom, to: weekTo } = useMemo(computeWeekRange, []);
+  const activeDaysCount = useMemo(
+    () =>
+      activeDates.filter((date) => date >= weekFrom && date <= weekTo).length,
+    [activeDates, weekFrom, weekTo]
+  );
   const statHighlightsData = useMemo(
     () => [
       {
@@ -187,25 +229,6 @@ const HomePage = () => {
     ],
     [sessionsCount, activeDaysCount, totalPracticeHours]
   );
-  const ymd = (d) => {
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  };
-  const addDays = (date, delta) => {
-    const d = new Date(date);
-    d.setDate(d.getDate() + delta);
-    return d;
-  };
-  const computeRange = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    // Align grid start to Sunday for 8 weeks back
-    const start = addDays(today, -7 * (8 - 1));
-    const gridStart = addDays(start, -start.getDay()); // move back to Sun
-    return { from: ymd(gridStart), to: ymd(today) };
-  };
 
   useEffect(() => {
     const loadActivity = async () => {
@@ -231,8 +254,12 @@ const HomePage = () => {
       if (now - sessionsFetchRef.current < FETCH_INTERVAL_MS) return;
       sessionsFetchRef.current = now;
       try {
-        const data = await SessionService.stats();
-        setSessionsCount(Number(data?.totalSessions) || 0);
+        const data = await SessionService.stats(weekFrom, weekTo);
+        const weeklySessions =
+          data?.rangeSessions !== undefined
+            ? Number(data.rangeSessions)
+            : Number(data?.totalSessions) || 0;
+        setSessionsCount(weeklySessions);
       } catch (e) {
         console.warn("Failed to fetch sessions stats:", e);
       }
@@ -301,16 +328,26 @@ const HomePage = () => {
                       ).slice(1)}
                   </Typography>
                   <Typography
-                    variant="h6"
+                    variant="body1"
                     sx={{
                       color: BODY_COLOR,
                       fontWeight: 400,
-                      mb: 3,
                     }}
                   >
                     Ready to take your communication skills to the next level?
                     Let's make today another step forward in your speaking
                     journey.
+                  </Typography>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color: MUTED_COLOR,
+                      fontWeight: 600,
+                      letterSpacing: 0.2,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Weekly stats
                   </Typography>
                   <StatHighlights stats={statHighlightsData} />
                 </Stack>
@@ -466,7 +503,7 @@ const HomePage = () => {
                 <List disablePadding sx={{ flexGrow: 1 }}>
                   {[
                     {
-                      title: "Job interview practice",
+                      title: "Job Interviews",
                       description:
                         "Work through targeted questions, capture AI feedback, and refine replies.",
                       iconColor: "rgba(250,115,91,0.95)",
@@ -479,7 +516,7 @@ const HomePage = () => {
                       action: () => navigate("/interview"),
                     },
                     {
-                      title: "Impromptu speaking reps",
+                      title: "Impromptu Speaking",
                       description:
                         "Stay comfortable with spontaneous prompts and soft skills drills.",
                       iconColor: "rgba(250,115,91,0.95)",
@@ -558,18 +595,6 @@ const HomePage = () => {
                     </ListItem>
                   ))}
                 </List>
-                <Button
-                  variant="text"
-                  sx={{
-                    alignSelf: "flex-start",
-                    color: "rgba(228, 71, 36, 0.94)",
-                    fontWeight: 600,
-                    textTransform: "none",
-                  }}
-                  onClick={() => navigate("/projects")}
-                >
-                  Explore upcoming practice modes ->
-                </Button>
               </Paper>
             </Grid>
           </Grid>
