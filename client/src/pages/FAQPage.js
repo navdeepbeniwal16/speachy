@@ -91,6 +91,7 @@ const FAQPage = () => {
     <Box
       sx={{
         minHeight: "100vh",
+        backgroundColor: "#fff4ef",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -115,7 +116,7 @@ const FAQPage = () => {
       <Typography
         variant="body1"
         align="center"
-        sx={{ color: "gray", mb: 4, maxWidth: "600px" }}
+        sx={{ color: "rgba(60,32,25,0.72)", mb: 4, maxWidth: "600px" }}
       >
         Find the answers to frequently asked questions below or let us know what
         we can do to improve Speachy!
@@ -128,7 +129,9 @@ const FAQPage = () => {
           maxWidth: "700px",
           borderRadius: 2,
           overflow: "hidden",
-          backgroundColor: "#f9f5f4",
+          backgroundColor: "#fff",
+          border: "1px solid #f0e6e1",
+          boxShadow: "0 2px 8px rgba(250, 115, 91, 0.06)",
         }}
       >
         {faqs.map((faq, index) => (
@@ -136,16 +139,27 @@ const FAQPage = () => {
             key={index}
             expanded={expandedIndex === index}
             onChange={() => handleExpansion(index)}
+            elevation={0}
+            sx={{
+              "&:before": {
+                display: "none",
+              },
+              borderBottom:
+                index === faqs.length - 1 ? "none" : "1px solid #f4e9e3",
+            }}
           >
             <AccordionSummary
               expandIcon={<ExpandMoreIcon />}
               aria-controls={`faq-content-${index}`}
               id={`faq-header-${index}`}
+              sx={{ py: 1.5 }}
             >
               <Typography sx={{ fontWeight: 500 }}>{faq.question}</Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Typography sx={{ color: "gray" }}>{faq.answer}</Typography>
+              <Typography sx={{ color: "rgba(60,32,25,0.72)" }}>
+                {faq.answer}
+              </Typography>
             </AccordionDetails>
           </Accordion>
         ))}
@@ -156,16 +170,18 @@ const FAQPage = () => {
           width: "100%",
           maxWidth: "700px",
           mt: 6,
-          px: 2,
+          px: 3,
           py: 4,
-          backgroundColor: "#f9f5f4",
+          backgroundColor: "#fff",
+          border: "1px solid #f0e6e1",
           borderRadius: 2,
+          boxShadow: "0 2px 8px rgba(250, 115, 91, 0.06)",
         }}
       >
         <Typography variant="h6" fontWeight="bold" gutterBottom>
           How are you finding Speachy so far?
         </Typography>
-        <Typography variant="body2" sx={{ color: "gray", mb: 2 }}>
+        <Typography variant="body2" sx={{ color: "rgba(60,32,25,0.72)", mb: 2 }}>
           We're eager to hear your feedback!
         </Typography>
 
@@ -224,7 +240,7 @@ const FAQPage = () => {
         <Typography variant="h6" fontWeight="bold" gutterBottom>
           Have any other questions?
         </Typography>
-        <Typography variant="body1" sx={{ color: "gray", mb: 2 }}>
+        <Typography variant="body1" sx={{ color: "rgba(60,32,25,0.72)", mb: 2 }}>
           Don’t hesitate to send us an email with your enquiry or statement at:
         </Typography>
         <Box
@@ -243,7 +259,8 @@ const FAQPage = () => {
               borderRadius: 1,
               display: "flex",
               alignItems: "center",
-              bgcolor: "#f9f9f9",
+              bgcolor: "#fff4ef",
+              border: "1px solid #f0e6e1",
             }}
           >
             <Typography
@@ -257,7 +274,7 @@ const FAQPage = () => {
             <IconButton
               onClick={copyToClipboard}
               sx={{
-                color: "#ff7a18",
+                color: "#FA735B",
               }}
             >
               <ContentCopyIcon />
