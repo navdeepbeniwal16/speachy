@@ -25,6 +25,8 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
+const NAV_ICON_SX = { color: "#2f170f", borderRadius: 2 };
+
 const InterviewQuestions = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -188,129 +190,139 @@ const InterviewQuestions = () => {
   ));
 
   return (
-    <Container component="main" maxWidth="lg">
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-        }}
-      >
-        <IconButton onClick={() => navigate("/interview")}>
-          <ArrowBackIcon></ArrowBackIcon>
-        </IconButton>
-        <Typography variant="h6" gutterBottom>
-          Practice Questions
-        </Typography>
-        <Typography></Typography>
-      </Box>
-
-      {/* Filters Section */}
-      <Paper
-        elevation={0}
-        sx={{
-          mt: 3,
-          mb: 3,
-          py: 2,
-          background: "#fff",
-          borderRadius: "16px", // match dashboard
-          boxShadow: "0 2px 8px rgba(250, 115, 91, 0.04)",
-          border: "1px solid #f0e6e1",
-          display: "flex",
-          flexDirection: { xs: "column", sm: "row" },
-          alignItems: { xs: "flex-start", sm: "center" },
-          gap: 3,
-          justifyContent: { xs: "flex-start", sm: "space-between" },
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Typography
-            variant="subtitle2"
-            color="text.secondary"
-            sx={{ minWidth: 70, fontWeight: 600, paddingLeft: 2 }}
-          >
-            Difficulty
-          </Typography>
-          {["easy", "medium", "hard"].map((diff) => (
-            <FormControlLabel
-              key={diff}
-              control={
-                <Checkbox
-                  checked={selectedDifficulties.includes(diff)}
-                  onChange={handleDifficultyChange}
-                  value={diff}
-                  color="warning"
-                  sx={{ p: 0.5, "&.Mui-checked": { color: "#FA735B" } }}
-                />
-              }
-              label={
-                <Typography
-                  variant="body2"
-                  sx={{ textTransform: "capitalize", fontWeight: 500 }}
-                >
-                  {diff}
-                </Typography>
-              }
-              sx={{ mr: 2 }}
-            />
-          ))}
-        </Box>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        backgroundColor: "#fff4ef",
+        py: { xs: 4, md: 6 },
+      }}
+    >
+      <Container component="main" maxWidth="lg">
         <Box
           sx={{
             display: "flex",
-            alignItems: "center",
-            gap: 2,
-            width: { xs: "100%", sm: "auto" },
-            justifyContent: { xs: "flex-start", sm: "flex-end" },
-            ml: { xs: 0, sm: "auto" },
-            mt: { xs: 2, sm: 0 },
+            justifyContent: "space-between",
           }}
         >
-          <Typography
-            variant="subtitle2"
-            color="text.secondary"
-            sx={{ minWidth: 60, fontWeight: 600 }}
-          >
-            Source
+          <IconButton onClick={() => navigate("/interview")} sx={NAV_ICON_SX}>
+            <ArrowBackIcon></ArrowBackIcon>
+          </IconButton>
+          <Typography variant="h6" gutterBottom>
+            Practice Questions
           </Typography>
-          <ToggleButtonGroup
-            value={questionSource}
-            exclusive
-            onChange={handleSourceChange}
-            size="small"
+          <Typography></Typography>
+        </Box>
+
+        {/* Filters Section */}
+        <Paper
+          elevation={0}
+          sx={{
+            mt: 3,
+            mb: 3,
+            py: 2,
+            background: "#fff",
+            // borderRadius: "16px", // match dashboard
+            boxShadow: "0 2px 8px rgba(250, 115, 91, 0.04)",
+            border: "1px solid #f0e6e1",
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: { xs: "flex-start", sm: "center" },
+            gap: 3,
+            justifyContent: { xs: "flex-start", sm: "space-between" },
+            borderRadius: 2,
+            // border: "1px solid #f0f0f0",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              sx={{ minWidth: 70, fontWeight: 600, paddingLeft: 2 }}
+            >
+              Difficulty
+            </Typography>
+            {["easy", "medium", "hard"].map((diff) => (
+              <FormControlLabel
+                key={diff}
+                control={
+                  <Checkbox
+                    checked={selectedDifficulties.includes(diff)}
+                    onChange={handleDifficultyChange}
+                    value={diff}
+                    color="warning"
+                    sx={{ p: 0.5, "&.Mui-checked": { color: "#FA735B" } }}
+                  />
+                }
+                label={
+                  <Typography
+                    variant="body2"
+                    sx={{ textTransform: "capitalize", fontWeight: 500 }}
+                  >
+                    {diff}
+                  </Typography>
+                }
+                sx={{ mr: 2 }}
+              />
+            ))}
+          </Box>
+          <Box
             sx={{
-              background: "#fff",
-              borderRadius: 2,
-              boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
-              pl: 1.5,
-              pr: 1.5,
-              py: 0.5,
-              "& .MuiToggleButton-root": {
-                border: "none",
-                borderRadius: 2,
-                mx: 0.5,
-                px: 2,
-                color: "text.secondary",
-                fontWeight: 500,
-                letterSpacing: 0.5,
-                "&.Mui-selected": {
-                  color: "#FA735B",
-                  background: "#fff0ec",
-                  fontWeight: 600,
-                },
-              },
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              width: { xs: "100%", sm: "auto" },
+              justifyContent: { xs: "flex-start", sm: "flex-end" },
+              ml: { xs: 0, sm: "auto" },
+              mt: { xs: 2, sm: 0 },
             }}
           >
-            <ToggleButton value="all">ALL</ToggleButton>
-            <ToggleButton value="ai">AI-GENERATED</ToggleButton>
-            <ToggleButton value="curated">CURATED</ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-      </Paper>
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              sx={{ minWidth: 60, fontWeight: 600 }}
+            >
+              Source
+            </Typography>
+            <ToggleButtonGroup
+              value={questionSource}
+              exclusive
+              onChange={handleSourceChange}
+              size="small"
+              sx={{
+                background: "#fff",
+                borderRadius: 2,
+                boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+                pl: 1.5,
+                pr: 1.5,
+                py: 0.5,
+                "& .MuiToggleButton-root": {
+                  border: "none",
+                  borderRadius: 2,
+                  mx: 0.5,
+                  px: 2,
+                  color: "text.secondary",
+                  fontWeight: 500,
+                  letterSpacing: 0.5,
+                  "&.Mui-selected": {
+                    color: "#FA735B",
+                    background: "#fff0ec",
+                    fontWeight: 600,
+                  },
+                },
+              }}
+            >
+              <ToggleButton value="all">ALL</ToggleButton>
+              <ToggleButton value="ai">AI-GENERATED</ToggleButton>
+              <ToggleButton value="curated">CURATED</ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
+        </Paper>
 
-      <Box>
-        <List>{questionsList}</List>
-      </Box>
-    </Container>
+        <Box>
+          <List>{questionsList}</List>
+        </Box>
+      </Container>
+    </Box>
   );
 };
 

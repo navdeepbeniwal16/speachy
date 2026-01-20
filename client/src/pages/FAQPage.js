@@ -18,6 +18,21 @@ import UserService from "../services/user-service";
 
 const FAQPage = () => {
   const email = "contact@speachy.com";
+  const primaryButtonSx = {
+    textTransform: "none",
+    fontWeight: 600,
+    px: 3.5,
+    py: 1.4,
+    borderRadius: 2,
+    backgroundColor: "#FA735B",
+    boxShadow:
+      "0px 12px 24px -12px rgba(250,115,91,0.7), 0px 10px 18px -14px rgba(49,30,20,0.35)",
+    "&:hover": {
+      backgroundColor: "#f8643f",
+      boxShadow:
+        "0px 14px 26px -12px rgba(250,115,91,0.8), 0px 12px 18px -14px rgba(49,30,20,0.35)",
+    },
+  };
 
   const faqs = [
     {
@@ -91,6 +106,7 @@ const FAQPage = () => {
     <Box
       sx={{
         minHeight: "100vh",
+        backgroundColor: "#fff4ef",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -104,7 +120,8 @@ const FAQPage = () => {
         align="center"
         gutterBottom
         sx={{
-          background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
+          // background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
+          background: "linear-gradient(90deg, #FA735B 20%, #FF8E53 90%)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
         }}
@@ -114,7 +131,7 @@ const FAQPage = () => {
       <Typography
         variant="body1"
         align="center"
-        sx={{ color: "gray", mb: 4, maxWidth: "600px" }}
+        sx={{ color: "rgba(60,32,25,0.72)", mb: 4, maxWidth: "600px" }}
       >
         Find the answers to frequently asked questions below or let us know what
         we can do to improve Speachy!
@@ -127,7 +144,9 @@ const FAQPage = () => {
           maxWidth: "700px",
           borderRadius: 2,
           overflow: "hidden",
-          backgroundColor: "#f9f5f4",
+          backgroundColor: "#fff",
+          border: "1px solid #f0e6e1",
+          boxShadow: "0 2px 8px rgba(250, 115, 91, 0.06)",
         }}
       >
         {faqs.map((faq, index) => (
@@ -135,16 +154,27 @@ const FAQPage = () => {
             key={index}
             expanded={expandedIndex === index}
             onChange={() => handleExpansion(index)}
+            elevation={0}
+            sx={{
+              "&:before": {
+                display: "none",
+              },
+              borderBottom:
+                index === faqs.length - 1 ? "none" : "1px solid #f4e9e3",
+            }}
           >
             <AccordionSummary
               expandIcon={<ExpandMoreIcon />}
               aria-controls={`faq-content-${index}`}
               id={`faq-header-${index}`}
+              sx={{ py: 1.5 }}
             >
               <Typography sx={{ fontWeight: 500 }}>{faq.question}</Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Typography sx={{ color: "gray" }}>{faq.answer}</Typography>
+              <Typography sx={{ color: "rgba(60,32,25,0.72)" }}>
+                {faq.answer}
+              </Typography>
             </AccordionDetails>
           </Accordion>
         ))}
@@ -155,16 +185,18 @@ const FAQPage = () => {
           width: "100%",
           maxWidth: "700px",
           mt: 6,
-          px: 2,
+          px: 3,
           py: 4,
-          backgroundColor: "#f9f5f4",
+          backgroundColor: "#fff",
+          border: "1px solid #f0e6e1",
           borderRadius: 2,
+          boxShadow: "0 2px 8px rgba(250, 115, 91, 0.06)",
         }}
       >
         <Typography variant="h6" fontWeight="bold" gutterBottom>
           How are you finding Speachy so far?
         </Typography>
-        <Typography variant="body2" sx={{ color: "gray", mb: 2 }}>
+        <Typography variant="body2" sx={{ color: "rgba(60,32,25,0.72)", mb: 2 }}>
           We're eager to hear your feedback!
         </Typography>
 
@@ -195,18 +227,7 @@ const FAQPage = () => {
           variant="contained"
           onClick={() => uploadUserFeedback(rating, userFeedback)}
           disabled={!rating && userFeedback.trim() === ""}
-          sx={{
-            background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
-            color: "#fff",
-            fontWeight: "bold",
-            px: 4,
-            py: 1.5,
-            borderRadius: 2,
-            textTransform: "none",
-            "&:hover": {
-              background: "linear-gradient(90deg, #e7610b, #db2037)",
-            },
-          }}
+          sx={primaryButtonSx}
         >
           Send feedback
         </Button>
@@ -221,7 +242,7 @@ const FAQPage = () => {
         <Typography variant="h6" fontWeight="bold" gutterBottom>
           Have any other questions?
         </Typography>
-        <Typography variant="body1" sx={{ color: "gray", mb: 2 }}>
+        <Typography variant="body1" sx={{ color: "rgba(60,32,25,0.72)", mb: 2 }}>
           Don’t hesitate to send us an email with your enquiry or statement at:
         </Typography>
         <Box
@@ -240,7 +261,8 @@ const FAQPage = () => {
               borderRadius: 1,
               display: "flex",
               alignItems: "center",
-              bgcolor: "#f9f9f9",
+              bgcolor: "#fff4ef",
+              border: "1px solid #f0e6e1",
             }}
           >
             <Typography
@@ -254,7 +276,7 @@ const FAQPage = () => {
             <IconButton
               onClick={copyToClipboard}
               sx={{
-                color: "#ff7a18",
+                color: "#FA735B",
               }}
             >
               <ContentCopyIcon />

@@ -10,18 +10,7 @@ const BannerWrapper = () => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
-      if (firebaseUser) {
-        setIsUserVerified(firebaseUser.emailVerified);
-        // Start polling for email verification status
-        const intervalId = setInterval(async () => {
-          await firebaseUser.reload();
-          setIsUserVerified(firebaseUser.emailVerified);
-        }, 5000); // Check every 5 seconds
-
-        return () => clearInterval(intervalId); // Clean up interval on unmount
-      } else {
-        setIsUserVerified(false);
-      }
+      setIsUserVerified(firebaseUser ? firebaseUser.emailVerified : false);
     });
 
     return () => unsubscribe();

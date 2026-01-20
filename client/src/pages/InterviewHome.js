@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -18,9 +18,18 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import InterviewService from "../services/interview-service.js";
 import { getAuth } from "firebase/auth";
 import QuestionsList from "../components/QuestionsList.js";
+import { AppContext } from "../components/AppContext.js";
+
+const PAGE_BG = "#fff4ef";
+const SURFACE_BG = "#ffffff";
+const SURFACE_BORDER = "1px solid rgba(252,150,120,0.14)";
+const SURFACE_SHADOW = "0 18px 36px rgba(252,150,120,0.12)";
+const HEADING_COLOR = "#2f170f";
+const BODY_COLOR = "rgba(60,32,25,0.78)";
 
 const InterviewHome = () => {
   const auth = getAuth();
+  const { showSnackbar } = useContext(AppContext);
   const navigate = useNavigate();
   const [isStarting, setIsStarting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -34,6 +43,35 @@ const InterviewHome = () => {
   const [jobDescription, setJobDescription] = useState("");
   const [user, setUser] = useState(null);
   const [savedQuestions, setSavedQuestions] = useState([]);
+
+  const inputSx = {
+    "& .MuiOutlinedInput-root": {
+      "& .MuiOutlinedInput-notchedOutline": {
+        borderColor: "rgba(47,23,15,0.2)",
+      },
+      "&:hover .MuiOutlinedInput-notchedOutline": {
+        borderColor: "rgba(47,23,15,0.4)",
+      },
+      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+        borderColor: "#FA735B",
+      },
+    },
+  };
+  const primaryButtonSx = {
+    textTransform: "none",
+    fontWeight: 600,
+    px: 3.5,
+    py: 1.4,
+    borderRadius: 2,
+    backgroundColor: "#FA735B",
+    boxShadow:
+      "0px 12px 24px -12px rgba(250,115,91,0.7), 0px 10px 18px -14px rgba(49,30,20,0.35)",
+    "&:hover": {
+      backgroundColor: "#f8643f",
+      boxShadow:
+        "0px 14px 26px -12px rgba(250,115,91,0.8), 0px 12px 18px -14px rgba(49,30,20,0.35)",
+    },
+  };
 
   const experienceOptions = [
     { value: "entry", label: "Entry (0-1 years)" },
@@ -95,70 +133,94 @@ const InterviewHome = () => {
 
     setIsUploading(true);
 
-    const questions = await InterviewService.fetchBehaviouralQuestions(
-      companyName,
-      jobRole,
-      jobDescription,
-      industry,
-      experience
-    );
-    console.log("Questions (fetched from backend api):", questions);
+    try {
+      const questions = await InterviewService.fetchBehaviouralQuestions(
+        companyName,
+        jobRole,
+        jobDescription,
+        industry,
+        experience
+      );
+      console.log("Questions (fetched from backend api):", questions);
 
-    navigate("/interview/questions", {
-      state: {
-        questions: questions,
-        companyName: companyName,
-        jobRole: jobRole,
-        jobDescription: jobDescription,
-        industry: industry,
-        requiredExperience: experience,
-      },
-    });
+      navigate("/interview/questions", {
+        state: {
+          questions: questions,
+          companyName: companyName,
+          jobRole: jobRole,
+          jobDescription: jobDescription,
+          industry: industry,
+          requiredExperience: experience,
+        },
+      });
+    } catch (error) {
+      const message =
+        error?.userMessage ||
+        "Unable to generate questions right now. Please try again.";
+      showSnackbar("error", message);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleStart = async (event) => {
     event.preventDefault();
     setIsStarting(true);
 
-    const questions = await InterviewService.fetchBehaviouralQuestions(
-      null,
-      null,
-      null
-    );
-    console.log("Questions (fetched from backend api):", questions);
+    try {
+      const questions = await InterviewService.fetchBehaviouralQuestions(
+        null,
+        null,
+        null
+      );
+      console.log("Questions (fetched from backend api):", questions);
 
-    navigate("/interview/questions", {
-      state: {
-        questions: questions,
-        companyName: companyName,
-        jobRole: jobRole,
-        jobDescription: jobDescription,
-      },
-    });
+      navigate("/interview/questions", {
+        state: {
+          questions: questions,
+          companyName: companyName,
+          jobRole: jobRole,
+          jobDescription: jobDescription,
+        },
+      });
+    } catch (error) {
+      const message =
+        error?.userMessage ||
+        "Unable to generate questions right now. Please try again.";
+      showSnackbar("error", message);
+    } finally {
+      setIsStarting(false);
+    }
   };
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-        <IconButton onClick={() => navigate("/")}>
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography variant="h6" gutterBottom>
-          👔 Job Interview Preparation
-        </Typography>
-        <Box></Box>
-      </Box>
+    <Box sx={{ minHeight: "100vh", backgroundColor: PAGE_BG, py: { xs: 4, md: 6 } }}>
+      <Container maxWidth="lg">
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <IconButton
+            onClick={() => navigate("/")}
+            sx={{ color: HEADING_COLOR, borderRadius: 2 }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography variant="h6" gutterBottom sx={{ color: HEADING_COLOR, fontWeight: 600 }}>
+            👔 Job Interview Preparation
+          </Typography>
+          <Box />
+        </Box>
 
-      <Grid container spacing={2} sx={{ padding: 0 }}>
+        <Grid container spacing={3} sx={{ padding: 0 }}>
         <Grid item xs={12} sm={12} md={12} lg={12} xl={12}>
           <Paper
-            variant="elevation"
             elevation={0}
             sx={{
-              overflowY: "auto",
+              overflow: "hidden",
               zIndex: 1,
-              borderRadius: "10px",
               mt: 2,
+              borderRadius: 3,
+              border: SURFACE_BORDER,
+              backgroundColor: SURFACE_BG,
+              boxShadow: SURFACE_SHADOW,
             }}
           >
             {isUploading && (
@@ -175,18 +237,17 @@ const InterviewHome = () => {
             <Box sx={{ p: 3 }}>
               <Typography
                 variant="h5"
-                style={{ fontWeight: "bold", color: "#444444" }}
+                sx={{ fontWeight: 700, color: HEADING_COLOR }}
                 gutterBottom
               >
                 Prepare for an upcoming interview
               </Typography>
               <Typography
                 variant="body2"
-                color="grey"
                 sx={{
                   mb: 2,
+                  color: BODY_COLOR,
                 }}
-                style={{ fontWeight: "" }}
               >
                 Ace your interviews with practice questions and response
                 analysis
@@ -212,13 +273,7 @@ const InterviewHome = () => {
                       variant="outlined"
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "darkgray",
-                          },
-                        },
-                      }}
+                      sx={inputSx}
                     />
                     {!isCompanyProvided && (
                       <Typography variant="body2" color="red">
@@ -236,13 +291,7 @@ const InterviewHome = () => {
                       autoComplete="off"
                       value={jobRole}
                       onChange={(e) => setRole(e.target.value)}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "darkgray",
-                          },
-                        },
-                      }}
+                      sx={inputSx}
                     />
                     {!isRoleProvided && (
                       <Typography variant="body2" color="red">
@@ -260,13 +309,7 @@ const InterviewHome = () => {
                       name="experience"
                       value={experience}
                       onChange={(e) => setExperience(e.target.value)}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "darkgray",
-                          },
-                        },
-                      }}
+                      sx={inputSx}
                     >
                       {experienceOptions.map((option) => (
                         <MenuItem key={option.value} value={option.value}>
@@ -289,13 +332,7 @@ const InterviewHome = () => {
                       autoComplete="off"
                       value={industry}
                       onChange={(e) => setIndustry(e.target.value)}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "darkgray",
-                          },
-                        },
-                      }}
+                      sx={inputSx}
                     />
                   </Grid>
 
@@ -311,33 +348,13 @@ const InterviewHome = () => {
                       rows={6}
                       value={jobDescription}
                       onChange={(e) => setJobDescription(e.target.value)}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "darkgray",
-                          },
-                        },
-                      }}
+                      sx={inputSx}
                     />
                     <Button
                       type="submit"
                       fullWidth
                       variant="contained"
-                      color="warning"
-                      sx={{
-                        mt: 2,
-                        mb: 2,
-                        textTransform: "none",
-                        fontWeight: "bold",
-                      }}
-                      style={{
-                        background:
-                          "linear-gradient(90deg, #FF8E53 20%, #FA735B 90%)",
-                        "&:hover": {
-                          background:
-                            "linear-gradient(90deg, #FA735B 20%, #FF8E53 90%)",
-                        },
-                      }}
+                      sx={{ ...primaryButtonSx, mt: 2, mb: 2 }}
                       disabled={isUploading}
                     >
                       Let's go!
@@ -351,17 +368,18 @@ const InterviewHome = () => {
 
         <Grid item xs={12} sm={12} md={12} lg={12} xl={12}>
           <Paper
-            variant="none"
+            elevation={0}
             sx={{
-              height: "100%",
-              borderRadius: "10px",
-              backgroundColor: "#FFF",
+              backgroundColor: SURFACE_BG,
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
               alignItems: "center",
-              padding: 3,
+              p: 3,
               mt: 2,
+              borderRadius: 3,
+              border: SURFACE_BORDER,
+              boxShadow: SURFACE_SHADOW,
             }}
           >
             <Box
@@ -376,8 +394,7 @@ const InterviewHome = () => {
             >
               <Typography
                 variant="h5"
-                sx={{ mb: 2, textAlign: "left" }}
-                style={{ fontWeight: "bold", color: "#444444" }}
+                sx={{ mb: 2, textAlign: "center", fontWeight: 700, color: HEADING_COLOR }}
                 gutterBottom
               >
                 General Practice
@@ -385,8 +402,7 @@ const InterviewHome = () => {
 
               <Typography
                 variant="body1"
-                color="textSecondary"
-                sx={{ mb: 3, textAlign: "center" }}
+                sx={{ mb: 3, textAlign: "center", color: BODY_COLOR }}
               >
                 Get ready to tackle the most common questions with confidence.
                 Start your practice now!
@@ -394,19 +410,9 @@ const InterviewHome = () => {
 
               <Button
                 variant="contained"
-                color="warning"
                 onClick={handleStart}
                 disabled={isStarting}
-                sx={{ textTransform: "none", fontWeight: "bold" }}
-                style={{
-                  backgroundColor: "#FA735B",
-                  background:
-                    "linear-gradient(90deg, #FF8E53 20%, #FA735B 90%)",
-                  "&:hover": {
-                    background:
-                      "linear-gradient(90deg, #FA735B 20%, #FF8E53 90%)",
-                  },
-                }}
+                sx={primaryButtonSx}
               >
                 Jump In
               </Button>
@@ -425,7 +431,7 @@ const InterviewHome = () => {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} sm={12} md={12} lg={12} xl={12}>
+        {/* <Grid item xs={12} sm={12} md={12} lg={12} xl={12}>
           <Paper
             variant="none"
             sx={{
@@ -451,9 +457,10 @@ const InterviewHome = () => {
 
             <QuestionsList questions={savedQuestions}></QuestionsList>
           </Paper>
-        </Grid>
+        </Grid> */}
       </Grid>
     </Container>
+    </Box>
   );
 };
 

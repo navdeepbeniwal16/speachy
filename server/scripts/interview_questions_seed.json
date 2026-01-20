@@ -1,0 +1,22 @@
+[
+  {"question": "Can you tell me about yourself?", "tags": ["general"], "difficultyLevel": "medium", "active": true, "rank": 1},
+  {"question": "Why do you want to work here?", "tags": ["general"], "difficultyLevel": "medium", "active": true, "rank": 2},
+  {"question": "What are your expectations of this role?", "tags": ["general"], "difficultyLevel": "medium", "active": true, "rank": 3},
+  {"question": "Describe a difficult work situation/project and how you overcame it", "tags": ["general"], "difficultyLevel": "medium", "active": true, "rank": 4},
+  {"question": "What are your strengths?", "tags": ["general"], "difficultyLevel": "medium", "active": true, "rank": 5},
+  {"question": "What is your greatest weakness?", "tags": ["general"], "difficultyLevel": "medium", "active": true, "rank": 6},
+  {"question": "Describe your ideal work environment.", "tags": ["general"], "difficultyLevel": "easy", "active": true, "rank": 7},
+  {"question": "What motivates you?", "tags": ["general"], "difficultyLevel": "medium", "active": true, "rank": 8},
+  {"question": "Where do you see yourself in five years?", "tags": ["general"], "difficultyLevel": "hard", "active": true, "rank": 9},
+  {"question": "What makes you a good fit for this role?", "tags": ["general"], "difficultyLevel": "medium", "active": true, "rank": 10},
+  {"question": "Can you describe a successful project you worked on?", "tags": ["general"], "difficultyLevel": "hard", "active": true, "rank": 11},
+  {"question": "What inspired you to pursue this career?", "tags": ["general"], "difficultyLevel": "medium", "active": true, "rank": 12},
+  {"question": "What are you passionate about outside of work?", "tags": ["general"], "difficultyLevel": "easy", "active": true, "rank": 13},
+  {"question": "What’s the best advice you’ve ever received?", "tags": ["general"], "difficultyLevel": "hard", "active": true, "rank": 14},
+  {"question": "How do you define success?", "tags": ["general"], "difficultyLevel": "hard", "active": true, "rank": 15},
+  {"question": "If you were an animal, which one would you be?", "tags": ["curveball"], "difficultyLevel": "hard", "active": true, "rank": 16},
+  {"question": "What would you do if you won the lottery tomorrow?", "tags": ["curveball"], "difficultyLevel": "hard", "active": true, "rank": 17},
+  {"question": "What’s the most interesting thing about you that’s not on your resume?", "tags": ["curveball"], "difficultyLevel": "hard", "active": true, "rank": 18},
+  {"question": "If you had to give a TED talk, what would it be about?", "tags": ["curveball"], "difficultyLevel": "hard", "active": true, "rank": 19}
+]
+

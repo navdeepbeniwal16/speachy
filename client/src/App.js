@@ -17,7 +17,6 @@ import SignUp from "./pages/SignUpPage";
 import SignIn from "./pages/SignInPage";
 import { auth } from "./services/firebase";
 import ImpromptSpeakingPractice from "./pages/ImpromptSpeakingPractice";
-import BannerWrapper from "./components/BannerWrapper";
 import PaymentSuccess from "./pages/payments/PaymentSuccess";
 import PaymentCancel from "./pages/payments/PaymentCancel";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
@@ -54,15 +53,13 @@ const requireAuth = (Component) => {
 function App() {
   return (
     <Box
-      sx={{ display: "flex", backgroundColor: "#f9f5f4", minHeight: "100vh" }}
+      sx={{ display: "flex", backgroundColor: "#fff4ef", minHeight: "100vh" }}
     >
       <Router>
         <CssBaseline />
         <DrawerLeft />
 
-        {/* <NavigationBar /> */}
         <Box component="main" sx={{ flexGrow: 1, p: 0 }}>
-          <BannerWrapper />
           <PageWrapper>
             <Routes>
               <Route path="/signup" element={<SignUp />} />

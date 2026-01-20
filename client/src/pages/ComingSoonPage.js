@@ -7,6 +7,7 @@ const ComingSoonPage = () => {
     <Box
       sx={{
         minHeight: "100vh",
+        backgroundColor: "#fff4ef",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -21,7 +22,8 @@ const ComingSoonPage = () => {
         align="center"
         gutterBottom
         sx={{
-          background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
+          color: "rgba(36, 20, 14, 0.9)",
+          background: "linear-gradient(90deg, #FA735B 20%, #FF8E53 90%)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
         }}
@@ -33,7 +35,7 @@ const ComingSoonPage = () => {
         variant="body1"
         align="center"
         sx={{
-          color: "gray",
+          color: "rgba(60,32,25,0.72)",
           maxWidth: "600px",
           mb: 6,
         }}
@@ -53,18 +55,21 @@ const ComingSoonPage = () => {
           px: 4,
           borderRadius: 2,
           backgroundColor: "#fff",
+          border: "1px solid #f0e6e1",
+          boxShadow: "0 2px 8px rgba(250, 115, 91, 0.06)",
           textAlign: "center",
         }}
       >
         <EngineeringIcon
           sx={{
             fontSize: 60,
+            color: "#FA735B",
           }}
         ></EngineeringIcon>
         <Typography variant="h5" fontWeight="bold" gutterBottom>
           Projects Under Construction
         </Typography>
-        <Typography variant="body2" sx={{ color: "gray", mt: 1 }}>
+        <Typography variant="body2" sx={{ color: "rgba(60,32,25,0.72)", mt: 1 }}>
           We’re working on something powerful. Stay tuned and be the first to
           try it.
         </Typography>

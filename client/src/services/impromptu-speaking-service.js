@@ -1,4 +1,5 @@
 import backendApiClient from "./backendAPIClient.js";
+import { getAuth } from "firebase/auth";
 
 class ImpromptuSpeakingService {
   static async fetchPrompt() {
@@ -32,26 +33,21 @@ class ImpromptuSpeakingService {
     formData.append("promptText", promptText);
 
     try {
-      const response = await fetch(
+      const response = await backendApiClient.post(
         "/impromptu-speaking/evaluate-response-audio",
-        {
-          method: "POST",
-          headers: {},
-          body: formData,
-        }
+        formData
       );
 
       if (response.status !== 200) {
-        throw new Error("Request unsuccessful: " + response);
+        throw new Error("Request unsuccessful: " + response.status);
       }
 
-      const data = await response.json();
-      if (!data.results) {
-        throw new Error("Results not found in response payload: " + response);
+      const data = response.data;
+      if (!data?.results) {
+        throw new Error("Results not found in response payload");
       }
 
-      const resultsObj = data.results;
-      return resultsObj;
+      return data.results;
     } catch (error) {
       console.error("Failed to fetch audio response feedback:", error);
       throw error; // Re-throw the error instead of returning null

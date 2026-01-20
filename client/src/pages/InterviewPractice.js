@@ -22,6 +22,8 @@ import { ReactComponent as FeedbackIcon } from "../assets/chat-evaluation.svg";
 import SnackbarAlert from "../components/SnackbarAlert";
 import QuestionProgressView from "../components/QuestionProgressView.js";
 
+const NAV_ICON_SX = { color: "#2f170f", borderRadius: 2 };
+
 const InterviewPractice = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -226,6 +228,7 @@ const InterviewPractice = () => {
               state: { questions: questions },
             })
           }
+          sx={NAV_ICON_SX}
         >
           <ArrowBackIcon />
         </IconButton>
