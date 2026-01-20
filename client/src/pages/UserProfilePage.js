@@ -14,7 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import { getAuth, updateProfile } from "firebase/auth";
+import { deleteUser, getAuth, updateProfile } from "firebase/auth";
 import { AppContext } from "../components/AppContext";
 import { useNavigate } from "react-router-dom";
 import SnackbarAlert from "../components/SnackbarAlert";
@@ -49,6 +49,8 @@ const UserProfilePage = () => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarType, setSnackbarType] = useState("success");
   const [signOutDialogOpen, setSignOutDialogOpen] = useState(false);
+  const [deleteAccountDialogOpen, setDeleteAccountDialogOpen] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   const triggerSnackbar = (type, message) => {
     setSnackbarOpen(false); // reset if open
@@ -106,6 +108,30 @@ const UserProfilePage = () => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    setIsDeletingAccount(true);
+    try {
+      await deleteUser(user);
+      setState((prevState) => ({
+        ...prevState,
+        isImpromptuSpeakingEnabled: false,
+        isInterviewPracticeEnabled: false,
+      }));
+      navigate("/");
+    } catch (error) {
+      const requiresRecentLogin =
+        error?.code === "auth/requires-recent-login" ||
+        error?.code === "auth/user-token-expired";
+      const message = requiresRecentLogin
+        ? "Please sign in again to delete your account."
+        : "Unable to delete your account right now. Please try again.";
+      triggerSnackbar("error", message);
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
   const openSignOutDialog = () => {
     setSignOutDialogOpen(true);
   };
@@ -117,6 +143,19 @@ const UserProfilePage = () => {
   const confirmSignOut = async () => {
     setSignOutDialogOpen(false);
     await signOut();
+  };
+
+  const openDeleteAccountDialog = () => {
+    setDeleteAccountDialogOpen(true);
+  };
+
+  const closeDeleteAccountDialog = () => {
+    setDeleteAccountDialogOpen(false);
+  };
+
+  const confirmDeleteAccount = async () => {
+    setDeleteAccountDialogOpen(false);
+    await handleDeleteAccount();
   };
 
   return (
@@ -240,36 +279,31 @@ const UserProfilePage = () => {
         </Box>
 
         <Box mt={4} maxWidth="500px">
-          {[
-            "Forgot your password?",
-            "Delete your account",
-          ].map((label, idx) => (
-            <Paper
-              key={idx}
-              elevation={0}
-              sx={{
-                p: 2,
-                mb: 2,
-                borderRadius: 2,
-                backgroundColor: "#fff",
-                border: "1px solid #f0e6e1",
-                boxShadow: "0 1px 4px rgba(250, 115, 91, 0.04)",
-                cursor: "pointer",
-                "&:hover": {
-                  backgroundColor: "#fff4ef",
-                },
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Typography>{label}</Typography>
-              <ArrowForwardIosIcon
-                sx={{ height: "22px", width: "22px" }}
-                style={{ color: "#FA735B" }}
-              />
-            </Paper>
-          ))}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              mb: 2,
+              borderRadius: 2,
+              backgroundColor: "#fff",
+              border: "1px solid #f0e6e1",
+              boxShadow: "0 1px 4px rgba(250, 115, 91, 0.04)",
+              cursor: "pointer",
+              "&:hover": {
+                backgroundColor: "#fff4ef",
+              },
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+            onClick={openDeleteAccountDialog}
+          >
+            <Typography>Delete your account</Typography>
+            <ArrowForwardIosIcon
+              sx={{ height: "22px", width: "22px" }}
+              style={{ color: "#FA735B" }}
+            />
+          </Paper>
 
           <Paper
             elevation={0}
@@ -360,6 +394,83 @@ const UserProfilePage = () => {
               sx={{ ...primaryButtonSx, minWidth: 140 }}
             >
               Sign out
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={deleteAccountDialogOpen}
+          onClose={closeDeleteAccountDialog}
+          maxWidth="xs"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 2,
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{
+              backgroundColor: "#fff",
+              borderBottom: "1px solid #f0e6e1",
+              fontWeight: "bold",
+              py: 2.2,
+            }}
+          >
+            Delete your account?
+          </DialogTitle>
+          <DialogContent sx={{ p: 3 }}>
+            <Typography variant="body1" sx={{ color: "text.secondary", lineHeight: 1.6 }}>
+              This action permanently deletes your account and cannot be undone.
+            </Typography>
+          </DialogContent>
+          <DialogActions
+            sx={{
+              p: 3,
+              backgroundColor: "#fff",
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 1.5,
+            }}
+          >
+            <Button
+              onClick={closeDeleteAccountDialog}
+              variant="outlined"
+              sx={{
+                fontWeight: "bold",
+                textTransform: "none",
+                borderRadius: 3,
+                px: 3.5,
+                py: 1,
+                minWidth: 120,
+                borderColor: "#e1cfc6",
+                color: "#5c4033",
+                "&:hover": {
+                  borderColor: "#d4bfb5",
+                  backgroundColor: "#fff4ef",
+                },
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmDeleteAccount}
+              variant="contained"
+              sx={{
+                ...primaryButtonSx,
+                minWidth: 160,
+                backgroundColor: "#E4573D",
+                boxShadow:
+                  "0px 12px 24px -12px rgba(228,87,61,0.6), 0px 10px 18px -14px rgba(49,30,20,0.35)",
+                "&:hover": {
+                  backgroundColor: "#d64d36",
+                  boxShadow:
+                    "0px 14px 26px -12px rgba(228,87,61,0.7), 0px 12px 18px -14px rgba(49,30,20,0.35)",
+                },
+              }}
+              disabled={isDeletingAccount}
+            >
+              {isDeletingAccount ? "Deleting..." : "Delete account"}
             </Button>
           </DialogActions>
         </Dialog>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useMemo, useState, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Button,
@@ -26,7 +26,10 @@ import {
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import MicNoneOutlinedIcon from "@mui/icons-material/MicNoneOutlined";
+import ForumOutlinedIcon from "@mui/icons-material/ForumOutlined";
+import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
+import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -42,6 +45,357 @@ const logoStyle = {
   height: "auto",
   cursor: "pointer",
 };
+
+const STEP_CARDS = [
+  {
+    title: "Practise",
+    body: "at your own pace without the usual pressure",
+    image: "/assets/speachy_waveform_step1.svg",
+    fallbackImage: "/assets/speachy_step1_waveform.svg",
+  },
+  {
+    title: "Learn",
+    body: "how to articulate your skills and strengths",
+    image: "/assets/speachy_step2_feedback_infographic.svg",
+    fallbackImage: "/assets/speachy_step2_feedback.svg",
+  },
+  {
+    title: "Grow",
+    body: "with personalised feedback and guidance",
+    image: "/assets/speachy_step3_progress_clean.svg",
+    fallbackImage: "/assets/speachy_step3_progress.svg",
+  },
+];
+
+const REASSURANCE_ITEMS = [
+  {
+    title: "Tailored questions for interviews",
+    subtext: "Get questions tailored to the role and company.",
+    icon: MicNoneOutlinedIcon,
+  },
+  {
+    title: "Impromptu sessions to build real confidence",
+    subtext: "No scripts. No judgment. Just practice.",
+    icon: ForumOutlinedIcon,
+  },
+  {
+    title: "Clear, detailed feedback and simple analytics",
+    subtext:
+      "Understand the structure, clarity, and relevance of your responses.",
+    icon: InsightsOutlinedIcon,
+  },
+  {
+    title: "Actionable tips after every session",
+    subtext: "You'll always know what to focus on next.",
+    icon: LightbulbOutlinedIcon,
+  },
+];
+
+const ENV_LABELS = {
+  local: "Local",
+  development: "Development",
+  production: "Early Access",
+};
+
+const TERMS_LAST_UPDATED = new Date().toLocaleDateString();
+
+const getEnvironmentLabel = (env) => ENV_LABELS[env] || "Unknown";
+
+const StepCard = memo(function StepCard({ title, body, image, fallbackImage }) {
+  return (
+    <Box
+      sx={{
+        height: "100%",
+        minHeight: 170,
+        p: { xs: 1.75, md: 2 },
+        borderRadius: 3,
+        backgroundColor: "transparent",
+        display: "flex",
+        flexDirection: "column",
+        position: "relative",
+        transform: "none",
+        alignItems: "center",
+        textAlign: "center",
+      }}
+    >
+      <Box
+        sx={{
+          width: { xs: 170, sm: 190, md: 210 },
+          height: { xs: 108, sm: 122, md: 132 },
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          mb: 1.2,
+        }}
+      >
+        <Box
+          component="img"
+          src={image}
+          alt=""
+          aria-hidden="true"
+          onError={(event) => {
+            event.currentTarget.src = fallbackImage;
+          }}
+          loading="lazy"
+          decoding="async"
+          sx={{
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            transform: title === "Speak naturally" ? "scale(1.08)" : "none",
+            filter: "drop-shadow(0px 8px 12px rgba(250, 115, 91, 0.18))",
+          }}
+        />
+      </Box>
+      <Typography
+        variant="subtitle1"
+        sx={{
+          fontWeight: 700,
+          color: "#2d1b16",
+          mb: 1,
+        }}
+      >
+        {title}
+      </Typography>
+      <Typography variant="body2" sx={{ color: "rgba(55, 34, 26, 0.7)" }}>
+        {body}
+      </Typography>
+    </Box>
+  );
+});
+
+const DemoDialog = memo(function DemoDialog({ open, onClose }) {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          backgroundColor: "#f9f5f4",
+          borderBottom: "1px solid #f0e3df",
+          fontWeight: 700,
+        }}
+      >
+        30s demo
+      </DialogTitle>
+      <DialogContent sx={{ p: 3 }}>
+        <Typography variant="body1" sx={{ color: "rgba(55, 34, 26, 0.8)" }}>
+          The short demo is on the way. For now, explore the preview and start
+          practicing when you're ready.
+        </Typography>
+      </DialogContent>
+      <DialogActions sx={{ p: 3 }}>
+        <Button
+          onClick={onClose}
+          variant="contained"
+          color="warning"
+          sx={{
+            color: "#fff",
+            fontWeight: "bold",
+            px: 3,
+            py: 1.2,
+            borderRadius: 2.5,
+            textTransform: "none",
+            boxShadow:
+              "0px 12px 24px -12px rgba(250, 115, 91, 0.7), 0px 10px 18px -14px rgba(49, 30, 20, 0.35)",
+            background: "linear-gradient(90deg, #FF8E53 0%, #FA735B 100%)",
+            "&:hover": {
+              filter: "brightness(0.95)",
+            },
+          }}
+        >
+          Got it
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+});
+
+const TermsDialog = memo(function TermsDialog({ open, onClose }) {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          maxHeight: "80vh",
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          backgroundColor: "#f9f5f4",
+          borderBottom: "1px solid #e0e0e0",
+          fontWeight: "bold",
+        }}
+      >
+        Terms and Conditions
+      </DialogTitle>
+      <DialogContent sx={{ p: 3 }}>
+        <Typography
+          variant="h6"
+          gutterBottom
+          sx={{ fontWeight: "bold", mb: 2 }}
+        >
+          Welcome to Speachy
+        </Typography>
+
+        <Typography variant="body1" paragraph>
+          These Terms and Conditions ("Terms") govern your use of the Speachy
+          application and services. By accessing or using our service, you agree
+          to be bound by these Terms.
+        </Typography>
+
+        <Typography
+          variant="h6"
+          gutterBottom
+          sx={{ fontWeight: "bold", mt: 3, mb: 1 }}
+        >
+          1. Acceptance of Terms
+        </Typography>
+        <Typography variant="body1" paragraph>
+          By creating an account or using Speachy, you acknowledge that you have
+          read, understood, and agree to be bound by these Terms. If you do not
+          agree to these Terms, please do not use our service.
+        </Typography>
+
+        <Typography
+          variant="h6"
+          gutterBottom
+          sx={{ fontWeight: "bold", mt: 3, mb: 1 }}
+        >
+          2. User Accounts
+        </Typography>
+        <Typography variant="body1" paragraph>
+          You are responsible for maintaining the confidentiality of your
+          account credentials and for all activities that occur under your
+          account. You must notify us immediately of any unauthorized use of
+          your account.
+        </Typography>
+
+        <Typography
+          variant="h6"
+          gutterBottom
+          sx={{ fontWeight: "bold", mt: 3, mb: 1 }}
+        >
+          3. Acceptable Use
+        </Typography>
+        <Typography variant="body1" paragraph>
+          You agree to use Speachy only for lawful purposes and in accordance
+          with these Terms. You may not use our service to transmit any harmful,
+          offensive, or inappropriate content.
+        </Typography>
+
+        <Typography
+          variant="h6"
+          gutterBottom
+          sx={{ fontWeight: "bold", mt: 3, mb: 1 }}
+        >
+          4. Privacy Policy
+        </Typography>
+        <Typography variant="body1" paragraph>
+          Your privacy is important to us. Please review our Privacy Policy,
+          which also governs your use of the service, to understand our
+          practices regarding the collection and use of your information.
+        </Typography>
+
+        <Typography
+          variant="h6"
+          gutterBottom
+          sx={{ fontWeight: "bold", mt: 3, mb: 1 }}
+        >
+          5. Intellectual Property
+        </Typography>
+        <Typography variant="body1" paragraph>
+          The Speachy service and its original content, features, and
+          functionality are owned by Speachy and are protected by international
+          copyright, trademark, patent, trade secret, and other intellectual
+          property laws.
+        </Typography>
+
+        <Typography
+          variant="h6"
+          gutterBottom
+          sx={{ fontWeight: "bold", mt: 3, mb: 1 }}
+        >
+          6. Limitation of Liability
+        </Typography>
+        <Typography variant="body1" paragraph>
+          In no event shall Speachy, nor its directors, employees, partners,
+          agents, suppliers, or affiliates, be liable for any indirect,
+          incidental, special, consequential, or punitive damages.
+        </Typography>
+
+        <Typography
+          variant="h6"
+          gutterBottom
+          sx={{ fontWeight: "bold", mt: 3, mb: 1 }}
+        >
+          7. Termination
+        </Typography>
+        <Typography variant="body1" paragraph>
+          We may terminate or suspend your account and bar access to the service
+          immediately, without prior notice or liability, under our sole
+          discretion, for any reason whatsoever.
+        </Typography>
+
+        <Typography
+          variant="h6"
+          gutterBottom
+          sx={{ fontWeight: "bold", mt: 3, mb: 1 }}
+        >
+          8. Changes to Terms
+        </Typography>
+        <Typography variant="body1" paragraph>
+          We reserve the right to modify or replace these Terms at any time. If
+          a revision is material, we will provide at least 30 days notice prior
+          to any new terms taking effect.
+        </Typography>
+
+        <Typography
+          variant="body2"
+          sx={{ mt: 3, fontStyle: "italic", color: "text.secondary" }}
+        >
+          Last updated: {TERMS_LAST_UPDATED}
+        </Typography>
+      </DialogContent>
+      <DialogActions sx={{ p: 3, backgroundColor: "#f9f5f4" }}>
+        <Button
+          onClick={onClose}
+          variant="contained"
+          color="warning"
+          sx={{
+            color: "#fff",
+            fontWeight: "bold",
+            px: 4,
+            py: 1.4,
+            borderRadius: 3,
+            textTransform: "none",
+            boxShadow:
+              "0px 12px 24px -12px rgba(250, 115, 91, 0.7), 0px 10px 18px -14px rgba(49, 30, 20, 0.35)",
+            background: "linear-gradient(90deg, #FF8E53 0%, #FA735B 100%)",
+            "&:hover": {
+              filter: "brightness(0.95)",
+            },
+          }}
+        >
+          I Understand
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+});
 
 const SignUp = () => {
   const auth = getAuth();
@@ -63,28 +417,32 @@ const SignUp = () => {
   const [termsDialogOpen, setTermsDialogOpen] = useState(false);
   const [demoDialogOpen, setDemoDialogOpen] = useState(false);
   const [heroPreviewSrc, setHeroPreviewSrc] = useState(
-    "/assets/speachy_promo_transparent.png"
+    "/assets/speachy_promo_transparent.png",
   );
 
-  const handleClickShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
+  const handleClickShowPassword = useCallback(() => {
+    setShowPassword((prev) => !prev);
+  }, []);
 
-  const handleTermsDialogOpen = () => {
+  const handleTermsDialogOpen = useCallback(() => {
     setTermsDialogOpen(true);
-  };
+  }, []);
 
-  const handleTermsDialogClose = () => {
+  const handleTermsDialogClose = useCallback(() => {
     setTermsDialogOpen(false);
-  };
+  }, []);
 
-  const handleDemoDialogOpen = () => {
+  const handleDemoDialogOpen = useCallback(() => {
     setDemoDialogOpen(true);
-  };
+  }, []);
 
-  const handleDemoDialogClose = () => {
+  const handleDemoDialogClose = useCallback(() => {
     setDemoDialogOpen(false);
-  };
+  }, []);
+
+  const handleHeroPreviewError = useCallback(() => {
+    setHeroPreviewSrc("/assets/speachy_promo_graphic.svg");
+  }, []);
 
   const validate = () => {
     let tempErrors = {};
@@ -108,7 +466,7 @@ const SignUp = () => {
         const userCredential = await createUserWithEmailAndPassword(
           auth,
           email,
-          password
+          password,
         );
         const user = userCredential.user;
         console.log("User is Signed Up:", user);
@@ -127,11 +485,11 @@ const SignUp = () => {
           {
             email: auth.currentUser.email,
             userUID: auth.currentUser.uid,
-          }
+          },
         );
         console.log(
           "Subscription document written:",
-          subscriptionDocSetupResult
+          subscriptionDocSetupResult,
         );
         navigate("/");
       } catch (error) {
@@ -158,7 +516,7 @@ const SignUp = () => {
     switch (errorCode) {
       case "auth/email-already-in-use":
         setSignUpError(
-          "The email address is already in use. Please use a different email."
+          "The email address is already in use. Please use a different email.",
         );
         break;
       case "auth/invalid-email":
@@ -166,12 +524,12 @@ const SignUp = () => {
         break;
       case "auth/weak-password":
         setSignUpError(
-          "The password is too weak. Please choose a stronger password."
+          "The password is too weak. Please choose a stronger password.",
         );
         break;
       case "auth/operation-not-allowed":
         setSignUpError(
-          "Account creation is currently disabled. Please try again later."
+          "Account creation is currently disabled. Please try again later.",
         );
         break;
       default:
@@ -180,96 +538,80 @@ const SignUp = () => {
     }
   };
 
-  const getEnvironmentLabel = () => {
-    const env = process.env.REACT_APP_ENV;
-    return env === "local"
-      ? "Local"
-      : env === "development"
-      ? "Development"
-      : env === "production"
-      ? "Early Access"
-      : "Unknown";
-  };
+  const environmentLabel = useMemo(
+    () => getEnvironmentLabel(process.env.REACT_APP_ENV),
+    [],
+  );
 
-  const handleScrollToSignup = () => {
+  const handleScrollToSignup = useCallback(() => {
     const signupSection = document.getElementById("signup-form");
     if (signupSection) {
       signupSection.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-  };
-
-  const stepCards = [
-    {
-      step: "01",
-      title: "Speak naturally",
-      body: "Answer out loud.",
-      image: "/assets/speachy_waveform_step1.svg",
-      fallbackImage: "/assets/speachy_step1_waveform.svg",
-    },
-    {
-      step: "02",
-      title: "Instant feedback",
-      body: "What worked. What to try next.",
-      image: "/assets/speachy_step2_feedback_infographic.svg",
-      fallbackImage: "/assets/speachy_step2_feedback.svg",
-      isHero: true,
-    },
-    {
-      step: "03",
-      title: "Track progress",
-      body: "Clarity, structure, relevance.",
-      image: "/assets/speachy_step3_progress_clean.svg",
-      fallbackImage: "/assets/speachy_step3_progress.svg",
-    },
-  ];
+  }, []);
 
   return (
     <Box
       sx={{
         minHeight: "100vh",
         background:
-          "linear-gradient(135deg, #fff8f5 0%, #ffe4db 40%, #fff9f5 100%)",
+          "radial-gradient(380px 380px at 92% -8%, rgba(250, 115, 91, 0.18) 0%, rgba(250, 115, 91, 0) 72%), radial-gradient(320px 320px at -6% 96%, rgba(255, 180, 130, 0.18) 0%, rgba(255, 180, 130, 0) 70%), linear-gradient(135deg, #fff8f5 0%, #ffe4db 40%, #fff9f5 100%)",
         position: "relative",
         overflow: "hidden",
-        py: { xs: 6, md: 10 },
+        py: { xs: 3, md: 5 },
       }}
     >
       <CssBaseline />
-      <Box
-        sx={{
-          position: "absolute",
-          width: 420,
-          height: 420,
-          top: -160,
-          right: -140,
-          background: "rgba(250, 115, 91, 0.18)",
-          filter: "blur(60px)",
-          borderRadius: "50%",
-        }}
-      />
-      <Box
-        sx={{
-          position: "absolute",
-          width: 360,
-          height: 360,
-          bottom: -140,
-          left: -120,
-          background: "rgba(255, 180, 130, 0.16)",
-          filter: "blur(70px)",
-        borderRadius: "50%",
-      }}
-    />
       <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
+        <Box
+          sx={{
+            mb: { xs: 1.5, md: 2 },
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box sx={{ width: { xs: 100, md: 120 } }}>
+            <Link to="/">
+              <img
+                src="/assets/Speachy_Logo_Full_SVG.svg"
+                alt="Speachy"
+                style={{ width: "100%", height: "auto", display: "block" }}
+              />
+            </Link>
+          </Box>
+          <Button
+            component={Link}
+            to="/signin"
+            variant="outlined"
+            color="warning"
+            sx={{
+              borderRadius: 999,
+              textTransform: "none",
+              fontWeight: 600,
+              px: 2.5,
+              py: 0.9,
+              color: "rgba(228, 71, 36, 0.94)",
+              borderColor: "rgba(228, 71, 36, 0.35)",
+              "&:hover": {
+                borderColor: "rgba(228, 71, 36, 0.7)",
+                backgroundColor: "rgba(255, 255, 255, 0.4)",
+              },
+            }}
+          >
+            Log in
+          </Button>
+        </Box>
         <Grid
           container
-          spacing={{ xs: 6, md: 10 }}
+          spacing={{ xs: 3, md: 4 }}
           alignItems="center"
           justifyContent="space-between"
         >
           <Grid item xs={12} md={6}>
-            <Stack spacing={{ xs: 3, md: 3.5 }} sx={{ maxWidth: 520 }}>
+            <Stack spacing={{ xs: 1.5, md: 2 }} sx={{ maxWidth: 520 }}>
               <Chip
-                label="Early access • Help shape Speachy"
+                label="Early access"
                 color="warning"
                 sx={{
                   alignSelf: "flex-start",
@@ -293,9 +635,11 @@ const SignUp = () => {
                 variant="h6"
                 sx={{ color: "rgba(55, 34, 26, 0.7)", fontWeight: 400 }}
               >
-                Practice speaking out loud. Get feedback that actually helps.
+                We’re on a mission to revolutionise verbal communication
+                education, empowering you to sharpen your skills and share your
+                stories.
               </Typography>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                 <Button
                   variant="contained"
                   color="warning"
@@ -317,7 +661,7 @@ const SignUp = () => {
                 >
                   Start practicing for free
                 </Button>
-                <Button
+                {/* <Button
                   variant="outlined"
                   color="warning"
                   onClick={handleDemoDialogOpen}
@@ -336,7 +680,7 @@ const SignUp = () => {
                   }}
                 >
                   Watch 30s demo
-                </Button>
+                </Button> */}
               </Stack>
             </Stack>
           </Grid>
@@ -381,8 +725,7 @@ const SignUp = () => {
                   height: 70,
                   borderRadius: 2.5,
                   backgroundColor: "rgba(255, 255, 255, 0.9)",
-                  boxShadow:
-                    "0px 16px 30px -20px rgba(250, 115, 91, 0.5)",
+                  boxShadow: "0px 16px 30px -20px rgba(250, 115, 91, 0.5)",
                   border: "1px solid rgba(250, 115, 91, 0.16)",
                   display: "flex",
                   alignItems: "center",
@@ -428,9 +771,9 @@ const SignUp = () => {
                 component="img"
                 src={heroPreviewSrc}
                 alt="Speachy feedback preview"
-                onError={() =>
-                  setHeroPreviewSrc("/assets/speachy_promo_graphic.svg")
-                }
+                onError={handleHeroPreviewError}
+                decoding="async"
+                fetchpriority="high"
                 sx={{
                   width: "100%",
                   height: "auto",
@@ -441,13 +784,13 @@ const SignUp = () => {
             </Box>
           </Grid>
         </Grid>
-        <Box sx={{ mt: { xs: 6, md: 8 }, position: "relative" }}>
+        <Box sx={{ mt: { xs: 3.5, md: 4 }, position: "relative" }}>
           <Typography
             variant="subtitle1"
             sx={{
               color: "rgba(60, 32, 25, 0.75)",
               fontWeight: 600,
-              mb: 2.5,
+              mb: 1.2,
             }}
           >
             How it works
@@ -455,94 +798,46 @@ const SignUp = () => {
           <Box
             sx={{
               position: "absolute",
-              left: "8%",
-              right: "8%",
-              top: 132,
-              borderTop: "1px dashed rgba(250, 115, 91, 0.22)",
+              left: "4%",
+              right: "4%",
+              top: 108,
+              height: 90,
               zIndex: 0,
               display: { xs: "none", md: "block" },
+              pointerEvents: "none",
             }}
-          />
-          <Grid container spacing={{ xs: 2.5, md: 3 }} sx={{ position: "relative", zIndex: 1 }}>
-            {stepCards.map((step) => (
+          >
+            <Box
+              component="svg"
+              viewBox="0 0 1000 140"
+              preserveAspectRatio="none"
+              sx={{ width: "100%", height: "100%" }}
+            >
+              <path
+                d="M20 80 C 180 20, 320 20, 500 80 S 820 140, 980 70"
+                fill="none"
+                stroke="rgba(250, 115, 91, 0.22)"
+                strokeWidth="2"
+                strokeDasharray="4 6"
+              />
+              <path
+                d="M980 70 l-16 -8 l4 8 l-4 8 z"
+                fill="rgba(250, 115, 91, 0.28)"
+              />
+            </Box>
+          </Box>
+          <Grid
+            container
+            spacing={{ xs: 1.75, md: 2 }}
+            sx={{ position: "relative", zIndex: 1, mt: { xs: 0, md: 0 } }}
+          >
+            {STEP_CARDS.map((step) => (
               <Grid key={step.title} item xs={12} sm={6} md={4}>
-                <Box
-                  sx={{
-                    height: "100%",
-                    minHeight: step.isHero ? 210 : 190,
-                    p: step.isHero ? 3.5 : 3,
-                    borderRadius: 3,
-                    backgroundColor: "rgba(255, 255, 255, 0.85)",
-                    border: "1px solid rgba(250, 115, 91, 0.14)",
-                    boxShadow:
-                      step.isHero
-                        ? "0px 22px 44px -26px rgba(250, 115, 91, 0.6)"
-                        : "0px 16px 34px -28px rgba(250, 115, 91, 0.55)",
-                    display: "flex",
-                    flexDirection: "column",
-                    position: "relative",
-                    transform: step.isHero ? "translateY(-8px)" : "none",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 16,
-                      left: 16,
-                      width: 26,
-                      height: 26,
-                      borderRadius: "50%",
-                      backgroundColor: "rgba(255, 153, 110, 0.2)",
-                      color: "rgba(228, 71, 36, 0.8)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "0.7rem",
-                      fontWeight: 700,
-                      letterSpacing: "0.03em",
-                    }}
-                  >
-                    {step.step}
-                  </Box>
-                  <Box
-                    sx={{
-                      width: step.isHero ? 104 : 88,
-                      height: step.isHero ? 64 : 56,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      mb: 2,
-                      mt: 1,
-                    }}
-                  >
-                    <Box
-                      component="img"
-                      src={step.image}
-                      alt=""
-                      aria-hidden="true"
-                      onError={(event) => {
-                        event.currentTarget.src = step.fallbackImage;
-                      }}
-                      sx={{ width: "100%", height: "auto" }}
-                    />
-                  </Box>
-                  <Typography
-                    variant="subtitle1"
-                    sx={{ fontWeight: 700, color: "#2d1b16", mb: 1 }}
-                  >
-                    {step.title}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "rgba(55, 34, 26, 0.7)" }}
-                  >
-                    {step.body}
-                  </Typography>
-                </Box>
+                <StepCard {...step} />
               </Grid>
             ))}
           </Grid>
-          <Button
+          {/* <Button
             variant="text"
             color="warning"
             onClick={handleScrollToSignup}
@@ -558,83 +853,100 @@ const SignUp = () => {
             }}
           >
             Start practicing for free →
-          </Button>
+          </Button> */}
         </Box>
       </Container>
-      <Container maxWidth="lg" sx={{ mt: { xs: 10, md: 14 } }}>
-        <Grid container spacing={{ xs: 6, md: 10 }} alignItems="flex-start">
-          <Grid item xs={12} md={6}>
-            <Grid container spacing={2}>
-              {[
-                "Real prompts (interviews + impromptu)",
-                "Gentle, specific suggestions",
-              ].map((item) => (
-                <Grid key={item} item xs={12} sm={6}>
-                  <Box
-                    sx={{
-                      height: "100%",
-                      p: 2.5,
-                      borderRadius: 3,
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      border: "1px solid rgba(250, 115, 91, 0.12)",
-                      boxShadow:
-                        "0px 14px 26px -24px rgba(250, 115, 91, 0.4)",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1.5,
-                    }}
-                  >
-                    <CheckCircleRoundedIcon
-                      sx={{ color: "rgba(250, 115, 91, 0.9)" }}
-                    />
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ color: "rgba(55, 34, 26, 0.85)" }}
-                    >
-                      {item}
-                    </Typography>
-                  </Box>
-                </Grid>
-              ))}
-            </Grid>
+      <Container
+        maxWidth="lg"
+        sx={{
+          mt: { xs: 4, md: 6 },
+          contentVisibility: "auto",
+          containIntrinsicSize: "900px",
+        }}
+      >
+        <Grid container spacing={{ xs: 3, md: 4 }} alignItems="stretch">
+          <Grid item xs={12} md={6} sx={{ display: "flex" }}>
             <Box
               sx={{
-                mt: 6,
-                p: 2.5,
-                backgroundColor: "#fff",
-                borderRadius: 3,
-                boxShadow:
-                  "0px 20px 45px -28px rgba(250, 115, 91, 0.6), 0px 18px 40px -24px rgba(49, 30, 20, 0.18)",
+                width: "100%",
+                display: "flex",
+                alignItems: { xs: "stretch", md: "center" },
               }}
             >
-              <Typography
-                variant="subtitle2"
+              <Box
                 sx={{
-                  color: "#2d1b16",
-                  fontWeight: 600,
-                  mb: 1.5,
+                  width: { xs: "100%", md: "90%" },
+                  backgroundColor: "rgba(255, 252, 250, 0.9)",
+                  borderRadius: 4,
+                  px: { xs: 3, sm: 3.5 },
+                  py: { xs: 3, sm: 3.5 },
+                  boxShadow:
+                    "0px 16px 36px -28px rgba(250, 115, 91, 0.25), 0px 12px 28px -26px rgba(49, 30, 20, 0.12)",
+                  border: "1px solid rgba(250, 115, 91, 0.08)",
                 }}
               >
-                On our immediate roadmap
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {[
-                  "Mock interviews",
-                  "Projects creation",
-                  "Tongue twister drills",
-                ].map((label) => (
-                  <Chip
-                    key={label}
-                    label={label}
-                    variant="outlined"
-                    sx={{
-                      borderColor: "rgba(250, 115, 91, 0.35)",
-                      color: "rgba(55,34,26,0.75)",
-                      fontWeight: 500,
-                    }}
-                  />
-                ))}
-              </Stack>
+                <Stack spacing={0.6} sx={{ mb: 1.6 }}>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ fontWeight: 600, color: "#2d1b16" }}
+                  >
+                    What you'll get with Speachy
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "rgba(55, 34, 26, 0.55)" }}
+                  >
+                    All features available for free while we're in early access.
+                  </Typography>
+                </Stack>
+                <Stack spacing={1.2}>
+                  {REASSURANCE_ITEMS.map((item, index) => {
+                    const Icon = item.icon;
+                    return (
+                      <Box
+                        key={item.title}
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 1.4,
+                          pt: index === 0 ? 0 : 0.8,
+                          borderTop:
+                            index === 0
+                              ? "none"
+                              : "1px solid rgba(250, 115, 91, 0.12)",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            mt: "2px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "rgba(228, 71, 36, 0.85)",
+                          }}
+                        >
+                          <Icon sx={{ fontSize: 20 }} />
+                        </Box>
+                        <Box>
+                          <Typography
+                            variant="subtitle2"
+                            sx={{ fontWeight: 600, color: "#2d1b16" }}
+                          >
+                            {item.title}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{ color: "rgba(55, 34, 26, 0.65)" }}
+                          >
+                            {item.subtext}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </Box>
             </Box>
           </Grid>
           <Grid item xs={12} md={6}>
@@ -653,13 +965,19 @@ const SignUp = () => {
               id="signup-form"
               elevation={0}
               sx={{
-                backdropFilter: "blur(18px)",
-                backgroundColor: "rgba(255, 255, 255, 0.92)",
+                backdropFilter: { xs: "none", md: "blur(18px)" },
+                WebkitBackdropFilter: { xs: "none", md: "blur(18px)" },
+                backgroundColor: {
+                  xs: "rgba(255, 255, 255, 0.98)",
+                  md: "rgba(255, 255, 255, 0.92)",
+                },
                 borderRadius: 4,
                 px: { xs: 3, sm: 4 },
                 py: { xs: 4, sm: 5 },
-                boxShadow:
-                  "0px 24px 60px -32px rgba(250, 115, 91, 0.55), 0px 28px 70px -40px rgba(49, 30, 20, 0.25)",
+                boxShadow: {
+                  xs: "0px 16px 36px -28px rgba(250, 115, 91, 0.4), 0px 14px 32px -24px rgba(49, 30, 20, 0.18)",
+                  md: "0px 24px 60px -32px rgba(250, 115, 91, 0.55), 0px 28px 70px -40px rgba(49, 30, 20, 0.25)",
+                },
               }}
             >
               <Box
@@ -673,7 +991,7 @@ const SignUp = () => {
                 <Link to="/">
                   <Badge
                     color="warning"
-                    badgeContent={getEnvironmentLabel()}
+                    badgeContent={environmentLabel}
                     anchorOrigin={{ vertical: "top", horizontal: "right" }}
                   >
                     <img
@@ -862,56 +1180,9 @@ const SignUp = () => {
           </Grid>
         </Grid>
       </Container>
-      <Dialog
-        open={demoDialogOpen}
-        onClose={handleDemoDialogClose}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            backgroundColor: "#f9f5f4",
-            borderBottom: "1px solid #f0e3df",
-            fontWeight: 700,
-          }}
-        >
-          30s demo
-        </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
-          <Typography variant="body1" sx={{ color: "rgba(55, 34, 26, 0.8)" }}>
-            The short demo is on the way. For now, explore the preview and start
-            practicing when you're ready.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button
-            onClick={handleDemoDialogClose}
-            variant="contained"
-            color="warning"
-            sx={{
-              color: "#fff",
-              fontWeight: "bold",
-              px: 3,
-              py: 1.2,
-              borderRadius: 2.5,
-              textTransform: "none",
-              boxShadow:
-                "0px 12px 24px -12px rgba(250, 115, 91, 0.7), 0px 10px 18px -14px rgba(49, 30, 20, 0.35)",
-              background: "linear-gradient(90deg, #FF8E53 0%, #FA735B 100%)",
-              "&:hover": {
-                filter: "brightness(0.95)",
-              },
-            }}
-          >
-            Got it
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {demoDialogOpen && (
+        <DemoDialog open={demoDialogOpen} onClose={handleDemoDialogClose} />
+      )}
       {isSignUpError && (
         <Snackbar
           open={isSignUpError}
@@ -930,179 +1201,9 @@ const SignUp = () => {
       )}
 
       {/* Terms and Conditions Dialog */}
-      <Dialog
-        open={termsDialogOpen}
-        onClose={handleTermsDialogClose}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            maxHeight: "80vh",
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            backgroundColor: "#f9f5f4",
-            borderBottom: "1px solid #e0e0e0",
-            fontWeight: "bold",
-          }}
-        >
-          Terms and Conditions
-        </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ fontWeight: "bold", mb: 2 }}
-          >
-            Welcome to Speachy
-          </Typography>
-
-          <Typography variant="body1" paragraph>
-            These Terms and Conditions ("Terms") govern your use of the Speachy
-            application and services. By accessing or using our service, you
-            agree to be bound by these Terms.
-          </Typography>
-
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ fontWeight: "bold", mt: 3, mb: 1 }}
-          >
-            1. Acceptance of Terms
-          </Typography>
-          <Typography variant="body1" paragraph>
-            By creating an account or using Speachy, you acknowledge that you
-            have read, understood, and agree to be bound by these Terms. If you
-            do not agree to these Terms, please do not use our service.
-          </Typography>
-
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ fontWeight: "bold", mt: 3, mb: 1 }}
-          >
-            2. User Accounts
-          </Typography>
-          <Typography variant="body1" paragraph>
-            You are responsible for maintaining the confidentiality of your
-            account credentials and for all activities that occur under your
-            account. You must notify us immediately of any unauthorized use of
-            your account.
-          </Typography>
-
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ fontWeight: "bold", mt: 3, mb: 1 }}
-          >
-            3. Acceptable Use
-          </Typography>
-          <Typography variant="body1" paragraph>
-            You agree to use Speachy only for lawful purposes and in accordance
-            with these Terms. You may not use our service to transmit any
-            harmful, offensive, or inappropriate content.
-          </Typography>
-
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ fontWeight: "bold", mt: 3, mb: 1 }}
-          >
-            4. Privacy Policy
-          </Typography>
-          <Typography variant="body1" paragraph>
-            Your privacy is important to us. Please review our Privacy Policy,
-            which also governs your use of the service, to understand our
-            practices regarding the collection and use of your information.
-          </Typography>
-
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ fontWeight: "bold", mt: 3, mb: 1 }}
-          >
-            5. Intellectual Property
-          </Typography>
-          <Typography variant="body1" paragraph>
-            The Speachy service and its original content, features, and
-            functionality are owned by Speachy and are protected by
-            international copyright, trademark, patent, trade secret, and other
-            intellectual property laws.
-          </Typography>
-
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ fontWeight: "bold", mt: 3, mb: 1 }}
-          >
-            6. Limitation of Liability
-          </Typography>
-          <Typography variant="body1" paragraph>
-            In no event shall Speachy, nor its directors, employees, partners,
-            agents, suppliers, or affiliates, be liable for any indirect,
-            incidental, special, consequential, or punitive damages.
-          </Typography>
-
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ fontWeight: "bold", mt: 3, mb: 1 }}
-          >
-            7. Termination
-          </Typography>
-          <Typography variant="body1" paragraph>
-            We may terminate or suspend your account and bar access to the
-            service immediately, without prior notice or liability, under our
-            sole discretion, for any reason whatsoever.
-          </Typography>
-
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ fontWeight: "bold", mt: 3, mb: 1 }}
-          >
-            8. Changes to Terms
-          </Typography>
-          <Typography variant="body1" paragraph>
-            We reserve the right to modify or replace these Terms at any time.
-            If a revision is material, we will provide at least 30 days notice
-            prior to any new terms taking effect.
-          </Typography>
-
-          <Typography
-            variant="body2"
-            sx={{ mt: 3, fontStyle: "italic", color: "text.secondary" }}
-          >
-            Last updated: {new Date().toLocaleDateString()}
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, backgroundColor: "#f9f5f4" }}>
-          <Button
-            onClick={handleTermsDialogClose}
-            variant="contained"
-            color="warning"
-            sx={{
-              color: "#fff",
-              fontWeight: "bold",
-              px: 4,
-              py: 1.4,
-              borderRadius: 3,
-              textTransform: "none",
-              boxShadow:
-                "0px 12px 24px -12px rgba(250, 115, 91, 0.7), 0px 10px 18px -14px rgba(49, 30, 20, 0.35)",
-              background: "linear-gradient(90deg, #FF8E53 0%, #FA735B 100%)",
-              "&:hover": {
-                filter: "brightness(0.95)",
-              },
-            }}
-          >
-            I Understand
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {termsDialogOpen && (
+        <TermsDialog open={termsDialogOpen} onClose={handleTermsDialogClose} />
+      )}
     </Box>
   );
 };

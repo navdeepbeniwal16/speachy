@@ -111,9 +111,8 @@ const HomePage = () => {
       }
       entitlementsFetchRef.current = now;
       try {
-        const response = await PaymentsService.fetchActiveEntitlements(
-          currentUserUID
-        );
+        const response =
+          await PaymentsService.fetchActiveEntitlements(currentUserUID);
         const data = response.data;
         if (data.entitlements === undefined || data.entitlements === null) {
           throw new Error("Entitlements not found");
@@ -207,7 +206,7 @@ const HomePage = () => {
   const activeDaysCount = useMemo(
     () =>
       activeDates.filter((date) => date >= weekFrom && date <= weekTo).length,
-    [activeDates, weekFrom, weekTo]
+    [activeDates, weekFrom, weekTo],
   );
   const statHighlightsData = useMemo(
     () => [
@@ -221,13 +220,13 @@ const HomePage = () => {
         label: "Active practice days",
         value: activeDaysCount,
       },
-      {
-        icon: <AccessTimeIcon sx={{ fontSize: 28 }} />,
-        label: "Total time spoken",
-        value: `${totalPracticeHours}h`,
-      },
+      // {
+      //   icon: <AccessTimeIcon sx={{ fontSize: 28 }} />,
+      //   label: "Total time spoken",
+      //   value: `${totalPracticeHours}h`,
+      // },
     ],
-    [sessionsCount, activeDaysCount, totalPracticeHours]
+    [sessionsCount, activeDaysCount],
   );
 
   useEffect(() => {
@@ -402,7 +401,8 @@ const HomePage = () => {
                   height: "100%",
                   borderRadius: 4,
                   px: { xs: 3, md: 4 },
-                  py: { xs: 4, md: 4.5 },
+                  pt: { xs: 4, md: 4.5 },
+                  pb: { xs: 3, md: 3.5 },
                   backgroundColor: SURFACE_BG,
                   border: SURFACE_BORDER,
                   boxShadow: SURFACE_SHADOW,
@@ -478,7 +478,8 @@ const HomePage = () => {
                   height: "100%",
                   borderRadius: 4,
                   px: { xs: 3, md: 4 },
-                  py: { xs: 4, md: 4.5 },
+                  pt: { xs: 4, md: 4.5 },
+                  pb: { xs: 3, md: 3.5 },
                   backgroundColor: SURFACE_BG,
                   border: SURFACE_BORDER,
                   boxShadow: SURFACE_SHADOW,
