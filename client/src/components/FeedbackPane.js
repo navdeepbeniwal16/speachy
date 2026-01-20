@@ -93,8 +93,9 @@ const FeedbackPane = ({ feedback, transcription }) => {
                 display: "flex",
                 flexDirection: "row",
                 alignItems: "center",
+                background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
+                color: "#FFF",
               }}
-              style={{ backgroundColor: "#FA735B", color: "#FFF" }}
             >
               <TipsAndUpdatesIcon />
               <Typography variant="body2" sx={{ ml: 1 }}>
@@ -151,8 +152,12 @@ const FeedbackPane = ({ feedback, transcription }) => {
                   width: "100%",
                   textTransform: "none",
                   fontWeight: "bold",
+                  background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
+                  color: "#fff",
+                  "&:hover": {
+                    background: "linear-gradient(90deg, #e7610b, #db2037)",
+                  },
                 }}
-                style={{ backgroundColor: "#FA735B" }}
               >
                 See Detailed Feedback
               </Button>

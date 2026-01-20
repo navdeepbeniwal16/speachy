@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Container,
+  CssBaseline,
   Grid,
   LinearProgress,
   Paper,
@@ -55,86 +56,144 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <Container>
-      <Grid container component="main" sx={{ height: "100%", padding: 5 }}>
-        <Grid item xs={false} sm={12} md={4} />
-        <Grid
-          item
-          xs={12}
-          sm={8}
-          md={4}
-          component={Paper}
-          elevation={0}
-          sx={{
-            height: "100%",
-            backgroundColor: "#f7f7f7",
-            overflowY: "auto",
-            zIndex: 1,
-          }}
-        >
-          {isResetting && (
-            <Box sx={{ width: "100%" }}>
-              <LinearProgress color="warning" />
-            </Box>
-          )}
-          <Paper
-            variant="elevation"
-            elevation={3}
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "100%",
-              padding: 3,
-              backgroundColor: "#fff",
-            }}
-          >
-            <Typography component="h1" variant="h5" textAlign={"center"}>
-              Forgot Password?
-            </Typography>
-            <Typography variant="subtitle2" textAlign={"center"}>
-              No worries, we'll send you reset instructions
-            </Typography>
-            <Box
-              component="form"
-              sx={{ mt: 1, width: "100%" }}
-              noValidate
-              onSubmit={handleSubmit}
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background:
+          "linear-gradient(135deg, #fff8f5 0%, #ffe4db 40%, #fff9f5 100%)",
+        position: "relative",
+        overflow: "hidden",
+        py: { xs: 6, md: 10 },
+      }}
+    >
+      <CssBaseline />
+      <Box
+        sx={{
+          position: "absolute",
+          width: 420,
+          height: 420,
+          top: -160,
+          right: -140,
+          background: "rgba(250, 115, 91, 0.18)",
+          filter: "blur(60px)",
+          borderRadius: "50%",
+        }}
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          width: 360,
+          height: 360,
+          bottom: -140,
+          left: -120,
+          background: "rgba(255, 180, 130, 0.16)",
+          filter: "blur(70px)",
+          borderRadius: "50%",
+        }}
+      />
+      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
+        <Grid container component="main" justifyContent="center">
+          <Grid item xs={12} sm={9} md={5} lg={4}>
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: 3,
+                backgroundColor: "#fff",
+                border: "1px solid rgba(252,150,120,0.2)",
+                boxShadow: "0 24px 60px rgba(250, 115, 91, 0.18)",
+                overflow: "hidden",
+              }}
             >
-              <TextField
-                variant="outlined"
-                margin="normal"
-                required
-                fullWidth
-                id="email"
-                label="Email Address"
-                name="email"
-                autoComplete="off"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                error={!!errors.email}
-                helperText={errors.email}
-              />
-
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                color="warning"
-                sx={{ mt: 3, mb: 2 }}
-                disabled={isResetting}
+              {isResetting && (
+                <Box sx={{ width: "100%" }}>
+                  <LinearProgress color="warning" />
+                </Box>
+              )}
+              <Box
+                sx={{
+                  px: { xs: 3, sm: 4 },
+                  py: { xs: 4, sm: 5 },
+                }}
               >
-                {isResetting ? "Sending..." : "Send Reset Link"}
-              </Button>
-              <Typography variant="body2" align="center" sx={{ mt: 2 }}>
-                Remembered your password? <Link to="/login">SignIn</Link>
-              </Typography>
-            </Box>
-          </Paper>
+                <Typography component="h1" variant="h5" textAlign="center">
+                  Forgot your password?
+                </Typography>
+                <Typography
+                  variant="subtitle2"
+                  textAlign="center"
+                  sx={{ color: "rgba(60,32,25,0.72)", mt: 1 }}
+                >
+                  No worries, we’ll send you reset instructions.
+                </Typography>
+                <Box
+                  component="form"
+                  sx={{ mt: 3, width: "100%" }}
+                  noValidate
+                  onSubmit={handleSubmit}
+                >
+                  <TextField
+                    variant="outlined"
+                    margin="normal"
+                    required
+                    fullWidth
+                    id="email"
+                    label="Email Address"
+                    name="email"
+                    autoComplete="off"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    error={!!errors.email}
+                    helperText={errors.email}
+                  />
+
+                  <Button
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    sx={{
+                      mt: 3,
+                      mb: 2,
+                      textTransform: "none",
+                      fontWeight: 600,
+                      px: 3.5,
+                      py: 1.4,
+                      borderRadius: 2,
+                      backgroundColor: "#FA735B",
+                      boxShadow:
+                        "0px 12px 24px -12px rgba(250,115,91,0.7), 0px 10px 18px -14px rgba(49,30,20,0.35)",
+                      "&:hover": {
+                        backgroundColor: "#f8643f",
+                        boxShadow:
+                          "0px 14px 26px -12px rgba(250,115,91,0.8), 0px 12px 18px -14px rgba(49,30,20,0.35)",
+                      },
+                    }}
+                    disabled={isResetting}
+                  >
+                    {isResetting ? "Sending..." : "Send reset link"}
+                  </Button>
+                  <Typography
+                    variant="caption"
+                    align="center"
+                    sx={{ display: "block", color: "rgba(60,32,25,0.64)", mt: 1 }}
+                  >
+                    Can’t find the email? Check your spam folder.
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    align="center"
+                    sx={{ mt: 2, color: "rgba(60,32,25,0.72)" }}
+                  >
+                    Remembered your password?{" "}
+                    <Link to="/login" style={{ color: "#FA735B" }}>
+                      Sign in
+                    </Link>
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+          </Grid>
         </Grid>
-        <Grid item xs={false} sm={12} md={4} />
-      </Grid>
+      </Container>
 
       {isSuccess && (
         <Snackbar
@@ -167,7 +226,7 @@ const ForgotPasswordPage = () => {
           </Alert>
         </Snackbar>
       )}
-    </Container>
+    </Box>
   );
 };
 

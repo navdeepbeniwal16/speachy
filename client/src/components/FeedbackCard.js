@@ -13,12 +13,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import InfoIcon from "@mui/icons-material/Info";
 
-const FeedbackCard = ({
-  heading,
-  feedbackPoints = [],
-  score = 0,
-  example = "Hmmm, sorry can\t think of an example at the moment",
-}) => {
+const FeedbackCard = ({ heading, feedbackPoints = [], score = 0, example }) => {
   const [showFeedback, setShowFeedback] = useState(true);
 
   const headingsLabelMapping = {
@@ -81,7 +76,7 @@ const FeedbackCard = ({
           height: 4,
           borderRadius: 5,
           [`& .MuiLinearProgress-bar`]: {
-            backgroundColor: "#FA735B",
+            background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
           },
         }}
       />
@@ -106,15 +101,17 @@ const FeedbackCard = ({
             </Typography>
           )}
         </Box>
-        <Paper
-          variant="outlined"
-          sx={{ mt: 1, p: 2, borderRadius: "10px" }}
-          style={{ background: "#f9f5f7" }}
-        >
-          <Typography variant="caption" fontStyle="italic">
-            ..{example}..
-          </Typography>
-        </Paper>
+        {/* {example && (
+          <Paper
+            variant="outlined"
+            sx={{ mt: 1, p: 2, borderRadius: "10px" }}
+            style={{ background: "#f9f5f7" }}
+          >
+            <Typography variant="caption" fontStyle="italic">
+              ..{example}..
+            </Typography>
+          </Paper>
+        )} */}
       </Collapse>
     </Paper>
   );

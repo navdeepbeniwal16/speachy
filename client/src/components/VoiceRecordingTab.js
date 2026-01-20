@@ -1,29 +1,37 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Button, Box, Typography } from "@mui/material";
+import { Button, Box, Typography, CircularProgress } from "@mui/material";
 import MicNoneOutlinedIcon from "@mui/icons-material/MicNoneOutlined";
 import MicOffOutlinedIcon from "@mui/icons-material/MicOffOutlined";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
+import "../css/bouncing-loader.css"; // We'll define the wave animation in this CSS
 
 const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
   const [recorder, setRecorder] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [timer, setTimer] = useState(0);
   const intervalRef = useRef(null);
   let chunks = [];
 
+  // Format timer to show minutes and seconds
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
   const handleRecordInner = () => {
     setIsRecording(true);
     startTimer();
-    // Additional recording logic would go here
     startRecording();
   };
 
   const handleSubmitInner = () => {
     setIsRecording(false);
     stopTimer();
-    // Additional stop recording logic would go here
     stopRecording();
+    setIsLoading(true); // show loader while waiting for server
   };
 
   const getMicrophoneAccess = async () => {
@@ -61,21 +69,26 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
 
     setIsRecording(true);
 
-    recorder.start(1000); // Use timeslice of 1000ms (1 second) to fix data audio data compatibility sent from Safari browser
+    recorder.start(1000);
 
     recorder.ondataavailable = (e) => {
       if (e.data.size > 0) {
-        chunks.push(e.data); // Collect chunks of recorded data
+        chunks.push(e.data);
       }
     };
 
-    recorder.onstop = () => {
+    recorder.onstop = async () => {
       const blob = new Blob(chunks, { type: "audio/mpeg" });
       const url = URL.createObjectURL(blob);
       setAudioUrl(url);
-      setIsRecording(false);
-      handleSubmit(blob);
-      chunks = []; // Reset chunks for the next recording
+      setIsLoading(true);
+
+      try {
+        await handleSubmit(blob);
+      } finally {
+        setIsLoading(false);
+        chunks = [];
+      }
     };
   };
 
@@ -88,7 +101,7 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
   };
 
   const startTimer = () => {
-    setTimer(0); // Reset the timer
+    setTimer(0);
     intervalRef.current = setInterval(() => {
       setTimer((prevTime) => prevTime + 1);
     }, 1000);
@@ -109,37 +122,45 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
         gap: 3,
       }}
     >
-      <TimerOutlinedIcon
-        color="gray"
-        fontSize="large"
-        sx={{
-          mr: "-20px",
-          color: "gray",
-        }}
-      ></TimerOutlinedIcon>
+      <TimerOutlinedIcon fontSize="large" sx={{ color: "gray", mr: "-20px" }} />
       <Typography variant="h5" sx={{ color: "gray" }}>
-        <strong>{`${timer}s`}</strong>
+        <strong>{formatTime(timer)}</strong>
       </Typography>
 
-      <Button
-        variant="contained"
-        onClick={isRecording ? handleSubmitInner : handleRecordInner}
-        sx={{ minWidth: "10%", textTransform: "none" }}
-        style={{ backgroundColor: "#FA735B" }}
-      >
-        <strong>{isRecording ? "Submit" : "Record"}</strong>
-      </Button>
+      {isLoading ? (
+        <Box className="bouncing-loader" sx={{ height: 36, width: 60 }}>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </Box>
+      ) : (
+        <Button
+          variant="contained"
+          onClick={isRecording ? handleSubmitInner : handleRecordInner}
+          sx={{
+            minWidth: "10%",
+            textTransform: "none",
+            backgroundColor: "#FA735B",
+            color: "#fff",
+            fontWeight: "bold",
+            boxShadow:
+              "0px 12px 24px -12px rgba(250,115,91,0.7), 0px 10px 18px -14px rgba(49,30,20,0.35)",
+            "&:hover": {
+              backgroundColor: "#f8643f",
+              boxShadow:
+                "0px 14px 26px -12px rgba(250,115,91,0.8), 0px 12px 18px -14px rgba(49,30,20,0.35)",
+            },
+          }}
+        >
+          <strong>{isRecording ? "Submit" : "Record"}</strong>
+        </Button>
+      )}
 
       {isRecording ? (
-        <MicNoneOutlinedIcon
-          style={{ color: "#FA735B" }}
-          fontSize="large"
-        ></MicNoneOutlinedIcon>
+        <MicNoneOutlinedIcon style={{ color: "#FA735B" }} fontSize="large" />
       ) : (
-        <MicOffOutlinedIcon
-          fontSize="large"
-          sx={{ color: "gray" }}
-        ></MicOffOutlinedIcon>
+        <MicOffOutlinedIcon fontSize="large" sx={{ color: "gray" }} />
       )}
     </Box>
   );

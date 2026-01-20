@@ -152,84 +152,172 @@ const fetchAudioTransacription = async (req, res, next) => {
 
 const evaluateResponse = async (req, res, next) => {
   const requestBody = req.body;
-  try {
-    if (!requestBody) {
-      return res.status(400).json({
-        message: "Error evaluating response",
-        description: "Request body is missing",
-      });
+  if (!requestBody) {
+    return res.status(400).json({
+      message: "Error evaluating response",
+      description: "Request body is missing",
+    });
+  }
+
+  const { promptText, responseText } = requestBody;
+
+  if (!promptText) {
+    return res.status(400).json({
+      message: "Error evaluating response",
+      description: "Request body is missing 'promptText'",
+    });
+  }
+
+  if (!responseText) {
+    return res.status(400).json({
+      message: "Error evaluating response",
+      description: "Request body is missing 'responseText'",
+    });
+  }
+
+  const model = "gpt-3.5-turbo";
+
+  const systemPrompt = {
+    role: "system",
+    content:
+      "You are a trained communication skills coach and your task is to evaluate responses to prompts. Your feedback should be critical, detailed, and effective while maintaining a friendly and supportive tone. Use relevant emojis and language that appeals to school and university students.",
+  };
+
+  const userPrompt = {
+    role: "user",
+    content: `Evaluate the following response to the prompt: \n Prompt: ${promptText} \n Response: ${responseText}`,
+  };
+
+  const getInstructionPrompt = (instruction) => ({
+    role: "user",
+    content: instruction,
+  });
+
+  const parseFieldValue = async (completion, field) => {
+    if (!Array.isArray(completion.choices) || completion.choices.length === 0) {
+      throw new Error("No response from OpenAI");
     }
 
-    if (!requestBody.promptText) {
-      return res.status(400).json({
-        message: "Error evaluating response",
-        description: "Request body is missing 'promptText'",
-      });
-    }
+    const raw = completion.choices[0].message.content;
+    const parsed = JSON.parse(raw);
+    if (!parsed[field]) throw new Error(`${field} missing in response`);
+    return parsed[field];
+  };
 
-    if (!requestBody.responseText) {
-      return res.status(400).json({
-        message: "Error evaluating response",
-        description: "Request body is missing 'responseText'",
-      });
-    }
+  const getOverview = async () => {
+    const completion = await openai.chat.completions.create({
+      model,
+      messages: [
+        systemPrompt,
+        userPrompt,
+        getInstructionPrompt(
+          "Provide a brief overview of the response in JSON format. Use no more than 30 words. Respond in the following JSON structure:\n" +
+            `{ "overview": "Well done, your story about helping your friend was touching and heartfelt 🌟" }`
+        ),
+      ],
+      response_format: { type: "json_object" },
+    });
+    return parseFieldValue(completion, "overview");
+  };
 
-    const { promptText, responseText } = requestBody;
+  const getTip = async () => {
+    const completion = await openai.chat.completions.create({
+      model,
+      messages: [
+        systemPrompt,
+        userPrompt,
+        getInstructionPrompt(
+          "Give one key tip to improve the response. Respond in JSON format with no more than 20 words. Format:\n" +
+            `{ "tip": "Try to structure your response using a clear beginning, middle, and end for better flow 📚" }`
+        ),
+      ],
+      response_format: { type: "json_object" },
+    });
+    return parseFieldValue(completion, "tip");
+  };
+
+  const getAspect = async (aspect) => {
+    const instructions = {
+      relevance:
+        "Evaluate how well the response addresses the prompt. Provide 1–2 warm, specific suggestions and a score. Respond in JSON format as follows:\n" +
+        `{ "relevance": { "waysToImprove": ["Point 1", "Point 2"], "score": 6.5 } }`,
+      structure:
+        "Evaluate the structure and flow of the response. Provide 1–2 helpful tips (avoid overlapping with tone/relevance) and a score. Respond in this JSON format:\n" +
+        `{ "structure": { "waysToImprove": ["Point 1", "Point 2"], "score": 7.2} }`,
+      sentiment:
+        "Evaluate how expressive and emotionally engaging the response is. Include 1–2 tone improvement tips and a score. Respond in JSON format:\n" +
+        `{ "sentiment": { "waysToImprove": ["Point 1", "Point 2"], "score": 6.8} }`,
+      authenticity:
+        "Evaluate how personal and genuine the response feels. Suggest 1–2 ways to make it sound more 'you'. Respond in JSON format:\n" +
+        `{ "authenticity": { "waysToImprove": ["Point 1", "Point 2"], "score": 7.5} }`,
+    };
 
     const completion = await openai.chat.completions.create({
+      model,
       messages: [
-        {
-          role: "system",
-          content:
-            "You are a trained communication skills coach and your task is to evaluate responses to prompts. Your feedback should be critical, detailed, and effective while maintaining a friendly and supportive tone. Use relevant emojis and choice of wording to make the feedback approachable for school and university students.",
-        },
-        {
-          role: "user",
-          content: `Evaluate the following response to the prompt. \n Here's the prompt and response pair: \n Prompt: ${promptText} \n Response: ${responseText}`,
-        },
-        {
-          role: "user",
-          content:
-            "Based on the information provided, CRITICALLY evaluate the response on the following aspects: \n" +
-            "Relevance: How well the response addresses the prompt. Include specific examples of what was done well and areas for improvement.\n" +
-            "Delivery: Clarity and fluency of the response. Provide detailed feedback on speaking pace, clarity, and use of pauses.\n" +
-            "Tone: Appropriateness of tone given the prompt. Comment on the enthusiasm, pitch variation, and engagement level.\n" +
-            "Please provide the results in the following JSON format:\n" +
-            "{ summary (json) : {" +
-            "relevance (json): { waysToImprove: [string array]: ['What was done well', 'What was lacking', 'Suggestions for improvement'], score: [float]: A score out of 10}," +
-            "delivery (json): { waysToImprove: [string array]: ['What was done well', 'What was lacking', 'Suggestions for improvement'], score: [float]: A score out of 10}," +
-            "tone (json): {waysToImprove: [string array]: ['What was done well', 'What was lacking', 'Suggestions for improvement'], score: [float]: A score out of 10}" +
-            "}," +
-            "overview (string) : Praise words, very breifly describe positive thing about the response and example eg: Well done, you gave an engaging response by mentioning your pet Toby!," +
-            "tip (string) : Next time try [insert advice] to improve your response" +
-            "detailedFeedback (string): overall feedback on the whole of the response to the prompt. It should include specific examples of areas to improve and suggestions for how the answer could be better. Ensure the detailed feedback is comprehensive and addresses multiple aspects of the response in depth. Use a friendly tone and incorporate relevant emojis to make it engaging. " +
-            "fillers (integer): number of filler words," +
-            "Clearly state what the user did well, what they lacked, and specific suggestions for improvement. For example, 'To improve relevance, you can...' or 'A good example of clarity in delivery is...' should be included within the text.\n" +
-            "}",
-        },
+        systemPrompt,
+        userPrompt,
+        getInstructionPrompt(instructions[aspect]),
       ],
-      model: "gpt-3.5-turbo",
       response_format: { type: "json_object" },
     });
 
-    // Parse raw json response and extract evaluation results
-    // Throw error is response is not of array type or is empty
-    if (!Array.isArray(completion.choices) || completion.choices.length < 0) {
-      throw new Error(
-        "Error occured in OpenAI chat api response while generating evaluating response for the prompt."
-      );
-    }
+    return parseFieldValue(completion, aspect);
+  };
 
-    const evaluationResultsRawJSON = completion.choices[0].message.content;
-    const evaluationResults = Object(JSON.parse(evaluationResultsRawJSON));
+  const getDetailedFeedback = async () => {
+    const completion = await openai.chat.completions.create({
+      model,
+      messages: [
+        systemPrompt,
+        userPrompt,
+        getInstructionPrompt(
+          "Provide an overall feedback on the whole of the response to the prompt. It should include specific examples of areas to improve and suggestions for how the answer could be better. Ensure the detailed feedback is comprehensive and addresses multiple aspects of the response in depth. Use a friendly tone and incorporate relevant emojis to make it engaging. Respond in the following JSON Format:\n" +
+            `{ "detailedFeedback": "Placeholder for generated detailed feedback" }`
+        ),
+      ],
+      response_format: { type: "json_object" },
+    });
+    return parseFieldValue(completion, "detailedFeedback");
+  };
 
-    req.results = evaluationResults;
+  try {
+    const [
+      overview,
+      tip,
+      relevance,
+      structure,
+      sentiment,
+      authenticity,
+      detailedFeedback,
+    ] = await Promise.all([
+      getOverview(),
+      getTip(),
+      getAspect("relevance"),
+      getAspect("structure"),
+      getAspect("sentiment"),
+      getAspect("authenticity"),
+      getDetailedFeedback(),
+    ]);
+
+    req.results = {
+      overview,
+      tip,
+      summary: {
+        relevance,
+        structure,
+        sentiment,
+        authenticity,
+      },
+      detailedFeedback,
+    };
+
     next();
   } catch (error) {
-    console.log("Error evaluating prompt response:", error);
+    console.error("Error evaluating prompt response:", error);
     return res.status(500).json({
       message: "Unknown error evaluating prompt response",
-      description: error,
+      description: error.message,
     });
   }
 };
@@ -278,9 +366,30 @@ router.post(
     next();
   },
   evaluateResponse,
-  (req, res, next) => {
+  async (req, res, next) => {
     const feedback = req.results;
     const transcription = req.transcription;
+
+    // Record session after successful evaluation (best-effort)
+    try {
+      const sessionResponse = await fetch(
+        `${req.protocol}://${req.get("host")}/sessions/record`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: req.headers.authorization,
+          },
+          body: JSON.stringify({ sessionType: "impromptu" }),
+        }
+      );
+      if (!sessionResponse.ok) {
+        console.warn("Failed to record session (impromptu)");
+      }
+    } catch (err) {
+      console.error("Error recording session (impromptu):", err);
+    }
+
     res.json({
       message: "Prompt response successfully evaluated",
       results: {

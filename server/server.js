@@ -12,6 +12,8 @@ const interviewRoute = require("./routes/interview.js");
 const userRoute = require("./routes/user.js");
 const impromptuSpeakingRoute = require("./routes/impromptu-speaking.js");
 const paymentsRoute = require("./routes/payments.js");
+const sessionsRoute = require("./routes/sessions.js");
+const streakRoute = require("./routes/streak.js");
 const admin = require("firebase-admin");
 
 // Log requests in 'dev' format
@@ -77,7 +79,9 @@ app.get("/", (req, res, next) => {
 
 app.use("/interview", verifyToken, interviewRoute);
 app.use("/me", verifyToken, userRoute);
-app.use("/impromptu-speaking", impromptuSpeakingRoute);
+app.use("/streak", verifyToken, streakRoute);
+app.use("/sessions", verifyToken, sessionsRoute);
+app.use("/impromptu-speaking", verifyToken, impromptuSpeakingRoute);
 app.use("/payments", paymentsRoute);
 
 app.get("/debug-sentry", function mainHandler(req, res) {

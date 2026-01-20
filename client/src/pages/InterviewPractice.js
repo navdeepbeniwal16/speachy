@@ -4,7 +4,6 @@ import {
   IconButton,
   Paper,
   Typography,
-  LinearProgress,
   Skeleton,
   Grid,
   Collapse,
@@ -22,6 +21,8 @@ import FeedbackPane from "../components/FeedbackPane";
 import { ReactComponent as FeedbackIcon } from "../assets/chat-evaluation.svg";
 import SnackbarAlert from "../components/SnackbarAlert";
 import QuestionProgressView from "../components/QuestionProgressView.js";
+
+const NAV_ICON_SX = { color: "#2f170f", borderRadius: 2 };
 
 const InterviewPractice = () => {
   const location = useLocation();
@@ -54,7 +55,6 @@ const InterviewPractice = () => {
   const [responseProgressData, setResponseProgressData] = useState([
     { name: "relevance", data: [], attemptDateTime: [] },
     { name: "structure", data: [], attemptDateTime: [] },
-    { name: "sentiment", data: [], attemptDateTime: [] },
     { name: "authenticity", data: [], attemptDateTime: [] },
   ]);
 
@@ -65,19 +65,17 @@ const InterviewPractice = () => {
     const audioUrl = URL.createObjectURL(audioBlob);
     setAudioUrl(audioUrl);
 
-    // Create an Audio element
     const audio = new Audio(audioUrl);
     audio.preload = "auto";
 
-    // Handle loaded metadata event
-    const duration = await getAudioDuration(audio); // Wait for duration to be fetched
+    const duration = await getAudioDuration(audio);
     console.log("Audio Duration:", duration);
 
-    // Converting the seconds to a whole number
     audioDuration = parseInt(duration);
 
     console.log("Initiate request to get response feedback");
-    getAudioResponseFeedback(audioUrl);
+
+    await getAudioResponseFeedback(audioUrl);
   };
 
   const getAudioDuration = (audio) => {
@@ -126,7 +124,15 @@ const InterviewPractice = () => {
 
       console.log("Audio Evaluation Results:", response);
 
+      if (!response) {
+        throw new Error("No response received from the server");
+      }
+
       const feedback = response.feedback;
+      if (!feedback) {
+        throw new Error("No feedback data received from the server");
+      }
+
       feedback.duration = audioDuration; // Set duration of the audio
       updateProgressView(feedback);
       const transcription = response.transcription;
@@ -155,7 +161,6 @@ const InterviewPractice = () => {
     console.log("InterviewPractice: updateProgressView() is called");
     const relevanceScore = feedbackData.summary.relevance.score;
     const structureScore = feedbackData.summary.structure.score;
-    const sentimentScore = feedbackData.summary.sentiment.score;
     const authenticityScore = feedbackData.summary.authenticity.score;
 
     const feedbackTimeStamp = getCurrentTime();
@@ -173,12 +178,6 @@ const InterviewPractice = () => {
           return {
             ...progress,
             data: [...progress.data, structureScore],
-            attemptDateTime: [...progress.attemptDateTime, feedbackTimeStamp],
-          };
-        } else if (progress.name === "sentiment") {
-          return {
-            ...progress,
-            data: [...progress.data, sentimentScore],
             attemptDateTime: [...progress.attemptDateTime, feedbackTimeStamp],
           };
         } else if (progress.name === "authenticity") {
@@ -229,6 +228,7 @@ const InterviewPractice = () => {
               state: { questions: questions },
             })
           }
+          sx={NAV_ICON_SX}
         >
           <ArrowBackIcon />
         </IconButton>
@@ -261,7 +261,7 @@ const InterviewPractice = () => {
               >
                 {question}
               </Typography>
-              <Box
+              {/* <Box
                 sx={{
                   display: "flex",
                   flexDirection: "row",
@@ -282,7 +282,7 @@ const InterviewPractice = () => {
                     <BookmarkAddIcon></BookmarkAddIcon>
                   )}
                 </IconButton>
-              </Box>
+              </Box> */}
             </Paper>
           ) : (
             <Skeleton
@@ -337,18 +337,6 @@ const InterviewPractice = () => {
                 overflowY: "auto",
               }}
             >
-              {isEvaluating && (
-                <Box sx={{ width: "100%" }}>
-                  <LinearProgress
-                    sx={{
-                      "& .MuiLinearProgress-bar": {
-                        backgroundColor: "#FA735B", // Custom color for the progress bar
-                      },
-                    }}
-                  />
-                </Box>
-              )}
-
               {feedback ? (
                 <FeedbackPane
                   feedback={feedback}
