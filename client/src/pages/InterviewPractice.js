@@ -1,8 +1,11 @@
 import {
   Box,
+  Button,
   Container,
   IconButton,
+  LinearProgress,
   Paper,
+  TextField,
   Typography,
   Skeleton,
   Grid,
@@ -15,6 +18,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import BookmarkAddIcon from "@mui/icons-material/BookmarkAdd";
 import BookmarkAddedIcon from "@mui/icons-material/BookmarkAdded";
+import KeyboardVoiceIcon from "@mui/icons-material/KeyboardVoice";
+import EditNoteIcon from "@mui/icons-material/EditNote";
 import VoiceRecordingTab from "../components/VoiceRecordingTab";
 import InterviewService from "../services/interview-service.js";
 import FeedbackPane from "../components/FeedbackPane";
@@ -38,6 +43,9 @@ const InterviewPractice = () => {
   const industry = location.state.industry;
   const requiredExperience = location.state.requiredExperience;
 
+  const [inputMode, setInputMode] = useState("voice"); // "voice" | "text"
+  const [textAnswer, setTextAnswer] = useState("");
+
   const [isEvaluating, setIsEvaluating] = useState(false);
 
   const [audioUrl, setAudioUrl] = useState(null);
@@ -57,6 +65,42 @@ const InterviewPractice = () => {
     { name: "structure", data: [], attemptDateTime: [] },
     { name: "authenticity", data: [], attemptDateTime: [] },
   ]);
+
+  const handleModeSwitch = (mode) => {
+    if (mode === inputMode) return;
+    setInputMode(mode);
+    setFeedback(null);
+    setTranscription({ text: "No response recorded yet" });
+    setAudioUrl(null);
+    setTextAnswer("");
+  };
+
+  const handleTextResponseSubmit = async () => {
+    if (!textAnswer.trim()) return;
+    setIsEvaluating(true);
+    try {
+      const response = await InterviewService.fetchTextResponseFeedback(
+        question,
+        textAnswer,
+        companyName,
+        jobRole,
+        jobDescription,
+        industry,
+        requiredExperience
+      );
+      const feedback = response.feedback;
+      feedback.duration = null;
+      updateProgressView(feedback);
+      setFeedback(feedback);
+      setTranscription(response.transcription);
+    } catch (error) {
+      console.error("Error in fetching text response feedback:", error);
+      setAlertMessage(error.message);
+      setIsAlertOpen(true);
+    } finally {
+      setIsEvaluating(false);
+    }
+  };
 
   const handleVoiceRecordingSubmit = async (audioBlob) => {
     console.log("handleVoiceRecordingSubmit is called...");
@@ -300,26 +344,141 @@ const InterviewPractice = () => {
               alignItems: "center",
               mt: 2,
               mb: 3,
+              width: "100%",
             }}
           >
-            <VoiceRecordingTab
-              handleRecord={() => console.log("Handle record is pressed...")}
-              handleSubmit={handleVoiceRecordingSubmit}
-              style={{ width: "100%" }}
-            />
+            {/* Mode toggle */}
+            <Box
+              sx={{
+                display: "flex",
+                bgcolor: "#f5ede9",
+                borderRadius: "8px",
+                p: "4px",
+                gap: "4px",
+                mb: 2,
+              }}
+            >
+              <Button
+                size="small"
+                startIcon={<KeyboardVoiceIcon />}
+                onClick={() => handleModeSwitch("voice")}
+                disableElevation
+                sx={{
+                  borderRadius: "6px",
+                  textTransform: "none",
+                  px: 2,
+                  ...(inputMode === "voice"
+                    ? {
+                        bgcolor: "#FA735B",
+                        color: "#fff",
+                        "&:hover": { bgcolor: "#e8614a" },
+                      }
+                    : {
+                        color: "rgba(60,32,25,0.45)",
+                        "&:hover": { bgcolor: "transparent" },
+                      }),
+                }}
+              >
+                Voice
+              </Button>
+              <Button
+                size="small"
+                startIcon={<EditNoteIcon />}
+                onClick={() => handleModeSwitch("text")}
+                disableElevation
+                sx={{
+                  borderRadius: "6px",
+                  textTransform: "none",
+                  px: 2,
+                  ...(inputMode === "text"
+                    ? {
+                        bgcolor: "#FA735B",
+                        color: "#fff",
+                        "&:hover": { bgcolor: "#e8614a" },
+                      }
+                    : {
+                        color: "rgba(60,32,25,0.45)",
+                        "&:hover": { bgcolor: "transparent" },
+                      }),
+                }}
+              >
+                Text
+              </Button>
+            </Box>
+
+            {/* Input area */}
+            {inputMode === "voice" ? (
+              <VoiceRecordingTab
+                handleRecord={() => console.log("Handle record is pressed...")}
+                handleSubmit={handleVoiceRecordingSubmit}
+                style={{ width: "100%" }}
+              />
+            ) : (
+              <Box
+                sx={{
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 1.5,
+                }}
+              >
+                <TextField
+                  multiline
+                  rows={5}
+                  fullWidth
+                  placeholder="Type your answer here..."
+                  value={textAnswer}
+                  onChange={(e) => setTextAnswer(e.target.value)}
+                  disabled={isEvaluating}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "#ffffff",
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "rgba(250,115,91,0.35)",
+                      },
+                      "&:hover .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "rgba(250,115,91,0.6)",
+                      },
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "#FA735B",
+                      },
+                    },
+                  }}
+                />
+                <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                  <Button
+                    variant="contained"
+                    disableElevation
+                    disabled={isEvaluating || !textAnswer.trim()}
+                    onClick={handleTextResponseSubmit}
+                    sx={{ textTransform: "none" }}
+                    style={{
+                      backgroundColor:
+                        isEvaluating || !textAnswer.trim()
+                          ? undefined
+                          : "#FA735B",
+                    }}
+                  >
+                    <strong>Submit Answer</strong>
+                  </Button>
+                </Box>
+              </Box>
+            )}
           </Box>
         </Box>
       </Box>
 
       <Grid container spacing={2}>
-        <Grid item xs={12} lg={12}>
-          <Box sx={{ mt: "auto", mb: 0 }}>
-            <TranscriptionBox
-              transcription={transcription.text}
-              audioUrl={audioUrl}
-            />
-          </Box>
-        </Grid>
+        {inputMode === "voice" && (
+          <Grid item xs={12} lg={12}>
+            <Box sx={{ mt: "auto", mb: 0 }}>
+              <TranscriptionBox
+                transcription={transcription.text}
+                audioUrl={audioUrl}
+              />
+            </Box>
+          </Grid>
+        )}
         <Grid item xs={12} lg={6}>
           <Box sx={{ mt: "auto", mb: 2 }}>
             <QuestionProgressView seriesData={responseProgressData} />
@@ -337,10 +496,22 @@ const InterviewPractice = () => {
                 overflowY: "auto",
               }}
             >
+              {isEvaluating && inputMode === "text" && (
+                <Box sx={{ width: "100%" }}>
+                  <LinearProgress
+                    sx={{
+                      "& .MuiLinearProgress-bar": {
+                        backgroundColor: "#FA735B",
+                      },
+                    }}
+                  />
+                </Box>
+              )}
               {feedback ? (
                 <FeedbackPane
                   feedback={feedback}
                   transcription={transcription}
+                  showAudioMetrics={inputMode === "voice"}
                 />
               ) : (
                 <Box

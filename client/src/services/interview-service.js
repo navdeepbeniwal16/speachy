@@ -117,6 +117,38 @@ class InterviewService {
     }
   }
 
+  static async fetchTextResponseFeedback(
+    questionText,
+    responseText,
+    companyName,
+    jobRole,
+    jobDescription,
+    industry,
+    requiredExperience
+  ) {
+    try {
+      const response = await backendApiClient.post(
+        "/interview/evaluate-response-text",
+        {
+          questionText,
+          responseText,
+          companyName,
+          jobRole,
+          jobDescription,
+          industry,
+          requiredExperience,
+        }
+      );
+      const data = response.data;
+      if (!data.results) throw new Error("Results not found in response payload");
+      // Normalise to same shape as audio: { feedback, transcription }
+      return { feedback: data.results, transcription: { text: responseText } };
+    } catch (error) {
+      console.error("Failed to fetch text response feedback:", error);
+      throw error;
+    }
+  }
+
   static async getAllSavedInterviewQuestions(
     questionText,
     responseText,
