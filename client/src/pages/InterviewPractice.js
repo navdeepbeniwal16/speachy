@@ -10,14 +10,13 @@ import {
   Skeleton,
   Grid,
   Collapse,
+  Divider,
 } from "@mui/material";
 import React, { useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import BookmarkAddIcon from "@mui/icons-material/BookmarkAdd";
-import BookmarkAddedIcon from "@mui/icons-material/BookmarkAdded";
 import KeyboardVoiceIcon from "@mui/icons-material/KeyboardVoice";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import VoiceRecordingTab from "../components/VoiceRecordingTab";
@@ -27,13 +26,13 @@ import { ReactComponent as FeedbackIcon } from "../assets/chat-evaluation.svg";
 import SnackbarAlert from "../components/SnackbarAlert";
 import QuestionProgressView from "../components/QuestionProgressView.js";
 
-const NAV_ICON_SX = { color: "#2f170f", borderRadius: 2 };
+const SURFACE_SHADOW = "0 18px 36px rgba(252,150,120,0.15)";
+const SURFACE_BORDER = "1px solid rgba(252,150,120,0.12)";
 
 const InterviewPractice = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { questionId } = useParams();
-  console.log("QuestionId:", questionId);
 
   const questions = location.state.questions;
   const question = questions[questionId].question;
@@ -54,7 +53,6 @@ const InterviewPractice = () => {
     text: "No response recorded yet",
   });
   const [feedback, setFeedback] = useState(null);
-  const [isBookmarked, setIsBookmarked] = useState(false);
 
   const [alertType, setAlertType] = useState("error");
   const [alertMessage, setAlertMessage] = useState("");
@@ -103,7 +101,6 @@ const InterviewPractice = () => {
   };
 
   const handleVoiceRecordingSubmit = async (audioBlob) => {
-    console.log("handleVoiceRecordingSubmit is called...");
     setIsEvaluating(true);
 
     const audioUrl = URL.createObjectURL(audioBlob);
@@ -113,11 +110,7 @@ const InterviewPractice = () => {
     audio.preload = "auto";
 
     const duration = await getAudioDuration(audio);
-    console.log("Audio Duration:", duration);
-
     audioDuration = parseInt(duration);
-
-    console.log("Initiate request to get response feedback");
 
     await getAudioResponseFeedback(audioUrl);
   };
@@ -134,17 +127,17 @@ const InterviewPractice = () => {
             event.target.removeEventListener("timeupdate", getDuration);
 
             if (duration) {
-              resolve(duration); // Resolve the promise with the correct duration
+              resolve(duration);
             } else {
               reject("Unable to determine duration");
             }
           });
         } else {
-          resolve(audio.duration); // Duration is already available, resolve it
+          resolve(audio.duration);
         }
       });
 
-      audio.addEventListener("error", (err) => {
+      audio.addEventListener("error", () => {
         reject("Error loading audio metadata");
       });
     });
@@ -152,9 +145,7 @@ const InterviewPractice = () => {
 
   const getAudioResponseFeedback = async (audioUrl) => {
     try {
-      console.log("Fetching audio response feedback...");
       const audioBlob = await urlToBlob(audioUrl);
-      console.log("Audio blob obtained:", audioBlob);
 
       const response = await InterviewService.fetchAudioResponseFeedback(
         question,
@@ -166,8 +157,6 @@ const InterviewPractice = () => {
         requiredExperience
       );
 
-      console.log("Audio Evaluation Results:", response);
-
       if (!response) {
         throw new Error("No response received from the server");
       }
@@ -177,12 +166,10 @@ const InterviewPractice = () => {
         throw new Error("No feedback data received from the server");
       }
 
-      feedback.duration = audioDuration; // Set duration of the audio
+      feedback.duration = audioDuration;
       updateProgressView(feedback);
-      const transcription = response.transcription;
-
       setFeedback(feedback);
-      setTranscription(transcription);
+      setTranscription(response.transcription);
     } catch (error) {
       console.error("Error in fetching audio response feedback:", error);
       setAlertMessage(error.message);
@@ -202,16 +189,13 @@ const InterviewPractice = () => {
   };
 
   const updateProgressView = (feedbackData) => {
-    console.log("InterviewPractice: updateProgressView() is called");
     const relevanceScore = feedbackData.summary.relevance.score;
     const structureScore = feedbackData.summary.structure.score;
     const authenticityScore = feedbackData.summary.authenticity.score;
-
     const feedbackTimeStamp = getCurrentTime();
 
     setResponseProgressData((prevData) =>
       prevData.map((progress) => {
-        // Create updated progress objects based on feedbackData
         if (progress.name === "relevance") {
           return {
             ...progress,
@@ -231,7 +215,6 @@ const InterviewPractice = () => {
             attemptDateTime: [...progress.attemptDateTime, feedbackTimeStamp],
           };
         }
-        console.log("InterviewPractice: Progress is updated");
         return progress;
       })
     );
@@ -239,112 +222,118 @@ const InterviewPractice = () => {
 
   async function urlToBlob(url) {
     const response = await fetch(url);
-    const blob = await response.blob();
-    return blob;
+    return response.blob();
   }
 
-  async function handleBookmarkClick() {
-    const questionText = question;
-    const responseText = transcription;
-    const progressStats = [
-      responseProgressData.reduce((acc, item) => {
-        acc[item.name] = item.data[0];
-        return acc;
-      }, {}),
-    ];
-    console.log("Progress:", JSON.stringify(responseProgressData));
-    const saveSuccessful = await InterviewService.saveInterviewQuestion(
-      questionText,
-      responseText,
-      progressStats
-    );
-    console.log("Is bookmark successful? :", saveSuccessful);
-
-    setIsBookmarked(saveSuccessful);
-  }
+  const questionIndex = parseInt(questionId) + 1;
+  const totalQuestions = questions.length;
 
   return (
-    <Container component="main" maxWidth="lg">
-      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-        <IconButton
-          onClick={() =>
-            navigate("/interview/questions", {
-              state: { questions: questions },
-            })
-          }
-          sx={NAV_ICON_SX}
-        >
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography variant="h6" gutterBottom>
-          👔 Interview Practice Arena
-        </Typography>
-        <Typography></Typography>
-      </Box>
+    <Box sx={{ minHeight: "100vh", backgroundColor: "#fff4ef", pb: 6 }}>
+      <Container component="main" maxWidth="lg" sx={{ pt: 3 }}>
 
-      <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <Box>
-          {question ? (
-            <Paper
-              variant="rounded"
+        {/* Header */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 3,
+          }}
+        >
+          <IconButton
+            onClick={() =>
+              navigate("/interview/questions", { state: { questions } })
+            }
+            sx={{
+              color: "#2f170f",
+              border: SURFACE_BORDER,
+              bgcolor: "#ffffff",
+              borderRadius: 2,
+              "&:hover": {
+                bgcolor: "#fff4ef",
+                transform: "translateY(-1px)",
+                boxShadow: SURFACE_SHADOW,
+              },
+              transition: "all 0.2s ease",
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+
+          <Box sx={{ textAlign: "center" }}>
+            <Typography
+              variant="h6"
+              sx={{ color: "#2f170f", fontWeight: 700, letterSpacing: "-0.3px", lineHeight: 1.2 }}
+            >
+              Interview Practice
+            </Typography>
+            <Typography variant="caption" sx={{ color: "rgba(60,32,25,0.45)" }}>
+              Question {questionIndex} of {totalQuestions}
+            </Typography>
+          </Box>
+
+          {/* Spacer to keep title centred */}
+          <Box sx={{ width: 40 }} />
+        </Box>
+
+        {/* Question Card */}
+        {question ? (
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 3, md: 4 },
+              mb: 3,
+              borderRadius: 3,
+              backgroundColor: "#ffffff",
+              border: SURFACE_BORDER,
+              boxShadow: SURFACE_SHADOW,
+            }}
+          >
+            <Typography
+              variant="overline"
               sx={{
-                p: 2,
-                my: 2,
-                borderRadius: "10px",
-                backgroundColor: "#fff",
+                color: "#FA735B",
+                fontWeight: 700,
+                letterSpacing: 1.4,
+                mb: 1,
+                display: "block",
               }}
             >
-              <Typography
-                variant="body"
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  fontWeight: "bold",
-                  color: "#333333",
-                }}
-              >
-                {question}
-              </Typography>
-              {/* <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box></Box>
-                <IconButton
-                  onClick={() => {
-                    // setIsBookmarked(!isBookmarked);
-                    // TODO: Handle bookmark save
-                    handleBookmarkClick();
-                  }}
-                >
-                  {isBookmarked ? (
-                    <BookmarkAddedIcon></BookmarkAddedIcon>
-                  ) : (
-                    <BookmarkAddIcon></BookmarkAddIcon>
-                  )}
-                </IconButton>
-              </Box> */}
-            </Paper>
-          ) : (
-            <Skeleton
-              variant="rectangular"
-              sx={{ mx: 1, mt: 2, borderRadius: "10px" }}
-              height={118}
-            />
-          )}
+              Question
+            </Typography>
+            <Typography
+              variant="h6"
+              sx={{ color: "#2f170f", fontWeight: 600, lineHeight: 1.65 }}
+            >
+              {question}
+            </Typography>
+          </Paper>
+        ) : (
+          <Skeleton
+            variant="rectangular"
+            sx={{ mb: 3, borderRadius: 3 }}
+            height={100}
+          />
+        )}
 
+        {/* Input Section Card */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 3, md: 4 },
+            mb: 3,
+            borderRadius: 3,
+            backgroundColor: "#ffffff",
+            border: SURFACE_BORDER,
+            boxShadow: SURFACE_SHADOW,
+          }}
+        >
           <Box
             sx={{
-              flexGrow: 1,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              mt: 2,
-              mb: 3,
-              width: "100%",
             }}
           >
             {/* Mode toggle */}
@@ -352,10 +341,10 @@ const InterviewPractice = () => {
               sx={{
                 display: "flex",
                 bgcolor: "#f5ede9",
-                borderRadius: "8px",
+                borderRadius: "10px",
                 p: "4px",
                 gap: "4px",
-                mb: 2,
+                mb: 3,
               }}
             >
               <Button
@@ -364,18 +353,25 @@ const InterviewPractice = () => {
                 onClick={() => handleModeSwitch("voice")}
                 disableElevation
                 sx={{
-                  borderRadius: "6px",
+                  borderRadius: "7px",
                   textTransform: "none",
-                  px: 2,
+                  px: 2.5,
+                  py: 0.75,
+                  fontWeight: 600,
+                  transition: "all 0.2s ease",
                   ...(inputMode === "voice"
                     ? {
                         bgcolor: "#FA735B",
                         color: "#fff",
+                        boxShadow: "0px 4px 12px rgba(250,115,91,0.4)",
                         "&:hover": { bgcolor: "#e8614a" },
                       }
                     : {
                         color: "rgba(60,32,25,0.45)",
-                        "&:hover": { bgcolor: "transparent" },
+                        "&:hover": {
+                          bgcolor: "transparent",
+                          color: "rgba(60,32,25,0.65)",
+                        },
                       }),
                 }}
               >
@@ -387,18 +383,25 @@ const InterviewPractice = () => {
                 onClick={() => handleModeSwitch("text")}
                 disableElevation
                 sx={{
-                  borderRadius: "6px",
+                  borderRadius: "7px",
                   textTransform: "none",
-                  px: 2,
+                  px: 2.5,
+                  py: 0.75,
+                  fontWeight: 600,
+                  transition: "all 0.2s ease",
                   ...(inputMode === "text"
                     ? {
                         bgcolor: "#FA735B",
                         color: "#fff",
+                        boxShadow: "0px 4px 12px rgba(250,115,91,0.4)",
                         "&:hover": { bgcolor: "#e8614a" },
                       }
                     : {
                         color: "rgba(60,32,25,0.45)",
-                        "&:hover": { bgcolor: "transparent" },
+                        "&:hover": {
+                          bgcolor: "transparent",
+                          color: "rgba(60,32,25,0.65)",
+                        },
                       }),
                 }}
               >
@@ -409,7 +412,7 @@ const InterviewPractice = () => {
             {/* Input area */}
             {inputMode === "voice" ? (
               <VoiceRecordingTab
-                handleRecord={() => console.log("Handle record is pressed...")}
+                handleRecord={() => {}}
                 handleSubmit={handleVoiceRecordingSubmit}
                 style={{ width: "100%" }}
               />
@@ -419,7 +422,7 @@ const InterviewPractice = () => {
                   width: "100%",
                   display: "flex",
                   flexDirection: "column",
-                  gap: 1.5,
+                  gap: 2,
                 }}
               >
                 <TextField
@@ -433,15 +436,24 @@ const InterviewPractice = () => {
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       backgroundColor: "#ffffff",
+                      borderRadius: 2,
                       "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "rgba(250,115,91,0.35)",
+                        borderColor: "rgba(250,115,91,0.25)",
                       },
                       "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "rgba(250,115,91,0.6)",
+                        borderColor: "rgba(250,115,91,0.55)",
                       },
                       "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                         borderColor: "#FA735B",
                       },
+                    },
+                    "& .MuiInputBase-input": {
+                      color: "rgba(60,32,25,0.78)",
+                      fontSize: "0.95rem",
+                      lineHeight: 1.7,
+                    },
+                    "& .MuiInputBase-input::placeholder": {
+                      color: "rgba(60,32,25,0.35)",
                     },
                   }}
                 />
@@ -451,61 +463,71 @@ const InterviewPractice = () => {
                     disableElevation
                     disabled={isEvaluating || !textAnswer.trim()}
                     onClick={handleTextResponseSubmit}
-                    sx={{ textTransform: "none" }}
-                    style={{
-                      backgroundColor:
+                    sx={{
+                      textTransform: "none",
+                      fontWeight: 700,
+                      px: 3,
+                      py: 1,
+                      borderRadius: 2,
+                      background:
                         isEvaluating || !textAnswer.trim()
                           ? undefined
-                          : "#FA735B",
+                          : "linear-gradient(135deg, #FA735B 0%, #f8553a 100%)",
+                      boxShadow:
+                        isEvaluating || !textAnswer.trim()
+                          ? "none"
+                          : "0px 8px 20px -8px rgba(250,115,91,0.7)",
+                      "&:hover": {
+                        background:
+                          "linear-gradient(135deg, #e8614a 0%, #e04028 100%)",
+                        boxShadow: "0px 12px 24px -8px rgba(250,115,91,0.8)",
+                        transform: "translateY(-1px)",
+                      },
+                      transition: "all 0.2s ease",
                     }}
                   >
-                    <strong>Submit Answer</strong>
+                    Submit Answer
                   </Button>
                 </Box>
               </Box>
             )}
           </Box>
-        </Box>
-      </Box>
+        </Paper>
 
-      <Grid container spacing={2}>
-        {inputMode === "voice" && (
-          <Grid item xs={12} lg={12}>
-            <Box sx={{ mt: "auto", mb: 0 }}>
+        {/* Bottom grid */}
+        <Grid container spacing={3}>
+          {inputMode === "voice" && (
+            <Grid item xs={12}>
               <TranscriptionBox
                 transcription={transcription.text}
                 audioUrl={audioUrl}
               />
-            </Box>
-          </Grid>
-        )}
-        <Grid item xs={12} lg={6}>
-          <Box sx={{ mt: "auto", mb: 2 }}>
-            <QuestionProgressView seriesData={responseProgressData} />
-          </Box>
-        </Grid>
+            </Grid>
+          )}
 
-        <Grid item xs={12} lg={6}>
-          <Box sx={{ minHeight: "40vh" }}>
+          <Grid item xs={12} lg={6}>
+            <QuestionProgressView seriesData={responseProgressData} />
+          </Grid>
+
+          <Grid item xs={12} lg={6}>
             <Paper
-              variant="elevation"
               elevation={0}
               sx={{
-                borderRadius: "10px",
-                height: "100%",
-                overflowY: "auto",
+                minHeight: "40vh",
+                borderRadius: 3,
+                border: SURFACE_BORDER,
+                boxShadow: SURFACE_SHADOW,
+                overflow: "hidden",
+                backgroundColor: "#ffffff",
               }}
             >
               {isEvaluating && inputMode === "text" && (
-                <Box sx={{ width: "100%" }}>
-                  <LinearProgress
-                    sx={{
-                      "& .MuiLinearProgress-bar": {
-                        backgroundColor: "#FA735B",
-                      },
-                    }}
-                  />
-                </Box>
+                <LinearProgress
+                  sx={{
+                    "& .MuiLinearProgress-bar": { backgroundColor: "#FA735B" },
+                    backgroundColor: "rgba(250,115,91,0.12)",
+                  }}
+                />
               )}
               {feedback ? (
                 <FeedbackPane
@@ -520,16 +542,31 @@ const InterviewPractice = () => {
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
-                    p: 3,
+                    p: 4,
+                    minHeight: "40vh",
                   }}
                 >
                   <FeedbackIcon
-                    style={{ width: 300, height: 300, marginBottom: 8 }}
+                    style={{ width: 200, height: 200, marginBottom: 16, opacity: 0.85 }}
                   />
-                  <Typography variant="subtitle2" sx={{ textAlign: "center" }}>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      color: "#2f170f",
+                      fontWeight: 600,
+                      textAlign: "center",
+                      mb: 0.5,
+                    }}
+                  >
+                    {isEvaluating ? "Analysing your response..." : "Ready for feedback"}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "rgba(60,32,25,0.45)", textAlign: "center" }}
+                  >
                     {isEvaluating
-                      ? "Hang tight! We're processing your response..."
-                      : "Your personalised feedback will be shown here..."}
+                      ? "Hang tight — this usually takes 10–15 seconds."
+                      : "Submit your answer to receive personalised AI feedback."}
                   </Typography>
                 </Box>
               )}
@@ -539,49 +576,97 @@ const InterviewPractice = () => {
               alertMessage={alertMessage}
               isOpen={isAlertOpen}
             />
-          </Box>
+          </Grid>
         </Grid>
-      </Grid>
-    </Container>
+      </Container>
+    </Box>
   );
 };
 
 const TranscriptionBox = ({ transcription, audioUrl }) => {
   const [showText, setShowText] = useState(false);
 
-  const handleToggleText = () => {
-    setShowText(!showText);
-  };
-
   return (
-    <Box sx={{ bgcolor: "#fff", py: 2, px: 2, borderRadius: "10px" }}>
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: 3,
+        border: "1px solid rgba(252,150,120,0.12)",
+        boxShadow: "0 18px 36px rgba(252,150,120,0.15)",
+        overflow: "hidden",
+        backgroundColor: "#ffffff",
+      }}
+    >
       <Box
         sx={{
+          px: { xs: 3, md: 4 },
+          py: 2.5,
           display: "flex",
-          justifyContent: "space-between",
           alignItems: "center",
+          gap: 2,
         }}
       >
-        <Typography variant="h6" sx={{ width: "100%" }}>
-          Transcription
-        </Typography>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            variant="overline"
+            sx={{
+              color: "#FA735B",
+              fontWeight: 700,
+              letterSpacing: 1.4,
+              lineHeight: 1,
+              whiteSpace: "nowrap",
+            }}
+          >
+            Your Recording
+          </Typography>
+        </Box>
 
-        <audio
-          src={audioUrl}
-          controls
-          style={{ width: "100%", marginRight: "5px" }}
-        />
-        <IconButton onClick={handleToggleText}>
-          {showText ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        <Box sx={{ flex: 1 }}>
+          <audio
+            src={audioUrl}
+            controls
+            style={{ width: "100%", height: 36, display: "block" }}
+          />
+        </Box>
+
+        <IconButton
+          size="small"
+          onClick={() => setShowText(!showText)}
+          sx={{
+            color: "rgba(60,32,25,0.45)",
+            border: "1px solid rgba(252,150,120,0.2)",
+            borderRadius: 1.5,
+            flexShrink: 0,
+            "&:hover": { bgcolor: "#fff4ef", color: "#FA735B" },
+            transition: "all 0.2s ease",
+          }}
+        >
+          {showText ? (
+            <ExpandLessIcon fontSize="small" />
+          ) : (
+            <ExpandMoreIcon fontSize="small" />
+          )}
         </IconButton>
       </Box>
 
       <Collapse in={showText}>
-        <Typography variant="body2" sx={{ mt: 2 }}>
-          {transcription}
-        </Typography>
+        <Divider sx={{ borderColor: "rgba(252,150,120,0.1)" }} />
+        <Box
+          sx={{
+            px: { xs: 3, md: 4 },
+            py: 2.5,
+            backgroundColor: "#fffaf8",
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{ color: "rgba(60,32,25,0.78)", lineHeight: 1.8 }}
+          >
+            {transcription}
+          </Typography>
+        </Box>
       </Collapse>
-    </Box>
+    </Paper>
   );
 };
 
