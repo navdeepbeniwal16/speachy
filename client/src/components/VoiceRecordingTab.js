@@ -3,6 +3,7 @@ import { Button, Box, Typography, CircularProgress } from "@mui/material";
 import MicNoneOutlinedIcon from "@mui/icons-material/MicNoneOutlined";
 import MicOffOutlinedIcon from "@mui/icons-material/MicOffOutlined";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
+import CloseIcon from "@mui/icons-material/Close";
 import "../css/bouncing-loader.css"; // We'll define the wave animation in this CSS
 
 const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
@@ -12,6 +13,7 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [timer, setTimer] = useState(0);
   const intervalRef = useRef(null);
+  const isCancelledRef = useRef(false);
   let chunks = [];
 
   // Format timer to show minutes and seconds
@@ -32,6 +34,16 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
     stopTimer();
     stopRecording();
     setIsLoading(true); // show loader while waiting for server
+  };
+
+  const handleCancelInner = () => {
+    isCancelledRef.current = true;
+    setIsRecording(false);
+    stopTimer();
+    setTimer(0);
+    if (recorder && recorder.state === "recording") {
+      recorder.stop();
+    }
   };
 
   const getMicrophoneAccess = async () => {
@@ -78,6 +90,12 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
     };
 
     recorder.onstop = async () => {
+      if (isCancelledRef.current) {
+        isCancelledRef.current = false;
+        chunks = [];
+        return;
+      }
+
       const blob = new Blob(chunks, { type: "audio/mpeg" });
       const url = URL.createObjectURL(blob);
       setAudioUrl(url);
@@ -161,6 +179,27 @@ const VoiceRecordingTab = ({ handleRecord, handleSubmit }) => {
         <MicNoneOutlinedIcon style={{ color: "#FA735B" }} fontSize="large" />
       ) : (
         <MicOffOutlinedIcon fontSize="large" sx={{ color: "gray" }} />
+      )}
+
+      {isRecording && (
+        <Button
+          variant="outlined"
+          onClick={handleCancelInner}
+          startIcon={<CloseIcon />}
+          sx={{
+            textTransform: "none",
+            color: "rgba(60,32,25,0.55)",
+            borderColor: "rgba(60,32,25,0.2)",
+            fontWeight: "bold",
+            ml: 1,
+            "&:hover": {
+              borderColor: "rgba(60,32,25,0.4)",
+              backgroundColor: "rgba(60,32,25,0.04)",
+            },
+          }}
+        >
+          Cancel
+        </Button>
       )}
     </Box>
   );
