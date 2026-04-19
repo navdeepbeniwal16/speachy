@@ -1,48 +1,68 @@
-import React from "react";
+import React, { useContext, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   List,
   ListItemButton,
-  Typography,
-  Checkbox,
-  FormControlLabel,
-  FormGroup,
+  Paper,
+  TextField,
   ToggleButton,
   ToggleButtonGroup,
-  Stack,
-  FormLabel,
-  RadioGroup,
-  Radio,
-  Paper,
+  Typography,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
+import { AppContext } from "../components/AppContext.js";
+import InterviewService from "../services/interview-service.js";
 
 const NAV_ICON_SX = { color: "#2f170f", borderRadius: 2 };
 
 const InterviewQuestions = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const questions = location.state.questions;
-  const companyName = location.state.companyName;
-  const jobRole = location.state.jobRole;
-  const jobDescription = location.state.jobDescription;
-  const industry = location.state.industry;
-  const requiredExperience = location.state.requiredExperience;
+  const { showSnackbar } = useContext(AppContext);
 
-  const [selectedDifficulties, setSelectedDifficulties] = React.useState([
+  const {
+    questions: initialQuestions,
+    companyName,
+    jobRole,
+    jobDescription,
+    industry,
+    requiredExperience,
+    additionalNotes,
+    mode,
+  } = location.state;
+
+  const [questions, setQuestions] = useState(initialQuestions);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [projectName, setProjectName] = useState(
+    companyName && jobRole ? `${companyName} — ${jobRole}` : ""
+  );
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [selectedDifficulties, setSelectedDifficulties] = useState([
     "easy",
     "medium",
     "hard",
   ]);
-  const [questionSource, setQuestionSource] = React.useState("all"); // 'all', 'ai', 'curated'
+  const [questionSource, setQuestionSource] = useState("all");
 
   const handleDifficultyChange = (event) => {
     const { value, checked } = event.target;
@@ -55,7 +75,6 @@ const InterviewQuestions = () => {
     if (newSource !== null) setQuestionSource(newSource);
   };
 
-  // Filtering logic
   const filteredQuestions = questions.filter((q) => {
     const difficultyMatch = selectedDifficulties.includes(
       q.difficultyLevel.toLowerCase()
@@ -70,15 +89,58 @@ const InterviewQuestions = () => {
   const navigateToPracticePage = (questionId) => {
     navigate(`/interview/questions/${questionId}`, {
       state: {
-        questions: questions,
-        questionId: questionId,
-        companyName: companyName,
-        jobRole: jobRole,
-        jobDescription: jobDescription,
-        industry: industry,
-        requiredExperience: requiredExperience,
+        questions,
+        questionId,
+        companyName,
+        jobRole,
+        jobDescription,
+        industry,
+        requiredExperience,
       },
     });
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const refreshed = await InterviewService.fetchBehaviouralQuestions(
+        companyName,
+        jobRole,
+        jobDescription,
+        industry,
+        requiredExperience,
+        additionalNotes
+      );
+      setQuestions(refreshed);
+    } catch (error) {
+      const message =
+        error?.userMessage ||
+        "Unable to refresh questions right now. Your current set is still here.";
+      showSnackbar("error", message);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleSaveProject = async () => {
+    if (!projectName.trim()) return;
+    setIsSaving(true);
+    try {
+      await InterviewService.saveProject(projectName.trim(), questions, {
+        companyName,
+        jobRole,
+        jobDescription,
+        industry,
+        requiredExperience,
+        additionalNotes,
+      });
+      showSnackbar("success", "Project saved!");
+      setSaveDialogOpen(false);
+    } catch (error) {
+      showSnackbar("error", "Failed to save project. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const questionsList = filteredQuestions.map((questionObj, index) => (
@@ -90,8 +152,6 @@ const InterviewQuestions = () => {
         padding: 0,
         marginY: 2,
         borderRadius: "10px",
-        // border: "1px solid",
-        // borderColor: "#ff8350",
         border: "1px solid #f9f5f4",
         "&:hover": { border: "1px solid #ff8350" },
       }}
@@ -109,8 +169,6 @@ const InterviewQuestions = () => {
           alignItems: "center",
           padding: 1,
         }}
-        // style={{ borderColor: "#ff8350" }}
-        // style={{ borderColor: "red" }}
       >
         <CardContent sx={{ width: "96%" }}>
           <Box
@@ -146,40 +204,27 @@ const InterviewQuestions = () => {
                 questionObj.difficultyLevel.slice(1).toLowerCase()
               }
             />
-
-            <Box></Box>
-
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "right",
-              }}
-            >
-              {questionObj.tags.map((tag) => {
-                return (
-                  <Chip
-                    variant="outlined"
-                    size="small"
-                    label={
-                      <Typography
-                        fontSize={12}
-                        fontStyle="italic"
-                        color="GrayText"
-                      >{`#${tag}`}</Typography>
-                    }
-                    sx={{ border: "0px" }}
-                  />
-                );
-              })}
+            <Box />
+            <Box sx={{ display: "flex", alignItems: "right" }}>
+              {questionObj.tags.map((tag) => (
+                <Chip
+                  key={tag}
+                  variant="outlined"
+                  size="small"
+                  label={
+                    <Typography
+                      fontSize={12}
+                      fontStyle="italic"
+                      color="GrayText"
+                    >{`#${tag}`}</Typography>
+                  }
+                  sx={{ border: "0px" }}
+                />
+              ))}
             </Box>
           </Box>
         </CardContent>
-        <Box
-          sx={{
-            marginRight: 2,
-          }}
-        >
+        <Box sx={{ marginRight: 2 }}>
           <ArrowForwardIosIcon
             sx={{ height: "22px", width: "22px" }}
             style={{ color: "#FA735B" }}
@@ -190,30 +235,75 @@ const InterviewQuestions = () => {
   ));
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        backgroundColor: "#fff4ef",
-        py: { xs: 4, md: 6 },
-      }}
-    >
+    <Box sx={{ minHeight: "100vh", backgroundColor: "#fff4ef", py: { xs: 4, md: 6 } }}>
       <Container component="main" maxWidth="lg">
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-          }}
-        >
-          <IconButton onClick={() => navigate("/interview")} sx={NAV_ICON_SX}>
-            <ArrowBackIcon></ArrowBackIcon>
+        {/* Header */}
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <IconButton onClick={() => navigate(-1)} sx={NAV_ICON_SX}>
+            <ArrowBackIcon />
           </IconButton>
           <Typography variant="h6" gutterBottom>
             Practice Questions
           </Typography>
-          <Typography></Typography>
+          <Typography />
         </Box>
 
-        {/* Filters Section */}
+        {/* Action bar — only for AI-generated sets */}
+        {mode === "ai" && (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 1.5,
+              mt: 2,
+            }}
+          >
+            <Button
+              variant="outlined"
+              startIcon={
+                isRefreshing ? (
+                  <CircularProgress size={14} sx={{ color: "#FA735B" }} />
+                ) : (
+                  <RefreshIcon />
+                )
+              }
+              disabled={isRefreshing}
+              onClick={handleRefresh}
+              sx={{
+                textTransform: "none",
+                fontWeight: 600,
+                borderColor: "rgba(252,150,120,0.4)",
+                color: "#FA735B",
+                borderRadius: 2,
+                "&:hover": {
+                  borderColor: "#FA735B",
+                  backgroundColor: "rgba(250,115,91,0.04)",
+                },
+              }}
+            >
+              {isRefreshing ? "Refreshing…" : "Refresh"}
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<BookmarkBorderIcon />}
+              onClick={() => setSaveDialogOpen(true)}
+              sx={{
+                textTransform: "none",
+                fontWeight: 600,
+                borderRadius: 2,
+                backgroundColor: "#FA735B",
+                boxShadow: "0px 8px 20px -8px rgba(250,115,91,0.6)",
+                "&:hover": {
+                  backgroundColor: "#f8643f",
+                },
+              }}
+            >
+              Save as Project
+            </Button>
+          </Box>
+        )}
+
+        {/* Filters */}
         <Paper
           elevation={0}
           sx={{
@@ -221,7 +311,6 @@ const InterviewQuestions = () => {
             mb: 3,
             py: 2,
             background: "#fff",
-            // borderRadius: "16px", // match dashboard
             boxShadow: "0 2px 8px rgba(250, 115, 91, 0.04)",
             border: "1px solid #f0e6e1",
             display: "flex",
@@ -230,7 +319,6 @@ const InterviewQuestions = () => {
             gap: 3,
             justifyContent: { xs: "flex-start", sm: "space-between" },
             borderRadius: 2,
-            // border: "1px solid #f0f0f0",
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -322,6 +410,68 @@ const InterviewQuestions = () => {
           <List>{questionsList}</List>
         </Box>
       </Container>
+
+      {/* Save as Project dialog */}
+      <Dialog
+        open={saveDialogOpen}
+        onClose={() => !isSaving && setSaveDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: "#2f170f" }}>
+          Save as Project
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "rgba(60,32,25,0.6)", mb: 2 }}>
+            Give this question set a name so you can revisit it and add to it later.
+          </Typography>
+          <TextField
+            autoFocus
+            fullWidth
+            size="small"
+            label="Project name"
+            value={projectName}
+            onChange={(e) => setProjectName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && projectName.trim()) handleSaveProject();
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "10px",
+                "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(252,150,120,0.35)" },
+                "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(252,150,120,0.6)" },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#FA735B", borderWidth: "1px" },
+              },
+              "& .MuiInputLabel-root.Mui-focused": { color: "#FA735B" },
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button
+            onClick={() => setSaveDialogOpen(false)}
+            disabled={isSaving}
+            sx={{ textTransform: "none", color: "rgba(60,32,25,0.5)" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            disabled={!projectName.trim() || isSaving}
+            onClick={handleSaveProject}
+            sx={{
+              textTransform: "none",
+              fontWeight: 600,
+              borderRadius: 2,
+              backgroundColor: "#FA735B",
+              boxShadow: "0px 8px 20px -8px rgba(250,115,91,0.6)",
+              "&:hover": { backgroundColor: "#f8643f" },
+            }}
+          >
+            {isSaving ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : "Save"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

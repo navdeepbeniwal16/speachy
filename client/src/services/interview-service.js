@@ -6,7 +6,8 @@ class InterviewService {
     role,
     description,
     industry,
-    requiredExperience
+    requiredExperience,
+    additionalNotes
   ) {
     try {
       const response = await backendApiClient.post(
@@ -17,6 +18,7 @@ class InterviewService {
           description: description,
           industry: industry,
           requiredExperience: requiredExperience,
+          additionalNotes: additionalNotes,
         }
       );
 
@@ -145,6 +147,30 @@ class InterviewService {
       return { feedback: data.results, transcription: { text: responseText } };
     } catch (error) {
       console.error("Failed to fetch text response feedback:", error);
+      throw error;
+    }
+  }
+
+  static async getProjects() {
+    try {
+      const response = await backendApiClient.get("/interview/projects");
+      return response.data.projects || [];
+    } catch (error) {
+      console.error("InterviewService: Error fetching projects:", error);
+      throw error;
+    }
+  }
+
+  static async saveProject(name, questions, metadata) {
+    try {
+      const response = await backendApiClient.post("/interview/projects", {
+        name,
+        questions,
+        ...metadata,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("InterviewService: Error saving project:", error);
       throw error;
     }
   }

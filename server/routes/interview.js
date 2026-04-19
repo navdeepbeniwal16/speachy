@@ -90,8 +90,18 @@ const getQuestionsSet = async (
   role,
   description,
   industry,
-  requiredExperience
+  requiredExperience,
+  additionalNotes
 ) => {
+  const contextPrompt = [
+    `Generate a list of behavioral interview questions for a job role at company: ${company}, which operates in the industry: ${industry}.`,
+    `The job title is ${role} and requires someone with a ${requiredExperience} experience level.`,
+    `Here is the job description: ${description}`,
+    additionalNotes ? `Additional notes from the candidate: ${additionalNotes}` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   const completion = await openai.chat.completions.create({
     messages: [
       {
@@ -101,7 +111,7 @@ const getQuestionsSet = async (
       },
       {
         role: "user",
-        content: `Generate a list of behavioral interview questions for a job role at company: ${company}, which operates in the industry: ${industry}. The job title is ${role} and requires someone with a ${requiredExperience} experience level. Here is the job description: ${description}`,
+        content: contextPrompt,
       },
       {
         role: "user",
@@ -170,15 +180,16 @@ router.get("/", (req, res, next) => {
 });
 
 router.post("/fetch-questions", async (req, res) => {
-  const { company, role, description, industry, requiredExperience } = req.body;
+  const { company, role, description, industry, requiredExperience, additionalNotes } = req.body;
 
-  console.log("interview.js : Received job details:", {
+  logger.info("Received job details for question generation", {
     company,
     role,
-    description,
     industry,
     requiredExperience,
-  }); // TODO: Include a logger instead of console statement
+    hasDescription: !!description,
+    hasAdditionalNotes: !!additionalNotes,
+  });
 
   try {
     const predefinedQuestions = await getPreSelectedQuestions();
@@ -188,7 +199,8 @@ router.post("/fetch-questions", async (req, res) => {
       role,
       description,
       industry,
-      requiredExperience
+      requiredExperience,
+      additionalNotes
     );
 
     const allQuestions = [...predefinedQuestions, ...generatedQuestions];
@@ -207,6 +219,70 @@ router.post("/fetch-questions", async (req, res) => {
       success: false,
       error: error.message,
     });
+  }
+});
+
+router.get("/projects", async (req, res) => {
+  const uid = req.user.user_id;
+  try {
+    const snapshot = await db
+      .collection("interview_projects")
+      .doc(uid)
+      .collection("projects")
+      .orderBy("createdAt", "desc")
+      .get();
+
+    const projects = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    logger.info("Fetched interview projects", { uid, count: projects.length });
+    res.status(200).json({ projects });
+  } catch (error) {
+    logger.error("Error fetching interview projects", { error: error.message });
+    res.status(500).json({ success: false, error: "Failed to fetch projects" });
+  }
+});
+
+router.post("/projects", async (req, res) => {
+  const uid = req.user.user_id;
+  const {
+    name,
+    questions,
+    companyName,
+    jobRole,
+    industry,
+    requiredExperience,
+    jobDescription,
+    additionalNotes,
+  } = req.body;
+
+  if (!name || !name.trim()) {
+    return res.status(400).json({ success: false, error: "Project name is required" });
+  }
+  if (!Array.isArray(questions) || questions.length === 0) {
+    return res.status(400).json({ success: false, error: "Questions array is required" });
+  }
+
+  try {
+    const projectRef = await db
+      .collection("interview_projects")
+      .doc(uid)
+      .collection("projects")
+      .add({
+        name: name.trim(),
+        questions,
+        companyName: companyName || null,
+        jobRole: jobRole || null,
+        industry: industry || null,
+        requiredExperience: requiredExperience || null,
+        jobDescription: jobDescription || null,
+        additionalNotes: additionalNotes || null,
+        createdAt: new Date().toISOString(),
+      });
+
+    logger.info("Interview project saved", { uid, projectId: projectRef.id });
+    res.status(201).json({ success: true, projectId: projectRef.id });
+  } catch (error) {
+    logger.error("Error saving interview project", { error: error.message });
+    res.status(500).json({ success: false, error: "Failed to save project" });
   }
 });
 

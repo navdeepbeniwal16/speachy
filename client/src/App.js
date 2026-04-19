@@ -25,7 +25,7 @@ import FAQPage from "./pages/FAQPage";
 import "@fontsource/amaranth";
 import UserProfilePage from "./pages/UserProfilePage";
 import PracticePage from "./pages/PracticePage";
-import ComingSoonPage from "./pages/ComingSoonPage";
+import ProjectsPage from "./pages/ProjectsPage";
 
 // Function to check if user is authenticated
 const requireAuth = (Component) => {
@@ -78,7 +78,7 @@ function App() {
               <Route path="/" element={<HomePageWrapper />} />
               <Route path="/interview" element={<InterviewHomeWrapper />} />
               <Route path="/practice" element={<PracticePageWrapper />} />
-              <Route path="/projects" element={<ComingSoonPage />} />
+              <Route path="/projects" element={<ProjectsPageWrapper />} />
               <Route
                 path="/interview/questions"
                 element={<InterviewQuestionsWrapper />}
@@ -114,5 +114,6 @@ const ImpromptSpeakingPracticeWrapper = requireAuth(ImpromptSpeakingPractice);
 const PaymentSuccessWrapper = requireAuth(PaymentSuccess);
 const PaymentCancelWrapper = requireAuth(PaymentCancel);
 const UserProfilePageWrapper = requireAuth(UserProfilePage);
+const ProjectsPageWrapper = requireAuth(ProjectsPage);
 
 export default App;
