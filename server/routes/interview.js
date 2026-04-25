@@ -91,13 +91,15 @@ const getQuestionsSet = async (
   description,
   industry,
   requiredExperience,
-  additionalNotes
+  additionalNotes,
+  count = 12
 ) => {
   const contextPrompt = [
     `Generate a list of behavioral interview questions for a job role at company: ${company}, which operates in the industry: ${industry}.`,
     `The job title is ${role} and requires someone with a ${requiredExperience} experience level.`,
     `Here is the job description: ${description}`,
     additionalNotes ? `Additional notes from the candidate: ${additionalNotes}` : "",
+    `Please generate exactly ${count} behavioral interview questions.`,
   ]
     .filter(Boolean)
     .join(" ");
@@ -180,7 +182,7 @@ router.get("/", (req, res, next) => {
 });
 
 router.post("/fetch-questions", async (req, res) => {
-  const { company, role, description, industry, requiredExperience, additionalNotes } = req.body;
+  const { company, role, description, industry, requiredExperience, additionalNotes, count } = req.body;
 
   logger.info("Received job details for question generation", {
     company,
@@ -189,6 +191,7 @@ router.post("/fetch-questions", async (req, res) => {
     requiredExperience,
     hasDescription: !!description,
     hasAdditionalNotes: !!additionalNotes,
+    count,
   });
 
   try {
@@ -200,7 +203,8 @@ router.post("/fetch-questions", async (req, res) => {
       description,
       industry,
       requiredExperience,
-      additionalNotes
+      additionalNotes,
+      count || 12
     );
 
     const allQuestions = [...predefinedQuestions, ...generatedQuestions];
@@ -246,6 +250,7 @@ router.post("/projects", async (req, res) => {
   const {
     name,
     questions,
+    kind,
     companyName,
     jobRole,
     industry,
@@ -269,6 +274,8 @@ router.post("/projects", async (req, res) => {
       .add({
         name: name.trim(),
         questions,
+        type: req.body.type || "interview",
+        kind: kind || null,
         companyName: companyName || null,
         jobRole: jobRole || null,
         industry: industry || null,
@@ -283,6 +290,30 @@ router.post("/projects", async (req, res) => {
   } catch (error) {
     logger.error("Error saving interview project", { error: error.message });
     res.status(500).json({ success: false, error: "Failed to save project" });
+  }
+});
+
+router.get("/projects/:id", async (req, res) => {
+  const uid = req.user.user_id;
+  const { id } = req.params;
+  try {
+    const docSnap = await db
+      .collection("interview_projects")
+      .doc(uid)
+      .collection("projects")
+      .doc(id)
+      .get();
+
+    if (!docSnap.exists) {
+      return res.status(404).json({ success: false, error: "Project not found" });
+    }
+
+    const project = { id: docSnap.id, ...docSnap.data() };
+    logger.info("Fetched interview project by id", { uid, projectId: id });
+    res.status(200).json({ project });
+  } catch (error) {
+    logger.error("Error fetching interview project by id", { error: error.message });
+    res.status(500).json({ success: false, error: "Failed to fetch project" });
   }
 });
 
