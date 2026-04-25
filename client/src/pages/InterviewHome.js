@@ -2,11 +2,9 @@ import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Box,
   Button,
+  Checkbox,
   Chip,
   CircularProgress,
   Container,
@@ -14,35 +12,334 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   Grid,
   IconButton,
   MenuItem,
-  Paper,
+  Slider,
   TextField,
   Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import BoltIcon from "@mui/icons-material/Bolt";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import CloseIcon from "@mui/icons-material/Close";
-import CreateOutlinedIcon from "@mui/icons-material/CreateOutlined";
+import CreateIcon from "@mui/icons-material/Create";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
+import WorkIcon from "@mui/icons-material/Work";
+import AddIcon from "@mui/icons-material/Add";
 import InterviewService from "../services/interview-service.js";
-import { getAuth } from "firebase/auth";
 import { AppContext } from "../components/AppContext.js";
 
+// Design tokens
+const CORAL = "#FA735B";
+const CORAL_SOFTER = "rgba(250,115,91,0.08)";
+const CORAL_INK = "#C85A3E";
 const PAGE_BG = "#fff4ef";
-const SURFACE_BG = "#ffffff";
-const SURFACE_BORDER = "1px solid rgba(252, 150, 120, 0.12)";
-const SURFACE_SHADOW = "0 18px 36px rgba(252, 150, 120, 0.15)";
-const HEADING_COLOR = "#2f170f";
-const BODY_COLOR = "rgba(60,32,25,0.78)";
-const MUTED_COLOR = "rgba(60,32,25,0.45)";
+const SURFACE = "#ffffff";
+const SURFACE_SOFT = "#fff9f7";
+const LINE = "rgba(252,150,120,0.12)";
+const INK = "#2f170f";
+const INK_2 = "rgba(60,32,25,0.78)";
+const MUTED = "rgba(60,32,25,0.45)";
+const MUTED_2 = "rgba(60,32,25,0.3)";
+const BUTTER_SOFT = "rgba(232,200,124,0.25)";
+const BUTTER_INK = "#8b6a1f";
+
+const inputSx = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "10px",
+    "& .MuiOutlinedInput-notchedOutline": {
+      borderColor: "rgba(252, 150, 120, 0.35)",
+    },
+    "&:hover .MuiOutlinedInput-notchedOutline": {
+      borderColor: "rgba(252, 150, 120, 0.6)",
+    },
+    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: CORAL,
+      borderWidth: "1px",
+    },
+  },
+  "& .MuiInputLabel-root.Mui-focused": { color: CORAL },
+};
+
+const orangeInputSx = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "10px",
+    backgroundColor: SURFACE,
+    "& .MuiOutlinedInput-notchedOutline": {
+      borderColor: "rgba(252, 150, 120, 0.35)",
+    },
+    "&:hover .MuiOutlinedInput-notchedOutline": {
+      borderColor: "rgba(252, 150, 120, 0.6)",
+    },
+    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      borderColor: CORAL,
+      borderWidth: "1px",
+    },
+  },
+  "& .MuiInputBase-input": {
+    color: INK_2,
+    fontSize: "0.95rem",
+    lineHeight: 1.7,
+  },
+  "& .MuiInputBase-input::placeholder": { color: "rgba(60,32,25,0.35)" },
+};
+
+const primaryButtonSx = {
+  textTransform: "none",
+  fontWeight: 600,
+  px: 3.5,
+  py: 1.4,
+  borderRadius: 2,
+  backgroundColor: CORAL,
+  boxShadow:
+    "0px 12px 24px -12px rgba(250,115,91,0.7), 0px 10px 18px -14px rgba(49,30,20,0.35)",
+  "&:hover": {
+    backgroundColor: "#f8643f",
+    boxShadow:
+      "0px 14px 26px -12px rgba(250,115,91,0.8), 0px 12px 18px -14px rgba(49,30,20,0.35)",
+  },
+};
+
+// Progress ring SVG component for project cards
+const ProgressRing = ({
+  value,
+  size = 40,
+  stroke = 3.5,
+  color = CORAL,
+  track = CORAL_SOFTER,
+}) => {
+  const r = (size - stroke * 2) / 2;
+  const circ = 2 * Math.PI * r;
+  const pct = Math.min(1, Math.max(0, value || 0));
+  const dash = pct * circ;
+  return (
+    <Box
+      sx={{ position: "relative", width: size, height: size, flexShrink: 0 }}
+    >
+      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={track}
+          strokeWidth={stroke}
+        />
+        {pct > 0 && (
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke={color}
+            strokeWidth={stroke}
+            strokeDasharray={`${dash} ${circ - dash}`}
+            strokeLinecap="round"
+          />
+        )}
+      </svg>
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: size * 0.22,
+          fontWeight: 700,
+          color,
+        }}
+      >
+        {Math.round(pct * 100)}
+      </Box>
+    </Box>
+  );
+};
+
+// Empty state illustration + copy
+const EmptyProjectsState = ({ onPrepare, onBuild }) => (
+  <Box
+    sx={{
+      backgroundColor: SURFACE,
+      border: `1px solid ${LINE}`,
+      borderRadius: "18px",
+      p: "28px 32px",
+      display: "flex",
+      alignItems: "center",
+      gap: 4,
+      flexWrap: "wrap",
+    }}
+  >
+    <Box sx={{ flex: 1, minWidth: 220 }}>
+      <Box
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 0.75,
+          backgroundColor: CORAL_SOFTER,
+          color: CORAL_INK,
+          borderRadius: "20px",
+          px: 1.5,
+          py: 0.4,
+          mb: 1.5,
+          fontSize: 11.5,
+          fontWeight: 600,
+        }}
+      >
+        <AutoAwesomeIcon sx={{ fontSize: 12 }} />
+        New · Projects
+      </Box>
+      <Typography
+        sx={{
+          fontSize: 16,
+          fontWeight: 700,
+          color: INK,
+          mb: 1,
+          lineHeight: 1.3,
+        }}
+      >
+        No projects yet — let's change that.
+      </Typography>
+      <Typography
+        sx={{ fontSize: 13.5, color: INK_2, lineHeight: 1.6, mb: 2.5 }}
+      >
+        A project saves your questions and remembers your progress across
+        sessions.
+      </Typography>
+      <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+        <Button
+          variant="contained"
+          onClick={onPrepare}
+          sx={{
+            textTransform: "none",
+            fontWeight: 600,
+            px: 2.5,
+            py: 1,
+            borderRadius: "10px",
+            backgroundColor: CORAL,
+            boxShadow: "0px 8px 18px -6px rgba(250,115,91,0.6)",
+            "&:hover": { backgroundColor: CORAL_INK },
+            fontSize: 13,
+          }}
+        >
+          Start a tailored project
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={onBuild}
+          sx={{
+            textTransform: "none",
+            fontWeight: 600,
+            px: 2.5,
+            py: 1,
+            borderRadius: "10px",
+            borderColor: LINE,
+            color: INK_2,
+            "&:hover": {
+              borderColor: CORAL,
+              color: CORAL,
+              backgroundColor: CORAL_SOFTER,
+            },
+            fontSize: 13,
+          }}
+        >
+          Build my own
+        </Button>
+      </Box>
+    </Box>
+    <Box sx={{ flexShrink: 0 }}>
+      <svg viewBox="0 0 220 160" width="220" height="160">
+        <defs>
+          <linearGradient id="folderGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#FFF7F2" />
+            <stop offset="1" stopColor="#FCE2D8" />
+          </linearGradient>
+        </defs>
+        <g transform="translate(30 50) rotate(-6)">
+          <rect
+            x="0"
+            y="0"
+            width="120"
+            height="82"
+            rx="8"
+            fill="url(#folderGrad)"
+            stroke="#EE7B5E"
+            strokeOpacity="0.35"
+          />
+          <rect
+            x="14"
+            y="14"
+            width="70"
+            height="4"
+            rx="2"
+            fill="#EE7B5E"
+            opacity="0.35"
+          />
+          <rect
+            x="14"
+            y="26"
+            width="92"
+            height="3"
+            rx="1.5"
+            fill="#EE7B5E"
+            opacity="0.2"
+          />
+          <rect
+            x="14"
+            y="34"
+            width="64"
+            height="3"
+            rx="1.5"
+            fill="#EE7B5E"
+            opacity="0.2"
+          />
+        </g>
+        <g transform="translate(60 60) rotate(4)">
+          <path
+            d="M0 12 Q0 4 8 4 L34 4 L42 12 L112 12 Q120 12 120 20 L120 82 Q120 90 112 90 L8 90 Q0 90 0 82 Z"
+            fill="#fff"
+            stroke="#EE7B5E"
+            strokeOpacity="0.5"
+          />
+          <rect x="14" y="28" width="60" height="4" rx="2" fill="#C85A3E" />
+          <rect
+            x="14"
+            y="40"
+            width="88"
+            height="3"
+            rx="1.5"
+            fill="#EE7B5E"
+            opacity="0.3"
+          />
+          <rect
+            x="14"
+            y="48"
+            width="72"
+            height="3"
+            rx="1.5"
+            fill="#EE7B5E"
+            opacity="0.3"
+          />
+          <rect x="14" y="66" width="40" height="12" rx="6" fill="#FCE2D8" />
+        </g>
+        <path
+          d="M185 42 l3 8 l8 3 l-8 3 l-3 8 l-3 -8 l-8 -3 l8 -3 z"
+          fill="#EE7B5E"
+          opacity="0.8"
+        />
+        <circle cx="170" cy="78" r="2" fill="#EE7B5E" opacity="0.4" />
+        <circle cx="198" cy="90" r="2.4" fill="#E8C87C" />
+      </svg>
+    </Box>
+  </Box>
+);
 
 const InterviewHome = () => {
-  const auth = getAuth();
   const { showSnackbar } = useContext(AppContext);
   const navigate = useNavigate();
 
@@ -51,15 +348,12 @@ const InterviewHome = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isCompanyProvided, setIsCompanyProvided] = useState(true);
   const [isRoleProvided, setIsRoleProvided] = useState(true);
-  const [isExperienceProvided, setIsExperienceProvided] = useState(true);
   const [companyName, setCompanyName] = useState("");
   const [jobRole, setRole] = useState("");
   const [industry, setIndustry] = useState("");
   const [experience, setExperience] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [additionalNotes, setAdditionalNotes] = useState("");
-  const [user, setUser] = useState(null);
-
   // Mode toggle
   const [interviewMode, setInterviewMode] = useState(null); // null | "ai" | "custom"
 
@@ -74,85 +368,9 @@ const InterviewHome = () => {
   const [customProjectName, setCustomProjectName] = useState("");
   const [isSavingCustom, setIsSavingCustom] = useState(false);
 
-  const inputSx = {
-    "& .MuiOutlinedInput-root": {
-      borderRadius: "10px",
-      "& .MuiOutlinedInput-notchedOutline": {
-        borderColor: "rgba(252, 150, 120, 0.35)",
-      },
-      "&:hover .MuiOutlinedInput-notchedOutline": {
-        borderColor: "rgba(252, 150, 120, 0.6)",
-      },
-      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-        borderColor: "#FA735B",
-        borderWidth: "1px",
-      },
-    },
-    "& .MuiInputLabel-root.Mui-focused": {
-      color: "#FA735B",
-    },
-  };
-
-  const orangeInputSx = {
-    "& .MuiOutlinedInput-root": {
-      borderRadius: "10px",
-      backgroundColor: "#ffffff",
-      "& .MuiOutlinedInput-notchedOutline": {
-        borderColor: "rgba(252, 150, 120, 0.35)",
-      },
-      "&:hover .MuiOutlinedInput-notchedOutline": {
-        borderColor: "rgba(252, 150, 120, 0.6)",
-      },
-      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-        borderColor: "#FA735B",
-        borderWidth: "1px",
-      },
-    },
-    "& .MuiInputBase-input": {
-      color: BODY_COLOR,
-      fontSize: "0.95rem",
-      lineHeight: 1.7,
-    },
-    "& .MuiInputBase-input::placeholder": {
-      color: "rgba(60,32,25,0.35)",
-    },
-  };
-
-  const primaryButtonSx = {
-    textTransform: "none",
-    fontWeight: 600,
-    px: 3.5,
-    py: 1.4,
-    borderRadius: 2,
-    backgroundColor: "#FA735B",
-    boxShadow:
-      "0px 12px 24px -12px rgba(250,115,91,0.7), 0px 10px 18px -14px rgba(49,30,20,0.35)",
-    "&:hover": {
-      backgroundColor: "#f8643f",
-      boxShadow:
-        "0px 14px 26px -12px rgba(250,115,91,0.8), 0px 12px 18px -14px rgba(49,30,20,0.35)",
-    },
-  };
-
-  const experienceOptions = [
-    { value: "entry", label: "Entry (0-1 years)" },
-    { value: "intermediate", label: "Intermediate (1-3 years)" },
-    { value: "experienced", label: "Experienced (3-5 years)" },
-    { value: "advanced", label: "Advanced (5-10 years)" },
-    { value: "expert", label: "Expert (10+ years)" },
-  ];
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const firebaseUser = auth.currentUser;
-      if (firebaseUser) {
-        setUser(firebaseUser);
-      } else {
-        setUser(null);
-      }
-    };
-    fetchData();
-  }, []);
+  // New state
+  const [questionCount, setQuestionCount] = useState(12);
+  const [contextOpen, setContextOpen] = useState(false);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -168,6 +386,13 @@ const InterviewHome = () => {
     fetchProjects();
   }, []);
 
+  const experienceOptions = [
+    { value: "entry", label: "Entry", sub: "0–2 yrs" },
+    { value: "mid", label: "Mid", sub: "2–5 yrs" },
+    { value: "senior", label: "Senior", sub: "5–9 yrs" },
+    { value: "staff", label: "Staff+", sub: "9+ yrs" },
+  ];
+
   // --- AI mode handlers ---
 
   const handleUpload = async (event) => {
@@ -175,12 +400,9 @@ const InterviewHome = () => {
 
     setIsCompanyProvided(true);
     setIsRoleProvided(true);
-    setIsExperienceProvided(true);
-
-    if (!companyName || !jobRole || !experience) {
+    if (!companyName || !jobRole) {
       if (!companyName) setIsCompanyProvided(false);
       if (!jobRole) setIsRoleProvided(false);
-      if (!experience) setIsExperienceProvided(false);
       return;
     }
 
@@ -192,20 +414,67 @@ const InterviewHome = () => {
         jobDescription,
         industry,
         experience,
-        additionalNotes
+        additionalNotes,
+        questionCount,
       );
-      navigate("/interview/questions", {
-        state: {
-          questions,
-          companyName,
-          jobRole,
-          jobDescription,
-          industry,
-          requiredExperience: experience,
-          additionalNotes,
-          mode: "ai",
-        },
-      });
+
+      // Auto-save as project, then navigate to project detail
+      const projectName =
+        companyName && jobRole
+          ? `${companyName} — ${jobRole}`
+          : companyName || jobRole || "Interview Prep";
+
+      let savedProjectId = null;
+      try {
+        const saved = await InterviewService.saveProject(projectName, questions, {
+          kind: "prepare",
+          companyName: companyName || null,
+          jobRole: jobRole || null,
+          jobDescription: jobDescription || null,
+          industry: industry || null,
+          requiredExperience: experience || null,
+          additionalNotes: additionalNotes || null,
+        });
+        savedProjectId = saved?.projectId || null;
+      } catch (_) {
+        // non-blocking — save failure should not prevent navigation
+      }
+
+      setInterviewMode(null);
+
+      if (savedProjectId) {
+        navigate(`/interview/project/${savedProjectId}`, {
+          state: {
+            project: {
+              id: savedProjectId,
+              name: projectName,
+              questions,
+              kind: "prepare",
+              companyName: companyName || null,
+              jobRole: jobRole || null,
+              jobDescription: jobDescription || null,
+              industry: industry || null,
+              requiredExperience: experience || null,
+              additionalNotes: additionalNotes || null,
+              practicedCount: 0,
+            },
+          },
+        });
+      } else {
+        // Fallback if save failed — go to questions list directly
+        navigate("/interview/questions", {
+          state: {
+            questions,
+            companyName,
+            jobRole,
+            jobDescription,
+            industry,
+            requiredExperience: experience,
+            additionalNotes,
+            mode: "ai",
+          },
+        });
+      }
     } catch (error) {
       const message =
         error?.userMessage ||
@@ -223,15 +492,10 @@ const InterviewHome = () => {
       const questions = await InterviewService.fetchBehaviouralQuestions(
         null,
         null,
-        null
+        null,
       );
       navigate("/interview/questions", {
-        state: {
-          questions,
-          companyName,
-          jobRole,
-          jobDescription,
-        },
+        state: { questions, companyName, jobRole, jobDescription },
       });
     } catch (error) {
       const message =
@@ -283,19 +547,40 @@ const InterviewHome = () => {
     if (!customProjectName.trim() || customQuestions.length === 0) return;
     setIsSavingCustom(true);
     try {
-      await InterviewService.saveProject(customProjectName.trim(), customQuestions, {
-        companyName: companyName || null,
-        jobRole: jobRole || null,
-        jobDescription: jobDescription || null,
-        industry: industry || null,
-        requiredExperience: experience || null,
-        additionalNotes: null,
-      });
-      showSnackbar("success", "Project saved!");
+      const saved = await InterviewService.saveProject(
+        customProjectName.trim(),
+        customQuestions,
+        {
+          kind: "build",
+          companyName: companyName || null,
+          jobRole: jobRole || null,
+          jobDescription: jobDescription || null,
+          industry: industry || null,
+          requiredExperience: experience || null,
+          additionalNotes: null,
+        },
+      );
       setSaveCustomDialogOpen(false);
-      setCustomProjectName("");
-      const updated = await InterviewService.getProjects();
-      setProjects(updated);
+      setInterviewMode(null);
+      if (saved?.projectId) {
+        navigate(`/interview/project/${saved.projectId}`, {
+          state: {
+            project: {
+              id: saved.projectId,
+              name: customProjectName.trim(),
+              questions: customQuestions,
+              kind: "build",
+              companyName: companyName || null,
+              jobRole: jobRole || null,
+              jobDescription: jobDescription || null,
+              industry: industry || null,
+              requiredExperience: experience || null,
+              additionalNotes: null,
+              practicedCount: 0,
+            },
+          },
+        });
+      }
     } catch (error) {
       showSnackbar("error", "Failed to save project. Please try again.");
     } finally {
@@ -303,498 +588,1097 @@ const InterviewHome = () => {
     }
   };
 
-  return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: PAGE_BG, py: { xs: 6, md: 8 } }}>
-      <Container maxWidth="xl">
+  const suggestionPrompts = [
+    "Tell me about a conflict you resolved on your team.",
+    "Describe a time you had to push back on a stakeholder.",
+    "Walk me through a decision you later regretted.",
+  ];
 
-        {/* Page header */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+  return (
+    <Box
+      sx={{
+        minHeight: "100vh",
+        backgroundColor: PAGE_BG,
+        py: { xs: 5, md: 7 },
+      }}
+    >
+      <Container maxWidth="lg">
+        {/* Top nav */}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "48px 1fr 48px",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
           <IconButton
             onClick={() => navigate("/")}
-            sx={{ color: HEADING_COLOR, borderRadius: 2 }}
+            sx={{ color: INK, borderRadius: 2, width: 40, height: 40 }}
           >
-            <ArrowBackIcon />
+            <ArrowBackIcon fontSize="small" />
           </IconButton>
-          <Typography variant="h6" sx={{ color: HEADING_COLOR, fontWeight: 600 }}>
+          <Typography
+            align="center"
+            sx={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: MUTED,
+              letterSpacing: 0.3,
+            }}
+          >
             Job Interview Preparation
           </Typography>
           <Box />
         </Box>
 
-        {/* Entry point cards */}
-        <Grid container spacing={2} sx={{ mb: 4 }}>
-
-          {/* Card A — Prepare for a specific role */}
-          <Grid item xs={12} md={4}>
-            <Paper
-              elevation={0}
-              onClick={() => setInterviewMode("ai")}
-              sx={{
-                cursor: "pointer",
-                px: { xs: 3, md: 4 },
-                py: { xs: 3, md: 4 },
-                height: "100%",
-                borderRadius: 4,
-                display: "flex",
-                flexDirection: "column",
-                border: SURFACE_BORDER,
-                backgroundColor: SURFACE_BG,
-                boxShadow: SURFACE_SHADOW,
-                transition: "transform 120ms ease, border-color 120ms ease, background-color 120ms ease",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                  borderColor: "rgba(250,115,91,0.5)",
-                  backgroundColor: "rgba(250,115,91,0.03)",
-                },
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
-                <AutoAwesomeIcon sx={{ color: "#FA735B", fontSize: 22 }} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: HEADING_COLOR }}>
-                  Prepare for a role
-                </Typography>
-              </Box>
-              <Typography variant="body2" sx={{ color: BODY_COLOR, lineHeight: 1.6, flex: 1 }}>
-                Generate a tailored question set based on the company, role, and experience level.
-              </Typography>
-            </Paper>
-          </Grid>
-
-          {/* Card B — Build your own set */}
-          <Grid item xs={12} md={4}>
-            <Paper
-              elevation={0}
-              onClick={() => setInterviewMode("custom")}
-              sx={{
-                cursor: "pointer",
-                px: { xs: 3, md: 4 },
-                py: { xs: 3, md: 4 },
-                height: "100%",
-                borderRadius: 4,
-                display: "flex",
-                flexDirection: "column",
-                border: SURFACE_BORDER,
-                backgroundColor: SURFACE_BG,
-                boxShadow: SURFACE_SHADOW,
-                transition: "transform 120ms ease, border-color 120ms ease, background-color 120ms ease",
-                "&:hover": {
-                  transform: "translateY(-2px)",
-                  borderColor: "rgba(250,115,91,0.5)",
-                  backgroundColor: "rgba(250,115,91,0.03)",
-                },
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
-                <CreateOutlinedIcon sx={{ color: "#FA735B", fontSize: 22 }} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: HEADING_COLOR }}>
-                  Build your own set
-                </Typography>
-              </Box>
-              <Typography variant="body2" sx={{ color: BODY_COLOR, lineHeight: 1.6, flex: 1 }}>
-                Add your own questions and practice anything not covered by the AI.
-              </Typography>
-            </Paper>
-          </Grid>
-
-          {/* Card C — Quick Practice (most prominent) */}
-          <Grid item xs={12} md={4}>
-            <Paper
-              elevation={0}
-              sx={{
-                px: { xs: 3, md: 4 },
-                py: { xs: 3, md: 4 },
-                height: "100%",
-                borderRadius: 4,
-                border: SURFACE_BORDER,
-                backgroundColor: "rgba(250,115,91,0.05)",
-                boxShadow: SURFACE_SHADOW,
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
-                <PlayCircleOutlineIcon sx={{ color: "#FA735B", fontSize: 22 }} />
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: HEADING_COLOR }}>
-                  Quick Practice
-                </Typography>
-              </Box>
-              <Typography variant="body2" sx={{ color: BODY_COLOR, lineHeight: 1.6, mb: 2.5, flex: 1 }}>
-                Jump straight into commonly asked behavioural questions — no setup needed.
-              </Typography>
-              <Button
-                variant="contained"
-                onClick={handleStart}
-                disabled={isStarting}
-                sx={primaryButtonSx}
-              >
-                {isStarting ? <CircularProgress size={20} sx={{ color: "#fff" }} /> : "Jump In"}
-              </Button>
-            </Paper>
-          </Grid>
-
-        </Grid>
-
-        {/* Your Projects */}
-        <Box sx={{ mt: 5 }}>
+        {/* Intro */}
+        <Box sx={{ mb: 3.5 }}>
           <Typography
-            variant="h6"
-            sx={{ fontWeight: 700, color: HEADING_COLOR, mb: 2.5 }}
+            component="h1"
+            sx={{
+              fontFamily: "Georgia, serif",
+              fontSize: { xs: 22, md: 26 },
+              fontWeight: 500,
+              color: INK,
+              mb: 0.75,
+              lineHeight: 1.25,
+            }}
           >
-            Your Projects
+            Let's get you interview-ready.
           </Typography>
+          <Typography sx={{ fontSize: 14, color: MUTED, lineHeight: 1.6 }}>
+            Three ways to start - pick the one that matches how much prep time
+            you have.
+          </Typography>
+        </Box>
+
+        {/* Entry cards grid */}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "1fr 1fr 1fr" },
+            gap: "14px",
+            mb: 5,
+          }}
+        >
+          {/* PrepareCard */}
+          <Box
+            onClick={() => setInterviewMode("ai")}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              cursor: "pointer",
+              backgroundColor: SURFACE,
+              border: `1px solid ${LINE}`,
+              borderRadius: "18px",
+              p: "22px 22px 18px",
+              minHeight: 210,
+              display: "flex",
+              flexDirection: "column",
+              transition: "transform 120ms ease, box-shadow 120ms ease",
+              "&:hover": {
+                transform: "translateY(-2px)",
+                boxShadow: "0 22px 40px rgba(252,150,120,0.2)",
+              },
+            }}
+          >
+            {/* Icon box */}
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: "8px",
+                backgroundColor: CORAL,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mb: 1.5,
+                flexShrink: 0,
+              }}
+            >
+              <AutoAwesomeIcon sx={{ color: "#fff", fontSize: 16 }} />
+            </Box>
+
+            {/* Badge */}
+            <Box
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                backgroundColor: CORAL_SOFTER,
+                color: CORAL_INK,
+                borderRadius: "20px",
+                px: 1.25,
+                py: 0.3,
+                fontSize: 10.5,
+                fontWeight: 700,
+                mb: 1,
+                width: "fit-content",
+                letterSpacing: 0.3,
+              }}
+            >
+              AI · Tailored
+            </Box>
+
+            <Typography
+              sx={{ fontSize: 17, fontWeight: 600, color: INK, mb: 0.75 }}
+            >
+              Prepare for a role
+            </Typography>
+            <Typography
+              sx={{ fontSize: 13, color: INK_2, lineHeight: 1.6, flex: 1 }}
+            >
+              Drop in a company &amp; role — we'll generate a set tailored to
+              the exact bar they'll hold you to.
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 12.5,
+                fontWeight: 600,
+                color: CORAL_INK,
+                mt: 1.5,
+              }}
+            >
+              Generate questions →
+            </Typography>
+          </Box>
+
+          {/* BuildCard */}
+          <Box
+            onClick={() => setInterviewMode("custom")}
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              cursor: "pointer",
+              backgroundColor: SURFACE_SOFT,
+              backgroundImage:
+                "radial-gradient(circle, rgba(200,90,62,0.14) 1px, transparent 1.2px)",
+              backgroundSize: "14px 14px",
+              border: `1px solid ${LINE}`,
+              borderRadius: "18px",
+              p: "22px 22px 18px",
+              minHeight: 210,
+              display: "flex",
+              flexDirection: "column",
+              transition: "transform 120ms ease, box-shadow 120ms ease",
+              "&:hover": {
+                transform: "translateY(-2px)",
+                boxShadow: "0 22px 40px rgba(232,200,124,0.25)",
+              },
+            }}
+          >
+            {/* Icon box */}
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: "8px",
+                backgroundColor: SURFACE,
+                border: `1px solid ${LINE}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mb: 1.5,
+                flexShrink: 0,
+              }}
+            >
+              <CreateIcon sx={{ color: CORAL, fontSize: 16 }} />
+            </Box>
+
+            {/* Badge */}
+            <Box
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                backgroundColor: BUTTER_SOFT,
+                color: BUTTER_INK,
+                borderRadius: "20px",
+                px: 1.25,
+                py: 0.3,
+                fontSize: 10.5,
+                fontWeight: 700,
+                mb: 1,
+                width: "fit-content",
+                letterSpacing: 0.3,
+              }}
+            >
+              Custom
+            </Box>
+
+            <Typography
+              sx={{ fontSize: 17, fontWeight: 600, color: INK, mb: 0.75 }}
+            >
+              Build your own set
+            </Typography>
+            <Typography
+              sx={{ fontSize: 13, color: INK_2, lineHeight: 1.6, flex: 1 }}
+            >
+              Write the exact questions you're dreading — the ones the AI
+              wouldn't think to ask.
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 12.5,
+                fontWeight: 600,
+                color: BUTTER_INK,
+                mt: 1.5,
+              }}
+            >
+              Start a new set →
+            </Typography>
+          </Box>
+
+          {/* QuickCard */}
+          <Box
+            sx={{
+              position: "relative",
+              overflow: "hidden",
+              cursor: "pointer",
+              backgroundColor: INK,
+              borderRadius: "18px",
+              p: "22px 22px 18px",
+              minHeight: 210,
+              display: "flex",
+              flexDirection: "column",
+              transition: "transform 120ms ease, box-shadow 120ms ease",
+              "&:hover": {
+                transform: "translateY(-2px)",
+                boxShadow: "0 22px 40px rgba(47,23,15,0.35)",
+              },
+            }}
+          >
+            {/* Coral orb */}
+            <Box
+              sx={{
+                position: "absolute",
+                top: -40,
+                right: -40,
+                width: 180,
+                height: 180,
+                borderRadius: "50%",
+                background:
+                  "radial-gradient(circle at 30% 30%, #FA735B 0%, #C85A3E 70%, transparent 72%)",
+                pointerEvents: "none",
+                opacity: 0.85,
+              }}
+            />
+
+            {/* Icon box */}
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: "8px",
+                backgroundColor: "rgba(255,255,255,0.12)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mb: 1.5,
+                flexShrink: 0,
+              }}
+            >
+              <BoltIcon sx={{ color: "#fff", fontSize: 16 }} />
+            </Box>
+
+            {/* Badge */}
+            <Box
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                backgroundColor: "rgba(255,255,255,0.14)",
+                color: "rgba(255,255,255,0.9)",
+                borderRadius: "20px",
+                px: 1.25,
+                py: 0.3,
+                fontSize: 10.5,
+                fontWeight: 700,
+                mb: 1,
+                width: "fit-content",
+                letterSpacing: 0.3,
+              }}
+            >
+              No setup · 5 min
+            </Box>
+
+            <Typography
+              sx={{ fontSize: 17, fontWeight: 600, color: "#fff", mb: 0.75 }}
+            >
+              Quick Practice
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: 13,
+                color: "rgba(255,255,255,0.68)",
+                lineHeight: 1.6,
+                flex: 1,
+              }}
+            >
+              Jump straight into commonly asked behavioural questions.
+            </Typography>
+
+            <Button
+              variant="contained"
+              onClick={handleStart}
+              disabled={isStarting}
+              startIcon={
+                isStarting ? null : (
+                  <PlayCircleOutlineIcon sx={{ fontSize: "15px !important" }} />
+                )
+              }
+              sx={{
+                mt: 1.5,
+                textTransform: "none",
+                fontWeight: 700,
+                fontSize: 13,
+                px: 2.5,
+                py: 1,
+                borderRadius: "10px",
+                backgroundColor: CORAL,
+                color: "#fff",
+                alignSelf: "flex-start",
+                boxShadow: "0 8px 18px rgba(250,115,91,0.45)",
+                "&:hover": { backgroundColor: CORAL_INK },
+              }}
+            >
+              {isStarting ? (
+                <CircularProgress size={16} sx={{ color: "#fff" }} />
+              ) : (
+                "Jump In"
+              )}
+            </Button>
+          </Box>
+        </Box>
+
+        {/* Recent projects section */}
+        <Box>
+          {/* Section header */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "baseline",
+              justifyContent: "space-between",
+              mb: 2.5,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.5 }}>
+              <Typography sx={{ fontSize: 15, fontWeight: 700, color: INK }}>
+                Recent projects
+              </Typography>
+              {!projectsLoading && projects.length > 0 && (
+                <Typography sx={{ fontSize: 12.5, color: MUTED }}>
+                  {projects.length} saved
+                </Typography>
+              )}
+            </Box>
+            {!projectsLoading && projects.length > 0 && (
+              <Button
+                size="small"
+                onClick={() => navigate("/projects")}
+                sx={{
+                  textTransform: "none",
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  color: MUTED,
+                  px: 0,
+                  "&:hover": { color: CORAL, backgroundColor: "transparent" },
+                }}
+              >
+                View all →
+              </Button>
+            )}
+          </Box>
 
           {projectsLoading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-              <CircularProgress size={28} sx={{ color: "#FA735B" }} />
+            <Box sx={{ display: "flex", justifyContent: "center", py: 5 }}>
+              <CircularProgress size={28} sx={{ color: CORAL }} />
             </Box>
           ) : projects.length === 0 ? (
-            <Typography variant="body2" sx={{ color: MUTED_COLOR }}>
-              No saved projects yet — generate a question set above and save it as a project.
-            </Typography>
+            <EmptyProjectsState
+              onPrepare={() => setInterviewMode("ai")}
+              onBuild={() => setInterviewMode("custom")}
+            />
           ) : (
-            <Grid container spacing={2}>
-              {projects.map((project) => (
-                <Grid item xs={12} sm={6} md={4} key={project.id}>
-                  <Paper
-                    elevation={0}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+                gap: 2,
+              }}
+            >
+              {projects.slice(0, 3).map((project) => {
+                const total = project.questions?.length || 0;
+                const done = project.practicedCount || 0;
+                const pct = total > 0 ? done / total : 0;
+                const isCustom = project.kind === "build";
+                const createdDate = project.createdAt
+                  ? new Date(project.createdAt).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  : "";
+
+                return (
+                  <Box
+                    key={project.id}
                     onClick={() =>
-                      navigate("/interview/questions", {
-                        state: {
-                          questions: project.questions,
-                          companyName: project.companyName,
-                          jobRole: project.jobRole,
-                          jobDescription: project.jobDescription,
-                          industry: project.industry,
-                          requiredExperience: project.requiredExperience,
-                          additionalNotes: project.additionalNotes,
-                          mode: "project",
-                        },
+                      navigate(`/interview/project/${project.id}`, {
+                        state: { project },
                       })
                     }
                     sx={{
                       cursor: "pointer",
-                      px: 3,
-                      py: 2.5,
-                      borderRadius: 4,
-                      border: SURFACE_BORDER,
-                      backgroundColor: SURFACE_BG,
-                      boxShadow: SURFACE_SHADOW,
+                      backgroundColor: SURFACE,
+                      border: `1px solid ${LINE}`,
+                      borderRadius: "14px",
+                      p: "18px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "14px",
                       transition: "transform 120ms ease, box-shadow 120ms ease",
                       "&:hover": {
                         transform: "translateY(-2px)",
-                        borderColor: "rgba(250,115,91,0.4)",
+                        boxShadow: "0 18px 32px rgba(252,150,120,0.18)",
                       },
                     }}
                   >
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ fontWeight: 700, color: HEADING_COLOR, mb: 0.5 }}
+                    {/* Kind badge + progress ring */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
                     >
-                      {project.name}
-                    </Typography>
-
-                    {(project.companyName || project.jobRole) && (
-                      <Typography
-                        variant="body2"
-                        sx={{ color: BODY_COLOR, mb: 1 }}
-                      >
-                        {[project.companyName, project.jobRole]
-                          .filter(Boolean)
-                          .join(" — ")}
-                      </Typography>
-                    )}
-
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 1.5 }}>
-                      {project.requiredExperience && (
-                        <Chip
-                          label={project.requiredExperience}
-                          size="small"
+                      {isCustom ? (
+                        <Box
                           sx={{
-                            backgroundColor: "rgba(250,115,91,0.1)",
-                            color: "#FA735B",
-                            fontWeight: 600,
-                            fontSize: "0.7rem",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                            backgroundColor: BUTTER_SOFT,
+                            color: BUTTER_INK,
+                            borderRadius: "20px",
+                            px: 1.1,
+                            py: 0.3,
+                            fontSize: 10.5,
+                            fontWeight: 700,
                           }}
-                        />
+                        >
+                          <CreateIcon sx={{ fontSize: 10 }} />
+                          Custom
+                        </Box>
+                      ) : (
+                        <Box
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                            backgroundColor: CORAL_SOFTER,
+                            color: CORAL_INK,
+                            borderRadius: "20px",
+                            px: 1.1,
+                            py: 0.3,
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                          }}
+                        >
+                          <AutoAwesomeIcon sx={{ fontSize: 10 }} />
+                          Tailored
+                        </Box>
                       )}
-                      <Chip
-                        label={`${project.questions?.length ?? 0} questions`}
-                        size="small"
-                        sx={{
-                          backgroundColor: "rgba(60,32,25,0.06)",
-                          color: BODY_COLOR,
-                          fontSize: "0.7rem",
-                        }}
-                      />
+                      <ProgressRing value={pct} size={38} />
                     </Box>
 
-                    <Typography variant="caption" sx={{ color: MUTED_COLOR }}>
-                      {project.createdAt
-                        ? new Date(project.createdAt).toLocaleDateString(undefined, {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })
-                        : ""}
+                    {/* Company / role */}
+                    <Box>
+                      <Typography
+                        sx={{ fontWeight: 600, fontSize: 15, color: INK, lineHeight: 1.3 }}
+                      >
+                        {project.companyName || project.name}
+                      </Typography>
+                      {project.jobRole && (
+                        <Typography sx={{ fontSize: 12.5, color: MUTED, mt: 0.25 }}>
+                          {project.jobRole}
+                        </Typography>
+                      )}
+                    </Box>
+
+                    {/* Progress bar */}
+                    <Box>
+                      <Box
+                        sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}
+                      >
+                        <Typography sx={{ fontSize: 11.5, color: INK_2 }}>
+                          {done} of {total} practised
+                        </Typography>
+                        <Typography sx={{ fontSize: 11.5, color: MUTED }}>
+                          {createdDate}
+                        </Typography>
+                      </Box>
+                      <Box
+                        sx={{
+                          height: 4,
+                          borderRadius: 2,
+                          backgroundColor: CORAL_SOFTER,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            height: "100%",
+                            borderRadius: 2,
+                            backgroundColor: CORAL,
+                            width: `${pct * 100}%`,
+                            transition: "width 0.3s ease",
+                          }}
+                        />
+                      </Box>
+                    </Box>
+
+                    <Typography
+                      sx={{
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        color: MUTED,
+                        "&:hover": { color: CORAL },
+                      }}
+                    >
+                      {done > 0 ? "Continue practising →" : "Open project →"}
                     </Typography>
-                  </Paper>
-                </Grid>
-              ))}
-            </Grid>
+                  </Box>
+                );
+              })}
+            </Box>
           )}
         </Box>
-
       </Container>
 
       {/* Prepare for a role dialog */}
       <Dialog
         open={interviewMode === "ai"}
         onClose={() => setInterviewMode(null)}
-        maxWidth="md"
+        maxWidth="sm"
         fullWidth
         scroll="paper"
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        PaperProps={{
+          sx: {
+            borderRadius: "20px",
+            overflow: "hidden",
+            backgroundColor: PAGE_BG,
+          },
+        }}
       >
-        <DialogTitle sx={{ pb: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <AutoAwesomeIcon sx={{ color: "#FA735B", fontSize: 18 }} />
-              <Typography variant="subtitle1" sx={{ fontWeight: 700, color: HEADING_COLOR }}>
-                Prepare for a role
-              </Typography>
-            </Box>
-            <IconButton size="small" onClick={() => setInterviewMode(null)} sx={{ color: MUTED_COLOR }}>
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          </Box>
-        </DialogTitle>
-        <DialogContent dividers sx={{ px: { xs: 3, md: 4 }, py: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: HEADING_COLOR, mb: 2.5 }}>
-            Fill in your role details
+        {/* Header */}
+        <Box sx={{ px: 3.5, pt: 3.5, pb: 2.5, position: "relative" }}>
+          <IconButton
+            size="small"
+            onClick={() => setInterviewMode(null)}
+            sx={{ position: "absolute", top: 14, right: 14, color: MUTED }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+          <Typography
+            sx={{ fontSize: 20, fontWeight: 700, color: INK, mb: 0.75, pr: 4 }}
+          >
+            Tell us about the role
           </Typography>
+          <Typography
+            sx={{
+              fontSize: 13.5,
+              color: INK_2,
+              lineHeight: 1.6,
+              maxWidth: 420,
+            }}
+          >
+            The more context you give, the sharper the questions. You can always
+            edit the set after.
+          </Typography>
+        </Box>
+
+        <Divider sx={{ borderColor: LINE }} />
+
+        <DialogContent sx={{ px: 3.5, py: 3, backgroundColor: PAGE_BG }}>
           <Box component="form" onSubmit={handleUpload} noValidate>
             <Grid container spacing={2.5}>
-              <Grid item xs={12} md={6}>
+              {/* Company */}
+              <Grid item xs={12} sm={6}>
+                <Typography
+                  sx={{ fontSize: 13, color: INK, fontWeight: 500, mb: 0.6 }}
+                >
+                  Company <span style={{ color: CORAL }}>*</span>
+                </Typography>
                 <TextField
                   size="small"
                   fullWidth
-                  required
-                  label="Company Name"
                   autoComplete="off"
                   autoFocus
+                  placeholder="e.g. Atlassian"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  sx={inputSx}
+                  sx={{
+                    ...inputSx,
+                    "& .MuiOutlinedInput-root": {
+                      ...inputSx["& .MuiOutlinedInput-root"],
+                      backgroundColor: SURFACE,
+                    },
+                  }}
                 />
                 {!isCompanyProvided && (
-                  <Typography variant="caption" color="error" sx={{ mt: 0.5, display: "block" }}>
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    sx={{ mt: 0.5, display: "block" }}
+                  >
                     Company name is required
                   </Typography>
                 )}
               </Grid>
-              <Grid item xs={12} md={6}>
+
+              {/* Role */}
+              <Grid item xs={12} sm={6}>
+                <Typography
+                  sx={{ fontSize: 13, color: INK, fontWeight: 500, mb: 0.6 }}
+                >
+                  Role <span style={{ color: CORAL }}>*</span>
+                </Typography>
                 <TextField
                   size="small"
                   fullWidth
-                  required
-                  label="Role"
                   autoComplete="off"
+                  placeholder="e.g. Senior Software Engineer"
                   value={jobRole}
                   onChange={(e) => setRole(e.target.value)}
-                  sx={inputSx}
+                  sx={{
+                    ...inputSx,
+                    "& .MuiOutlinedInput-root": {
+                      ...inputSx["& .MuiOutlinedInput-root"],
+                      backgroundColor: SURFACE,
+                    },
+                  }}
                 />
                 {!isRoleProvided && (
-                  <Typography variant="caption" color="error" sx={{ mt: 0.5, display: "block" }}>
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    sx={{ mt: 0.5, display: "block" }}
+                  >
                     Role is required
                   </Typography>
                 )}
               </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  size="small"
-                  fullWidth
-                  required
-                  select
-                  label="Experience Required"
-                  value={experience}
-                  onChange={(e) => setExperience(e.target.value)}
-                  sx={inputSx}
+
+              {/* Experience — segmented control */}
+              <Grid item xs={12}>
+                <Typography
+                  sx={{ fontSize: 13, color: INK, fontWeight: 500, mb: 0.75 }}
                 >
-                  {experienceOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
+                  Experience level <span style={{ color: CORAL }}>*</span>
+                </Typography>
+                <Box
+                  sx={{
+                    backgroundColor: "rgba(60,32,25,0.06)",
+                    borderRadius: "10px",
+                    p: "4px",
+                    display: "grid",
+                    gridTemplateColumns: "repeat(4, 1fr)",
+                  }}
+                >
+                  {experienceOptions.map((opt) => (
+                    <Box
+                      key={opt.value}
+                      onClick={() => setExperience(opt.value)}
+                      sx={{
+                        cursor: "pointer",
+                        py: 1,
+                        px: 1,
+                        borderRadius: "7px",
+                        textAlign: "center",
+                        backgroundColor:
+                          experience === opt.value ? SURFACE : "transparent",
+                        boxShadow:
+                          experience === opt.value
+                            ? `0 1px 4px rgba(60,32,25,0.1), inset 0 0 0 1px ${LINE}`
+                            : "none",
+                        transition:
+                          "background-color 120ms ease, box-shadow 120ms ease",
+                        userSelect: "none",
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontSize: 13,
+                          fontWeight: experience === opt.value ? 700 : 500,
+                          color: experience === opt.value ? INK : MUTED,
+                          lineHeight: 1,
+                        }}
+                      >
+                        {opt.label}
+                      </Typography>
+                      <Typography
+                        sx={{ fontSize: 10.5, color: MUTED_2, mt: 0.3 }}
+                      >
+                        {opt.sub}
+                      </Typography>
+                    </Box>
                   ))}
-                </TextField>
-                {!isExperienceProvided && (
-                  <Typography variant="caption" color="error" sx={{ mt: 0.5, display: "block" }}>
-                    Experience level is required
-                  </Typography>
-                )}
+                </Box>
               </Grid>
-              <Grid item xs={12} md={6}>
+
+              {/* Industry */}
+              <Grid item xs={12}>
+                <Typography
+                  component="div"
+                  sx={{ fontSize: 13, fontWeight: 500, mb: 0.6 }}
+                >
+                  <span style={{ color: INK }}>Industry</span>{" "}
+                  <span style={{ color: MUTED }}>- optional</span>
+                </Typography>
                 <TextField
                   size="small"
                   fullWidth
-                  label="Industry"
                   autoComplete="off"
+                  placeholder="e.g. Fintech, SaaS, Travel"
                   value={industry}
                   onChange={(e) => setIndustry(e.target.value)}
-                  sx={inputSx}
+                  sx={{
+                    ...inputSx,
+                    "& .MuiOutlinedInput-root": {
+                      ...inputSx["& .MuiOutlinedInput-root"],
+                      backgroundColor: SURFACE,
+                    },
+                  }}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+
+              {/* Job description */}
+              <Grid item xs={12}>
+                <Typography
+                  component="div"
+                  sx={{ fontSize: 13, fontWeight: 500, mb: 0.6 }}
+                >
+                  <span style={{ color: INK }}>Job description</span>{" "}
+                  <span style={{ color: MUTED }}>- optional</span>
+                </Typography>
                 <TextField
                   size="small"
                   fullWidth
-                  label="Job Description"
                   multiline
                   rows={4}
+                  placeholder="Paste the job description, or describe what the role involves..."
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
-                  sx={inputSx}
+                  sx={{
+                    ...inputSx,
+                    "& .MuiOutlinedInput-root": {
+                      ...inputSx["& .MuiOutlinedInput-root"],
+                      backgroundColor: SURFACE,
+                    },
+                  }}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+
+              {/* Additional notes */}
+              <Grid item xs={12}>
+                <Typography
+                  component="div"
+                  sx={{ fontSize: 13, fontWeight: 500, mb: 0.6 }}
+                >
+                  <span style={{ color: INK }}>Additional notes</span>{" "}
+                  <span style={{ color: MUTED }}>— optional</span>
+                </Typography>
                 <TextField
                   size="small"
                   fullWidth
-                  label="Additional Notes"
-                  placeholder="e.g. Focus on leadership and conflict resolution"
                   multiline
-                  rows={4}
+                  rows={3}
+                  placeholder="e.g. Focus on leadership and conflict resolution"
                   value={additionalNotes}
                   onChange={(e) => setAdditionalNotes(e.target.value)}
-                  sx={inputSx}
+                  sx={{
+                    ...inputSx,
+                    "& .MuiOutlinedInput-root": {
+                      ...inputSx["& .MuiOutlinedInput-root"],
+                      backgroundColor: SURFACE,
+                    },
+                  }}
                 />
               </Grid>
+
+              {/* Question count slider */}
               <Grid item xs={12}>
-                <Button
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  sx={{ ...primaryButtonSx, py: 1.5 }}
-                  disabled={isUploading}
+                <Typography
+                  sx={{ fontSize: 13, color: INK, fontWeight: 500, mb: 1.25 }}
                 >
-                  {isUploading ? (
-                    <CircularProgress size={20} sx={{ color: "#fff" }} />
-                  ) : (
-                    "Generate Questions"
-                  )}
-                </Button>
+                  Number of questions
+                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Slider
+                    value={questionCount}
+                    onChange={(_, v) => setQuestionCount(v)}
+                    min={6}
+                    max={30}
+                    step={1}
+                    sx={{
+                      flex: 1,
+                      color: CORAL,
+                      "& .MuiSlider-thumb": {
+                        width: 18,
+                        height: 18,
+                        "&:hover": { boxShadow: `0 0 0 6px ${CORAL_SOFTER}` },
+                      },
+                      "& .MuiSlider-track": { height: 4, borderRadius: 2 },
+                      "& .MuiSlider-rail": {
+                        height: 4,
+                        borderRadius: 2,
+                        backgroundColor: CORAL_SOFTER,
+                      },
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      backgroundColor: CORAL_SOFTER,
+                      color: CORAL_INK,
+                      borderRadius: "20px",
+                      px: 1.75,
+                      py: 0.6,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {questionCount} qs
+                  </Box>
+                </Box>
               </Grid>
             </Grid>
           </Box>
         </DialogContent>
+
+        <DialogActions
+          sx={{
+            px: 3.5,
+            py: 2.5,
+            borderTop: `1px solid ${LINE}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            backgroundColor: PAGE_BG,
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: 12,
+              color: MUTED,
+              display: "flex",
+              alignItems: "center",
+              gap: 0.75,
+            }}
+          >
+            <BookmarkBorderIcon sx={{ fontSize: 14 }} />
+            Saved automatically as a project
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={handleUpload}
+            disabled={isUploading}
+            startIcon={
+              isUploading ? null : (
+                <AutoAwesomeIcon sx={{ fontSize: "14px !important" }} />
+              )
+            }
+            sx={{ ...primaryButtonSx, py: 1.1, px: 2.5, fontSize: 13.5 }}
+          >
+            {isUploading ? (
+              <CircularProgress size={18} sx={{ color: "#fff" }} />
+            ) : (
+              `Generate ${questionCount} questions`
+            )}
+          </Button>
+        </DialogActions>
       </Dialog>
 
       {/* Build your own set dialog */}
       <Dialog
         open={interviewMode === "custom"}
         onClose={() => setInterviewMode(null)}
-        maxWidth="md"
+        maxWidth="sm"
         fullWidth
         scroll="paper"
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        PaperProps={{
+          sx: {
+            borderRadius: "20px",
+            overflow: "hidden",
+            backgroundColor: PAGE_BG,
+          },
+        }}
       >
-        <DialogTitle sx={{ pb: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <CreateOutlinedIcon sx={{ color: "#FA735B", fontSize: 18 }} />
-              <Typography variant="subtitle1" sx={{ fontWeight: 700, color: HEADING_COLOR }}>
-                Build your own set
-              </Typography>
-            </Box>
-            <IconButton size="small" onClick={() => setInterviewMode(null)} sx={{ color: MUTED_COLOR }}>
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          </Box>
-        </DialogTitle>
-        <DialogContent dividers sx={{ px: { xs: 3, md: 4 }, py: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: HEADING_COLOR, mb: 2.5 }}>
-            Add the questions you want to practise
+        {/* Header */}
+        <Box sx={{ px: 3.5, pt: 3.5, pb: 2.5, position: "relative" }}>
+          <IconButton
+            size="small"
+            onClick={() => setInterviewMode(null)}
+            sx={{ position: "absolute", top: 14, right: 14, color: MUTED }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+          <Typography
+            sx={{ fontSize: 20, fontWeight: 700, color: INK, mb: 0.75, pr: 4 }}
+          >
+            Write the questions you want to practise
           </Typography>
-
-          {/* Optional job context */}
-          <Accordion
-            elevation={0}
-            disableGutters
+          <Typography
             sx={{
-              mb: 3,
-              border: SURFACE_BORDER,
-              borderRadius: "10px !important",
-              "&:before": { display: "none" },
-              "&.MuiAccordion-root": { borderRadius: "10px" },
+              fontSize: 13.5,
+              color: INK_2,
+              lineHeight: 1.6,
+              maxWidth: 420,
             }}
           >
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon sx={{ color: MUTED_COLOR }} />}
-              sx={{ px: 2, py: 0.5 }}
-            >
-              <Typography variant="body2" sx={{ color: MUTED_COLOR }}>
-                Add job context <span style={{ color: "rgba(60,32,25,0.3)" }}>(optional — improves feedback relevance)</span>
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails sx={{ pt: 0, px: 2, pb: 2 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    label="Company Name"
-                    autoComplete="off"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    sx={inputSx}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    label="Role"
-                    autoComplete="off"
-                    value={jobRole}
-                    onChange={(e) => setRole(e.target.value)}
-                    sx={inputSx}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    select
-                    label="Experience Level"
-                    value={experience}
-                    onChange={(e) => setExperience(e.target.value)}
-                    sx={inputSx}
-                  >
-                    {experienceOptions.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    label="Industry"
-                    autoComplete="off"
-                    value={industry}
-                    onChange={(e) => setIndustry(e.target.value)}
-                    sx={inputSx}
-                  />
-                </Grid>
-              </Grid>
-            </AccordionDetails>
-          </Accordion>
+            Add any number of behavioural question - one at a time.
+          </Typography>
+        </Box>
 
-          {/* Question input */}
+        <Divider sx={{ borderColor: LINE }} />
+
+        <DialogContent sx={{ px: 3.5, py: 3, backgroundColor: PAGE_BG }}>
+          {/* Collapsible job context */}
+          <Box
+            sx={{
+              border: `1px solid ${LINE}`,
+              borderRadius: "12px",
+              mb: 2.5,
+              overflow: "hidden",
+              backgroundColor: SURFACE,
+            }}
+          >
+            <Box
+              onClick={() => setContextOpen((v) => !v)}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                px: 2.5,
+                py: 1.5,
+                cursor: "pointer",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: INK,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.75,
+                }}
+              >
+                <WorkIcon sx={{ fontSize: 15, color: MUTED }} />
+                Job context{" "}
+                <span
+                  style={{
+                    color: MUTED,
+                    fontSize: 12,
+                    fontWeight: 400,
+                  }}
+                >
+                  (optional — improves feedback relevance)
+                </span>
+              </Typography>
+              <ExpandMoreIcon
+                sx={{
+                  color: MUTED,
+                  fontSize: 18,
+                  transition: "transform 200ms ease",
+                  transform: contextOpen ? "rotate(180deg)" : "rotate(0deg)",
+                }}
+              />
+            </Box>
+            {contextOpen && (
+              <Box
+                sx={{
+                  px: 2.5,
+                  pb: 2.5,
+                  pt: 2,
+                  borderTop: `1px solid ${LINE}`,
+                }}
+              >
+                <Grid container spacing={1.5}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      placeholder="Company"
+                      autoComplete="off"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      sx={inputSx}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      placeholder="Role"
+                      autoComplete="off"
+                      value={jobRole}
+                      onChange={(e) => setRole(e.target.value)}
+                      sx={inputSx}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      select
+                      value={experience}
+                      onChange={(e) => setExperience(e.target.value)}
+                      SelectProps={{ displayEmpty: true }}
+                      sx={{
+                        ...inputSx,
+                        "& .MuiSelect-select": {
+                          color: experience ? INK_2 : "rgba(60,32,25,0.35)",
+                        },
+                      }}
+                    >
+                      <MenuItem value="">
+                        <span style={{ color: "rgba(60,32,25,0.35)" }}>
+                          Experience level
+                        </span>
+                      </MenuItem>
+                      {[
+                        { value: "entry", label: "Entry (0–2 yrs)" },
+                        { value: "mid", label: "Mid (2–5 yrs)" },
+                        { value: "senior", label: "Senior (5–9 yrs)" },
+                        { value: "staff", label: "Staff+ (9+ yrs)" },
+                      ].map((o) => (
+                        <MenuItem key={o.value} value={o.value}>
+                          {o.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      placeholder="Industry"
+                      autoComplete="off"
+                      value={industry}
+                      onChange={(e) => setIndustry(e.target.value)}
+                      sx={inputSx}
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+            )}
+          </Box>
+
+          {/* Question textarea */}
           <TextField
             multiline
-            rows={3}
+            rows={4}
             fullWidth
             placeholder="e.g. Tell me about a time you resolved a conflict in your team."
             value={customQuestionInput}
@@ -805,146 +1689,268 @@ const InterviewHome = () => {
                 handleAddCustomQuestion();
               }
             }}
-            sx={{ ...orangeInputSx, mb: 1.5 }}
+            sx={{ ...orangeInputSx }}
           />
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+
+          {/* Hint row */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mt: 1,
+              mb: 2.5,
+            }}
+          >
+            <Typography sx={{ fontSize: 12, color: MUTED }}>
+              Press Enter to add quickly
+            </Typography>
             <Button
-              variant="contained"
-              disableElevation
+              size="small"
               disabled={!customQuestionInput.trim()}
               onClick={handleAddCustomQuestion}
+              startIcon={
+                <Box
+                  component="span"
+                  sx={{ fontSize: 16, lineHeight: 1, fontWeight: 400 }}
+                >
+                  +
+                </Box>
+              }
               sx={{
                 textTransform: "none",
                 fontWeight: 600,
-                px: 3,
-                py: 1,
-                borderRadius: 2,
-                background: customQuestionInput.trim()
-                  ? "linear-gradient(135deg, #FA735B 0%, #f8553a 100%)"
-                  : undefined,
-                boxShadow: customQuestionInput.trim()
-                  ? "0px 8px 20px -8px rgba(250,115,91,0.7)"
-                  : "none",
-                "&:hover": {
-                  background: "linear-gradient(135deg, #e8614a 0%, #e04028 100%)",
-                  boxShadow: "0px 12px 24px -8px rgba(250,115,91,0.8)",
-                  transform: "translateY(-1px)",
-                },
-                transition: "all 0.2s ease",
+                fontSize: 13,
+                color: customQuestionInput.trim() ? CORAL_INK : MUTED,
+                px: 1,
+                minWidth: 0,
+                "&:hover": { backgroundColor: CORAL_SOFTER },
               }}
             >
-              Add Question
+              Add question
             </Button>
           </Box>
 
-          {/* Added questions list */}
+          {/* Need a nudge */}
+          <Box sx={{ mb: customQuestions.length > 0 ? 2.5 : 0 }}>
+            <Typography
+              sx={{
+                fontSize: 10.5,
+                color: CORAL_INK,
+                fontWeight: 700,
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                mb: 1.25,
+              }}
+            >
+              Need a nudge?
+            </Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+              {suggestionPrompts.map((prompt) => (
+                <Box
+                  key={prompt}
+                  onClick={() => setCustomQuestionInput(prompt)}
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 0.75,
+                    fontSize: 13,
+                    color: INK_2,
+                    backgroundColor: SURFACE,
+                    border: `1px solid ${LINE}`,
+                    borderRadius: "20px",
+                    px: 1.75,
+                    py: 0.6,
+                    cursor: "pointer",
+                    alignSelf: "flex-start",
+                    "&:hover": {
+                      borderColor: CORAL,
+                      backgroundColor: CORAL_SOFTER,
+                      color: CORAL_INK,
+                    },
+                    transition: "all 120ms ease",
+                  }}
+                >
+                  <span style={{ color: CORAL, fontWeight: 600 }}>+</span>{" "}
+                  {prompt}
+                </Box>
+              ))}
+            </Box>
+          </Box>
+
+          {/* Questions list */}
           {customQuestions.length > 0 && (
-            <Box sx={{ mb: 3 }}>
-              <Typography
-                variant="overline"
-                sx={{ color: "#FA735B", fontWeight: 700, letterSpacing: 1.2, mb: 1.5, display: "block" }}
+            <Box>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 1.5,
+                }}
               >
-                Your Practice Set ({customQuestions.length})
-              </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                <Typography
+                  sx={{
+                    fontSize: 11,
+                    color: CORAL,
+                    fontWeight: 700,
+                    letterSpacing: 1.1,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Your Practice Set ({customQuestions.length})
+                </Typography>
+                <Box
+                  onClick={() => setCustomQuestions([])}
+                  sx={{
+                    fontSize: 11.5,
+                    color: MUTED,
+                    cursor: "pointer",
+                    "&:hover": { color: CORAL_INK },
+                    transition: "color 120ms ease",
+                  }}
+                >
+                  Clear all
+                </Box>
+              </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 {customQuestions.map((q, i) => (
-                  <Paper
+                  <Box
                     key={i}
-                    elevation={0}
                     sx={{
                       display: "flex",
                       alignItems: "center",
                       gap: 1.5,
                       px: 2,
-                      py: 1.5,
-                      borderRadius: 2,
-                      border: SURFACE_BORDER,
-                      backgroundColor: "#fffaf8",
+                      py: 1.25,
+                      borderRadius: "10px",
+                      border: `1px solid ${LINE}`,
+                      backgroundColor: SURFACE,
                     }}
                   >
-                    <Typography
-                      variant="caption"
-                      sx={{ color: "#FA735B", fontWeight: 700, minWidth: 24, flexShrink: 0 }}
+                    <Box
+                      sx={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: "50%",
+                        backgroundColor: CORAL_SOFTER,
+                        color: CORAL_INK,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        flexShrink: 0,
+                      }}
                     >
                       {i + 1}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: BODY_COLOR, flex: 1, lineHeight: 1.6 }}>
+                    </Box>
+                    <Typography
+                      sx={{
+                        flex: 1,
+                        fontSize: 13,
+                        color: INK_2,
+                        lineHeight: 1.5,
+                      }}
+                    >
                       {q.question}
                     </Typography>
                     <IconButton
                       size="small"
                       onClick={() => handleRemoveCustomQuestion(i)}
                       sx={{
-                        color: MUTED_COLOR,
+                        color: MUTED,
                         flexShrink: 0,
-                        "&:hover": { color: "#e04028", bgcolor: "rgba(224,64,40,0.08)" },
+                        "&:hover": {
+                          color: "#e04028",
+                          bgcolor: "rgba(224,64,40,0.08)",
+                        },
                         transition: "all 0.15s ease",
                       }}
                     >
-                      <DeleteOutlineIcon fontSize="small" />
+                      <DeleteOutlineIcon sx={{ fontSize: 16 }} />
                     </IconButton>
-                  </Paper>
+                  </Box>
                 ))}
               </Box>
             </Box>
           )}
         </DialogContent>
-        <DialogActions sx={{ px: { xs: 3, md: 4 }, py: 2.5, gap: 1.5 }}>
-          <Button
-            variant="outlined"
-            disabled={customQuestions.length === 0}
-            startIcon={<BookmarkBorderIcon />}
+
+        <DialogActions
+          sx={{
+            px: 3,
+            py: 2,
+            borderTop: `1px solid ${LINE}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            backgroundColor: PAGE_BG,
+          }}
+        >
+          {/* Save as project toggle */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.25,
+              cursor: "pointer",
+            }}
             onClick={() => {
               setCustomProjectName(
-                companyName && jobRole ? `${companyName} — ${jobRole}` : ""
+                companyName && jobRole ? `${companyName} — ${jobRole}` : "",
               );
               setSaveCustomDialogOpen(true);
             }}
-            sx={{
-              textTransform: "none",
-              fontWeight: 600,
-              borderRadius: 2,
-              borderColor: "rgba(252,150,120,0.4)",
-              color: "#FA735B",
-              "&:hover": {
-                borderColor: "#FA735B",
-                backgroundColor: "rgba(250,115,91,0.04)",
-              },
-            }}
           >
-            Save as Project
-          </Button>
+            <Checkbox
+              checked={customQuestions.length > 0}
+              size="small"
+              disableRipple
+              sx={{
+                p: 0.5,
+                color: MUTED,
+                "&.Mui-checked": { color: CORAL },
+                pointerEvents: "none",
+              }}
+            />
+            <BookmarkBorderIcon sx={{ fontSize: 15, color: MUTED, mr: 0.5 }} />
+            <Typography sx={{ fontSize: 13, color: MUTED, fontWeight: 500 }}>
+              Save as project
+            </Typography>
+          </Box>
+
           <Button
-            fullWidth
             variant="contained"
             disableElevation
             disabled={customQuestions.length === 0}
             onClick={handleStartCustomPractice}
+            startIcon={
+              customQuestions.length > 0 ? (
+                <PlayCircleOutlineIcon sx={{ fontSize: "15px !important" }} />
+              ) : null
+            }
             sx={{
               textTransform: "none",
               fontWeight: 700,
-              py: 1.4,
-              borderRadius: 2,
-              background:
-                customQuestions.length > 0
-                  ? "linear-gradient(135deg, #FA735B 0%, #f8553a 100%)"
-                  : undefined,
+              py: 1.2,
+              px: 2.5,
+              borderRadius: "10px",
+              fontSize: 13,
+              backgroundColor: customQuestions.length > 0 ? CORAL : undefined,
               boxShadow:
                 customQuestions.length > 0
-                  ? "0px 12px 24px -12px rgba(250,115,91,0.7), 0px 10px 18px -14px rgba(49,30,20,0.35)"
+                  ? "0px 12px 24px -12px rgba(250,115,91,0.7)"
                   : "none",
               "&:hover": {
-                background: "linear-gradient(135deg, #e8614a 0%, #e04028 100%)",
-                boxShadow:
-                  "0px 14px 26px -12px rgba(250,115,91,0.8), 0px 12px 18px -14px rgba(49,30,20,0.35)",
-                transform: "translateY(-1px)",
+                backgroundColor: CORAL_INK,
+                boxShadow: "0px 14px 26px -12px rgba(250,115,91,0.8)",
               },
-              transition: "all 0.2s ease",
             }}
           >
             {customQuestions.length === 0
               ? "Add at least one question to start"
-              : `Start Practice — ${customQuestions.length} question${customQuestions.length !== 1 ? "s" : ""}`}
+              : `Start practising · ${customQuestions.length} qs`}
           </Button>
         </DialogActions>
       </Dialog>
@@ -955,14 +1961,19 @@ const InterviewHome = () => {
         onClose={() => setSaveCustomDialogOpen(false)}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: 3, px: 1, py: 0.5 } }}
+        PaperProps={{ sx: { borderRadius: "14px", px: 1, py: 0.5 } }}
       >
-        <DialogTitle sx={{ fontWeight: 700, color: HEADING_COLOR, pb: 0.5 }}>
+        <DialogTitle
+          sx={{ fontWeight: 700, color: INK, pb: 0.5, fontSize: 16 }}
+        >
           Save as Project
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body2" sx={{ color: BODY_COLOR, mb: 2 }}>
-            Give this question set a name so you can revisit and practice from it later.
+          <Typography
+            sx={{ fontSize: 13.5, color: INK_2, mb: 2, lineHeight: 1.6 }}
+          >
+            Give this question set a name so you can revisit and practice from
+            it later.
           </Typography>
           <TextField
             autoFocus
@@ -972,7 +1983,11 @@ const InterviewHome = () => {
             value={customProjectName}
             onChange={(e) => setCustomProjectName(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && customProjectName.trim() && !isSavingCustom) {
+              if (
+                e.key === "Enter" &&
+                customProjectName.trim() &&
+                !isSavingCustom
+              ) {
                 handleSaveCustomProject();
               }
             }}
@@ -982,7 +1997,7 @@ const InterviewHome = () => {
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
           <Button
             onClick={() => setSaveCustomDialogOpen(false)}
-            sx={{ textTransform: "none", color: MUTED_COLOR }}
+            sx={{ textTransform: "none", color: MUTED }}
           >
             Cancel
           </Button>
@@ -993,7 +2008,11 @@ const InterviewHome = () => {
             onClick={handleSaveCustomProject}
             sx={{ ...primaryButtonSx, py: 1, px: 2.5 }}
           >
-            {isSavingCustom ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : "Save"}
+            {isSavingCustom ? (
+              <CircularProgress size={18} sx={{ color: "#fff" }} />
+            ) : (
+              "Save"
+            )}
           </Button>
         </DialogActions>
       </Dialog>
