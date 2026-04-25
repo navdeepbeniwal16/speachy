@@ -2,26 +2,95 @@ import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
-  Chip,
+  Button,
   CircularProgress,
   Container,
-  Grid,
   IconButton,
-  Paper,
   Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import CreateIcon from "@mui/icons-material/Create";
 import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
 import { AppContext } from "../components/AppContext.js";
 import InterviewService from "../services/interview-service.js";
 
+const CORAL = "#FA735B";
+const CORAL_SOFTER = "rgba(250,115,91,0.08)";
+const CORAL_INK = "#C85A3E";
 const PAGE_BG = "#fff4ef";
-const SURFACE_BG = "#ffffff";
-const SURFACE_BORDER = "1px solid rgba(252,150,120,0.12)";
-const SURFACE_SHADOW = "0 18px 36px rgba(252,150,120,0.15)";
-const HEADING_COLOR = "#2f170f";
-const BODY_COLOR = "rgba(60,32,25,0.78)";
-const MUTED_COLOR = "rgba(60,32,25,0.45)";
+const SURFACE = "#ffffff";
+const LINE = "rgba(252,150,120,0.12)";
+const INK = "#2f170f";
+const INK_2 = "rgba(60,32,25,0.78)";
+const MUTED = "rgba(60,32,25,0.45)";
+const BUTTER_SOFT = "rgba(232,200,124,0.25)";
+const BUTTER_INK = "#8b6a1f";
+
+const TYPE_CONFIG = {
+  interview: {
+    label: "Interview",
+    bg: CORAL_SOFTER,
+    color: CORAL_INK,
+    icon: <AutoAwesomeIcon sx={{ fontSize: 10 }} />,
+  },
+  warmup: {
+    label: "Warm-up",
+    bg: BUTTER_SOFT,
+    color: BUTTER_INK,
+    icon: null,
+  },
+  presentation: {
+    label: "Presentation",
+    bg: "rgba(82,130,255,0.08)",
+    color: "#2a4bcc",
+    icon: null,
+  },
+};
+
+const KindBadge = ({ kind, type }) => {
+  if (kind === "build") {
+    return (
+      <Box
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 0.5,
+          backgroundColor: BUTTER_SOFT,
+          color: BUTTER_INK,
+          borderRadius: "20px",
+          px: 1.1,
+          py: 0.3,
+          fontSize: 10.5,
+          fontWeight: 700,
+        }}
+      >
+        <CreateIcon sx={{ fontSize: 10 }} />
+        Custom
+      </Box>
+    );
+  }
+  const cfg = TYPE_CONFIG[type] || TYPE_CONFIG.interview;
+  return (
+    <Box
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 0.5,
+        backgroundColor: cfg.bg,
+        color: cfg.color,
+        borderRadius: "20px",
+        px: 1.1,
+        py: 0.3,
+        fontSize: 10.5,
+        fontWeight: 700,
+      }}
+    >
+      {cfg.icon}
+      {kind === "prepare" ? "Tailored" : cfg.label}
+    </Box>
+  );
+};
 
 const ProjectsPage = () => {
   const navigate = useNavigate();
@@ -45,151 +114,244 @@ const ProjectsPage = () => {
   }, []);
 
   const openProject = (project) => {
-    navigate("/interview/questions", {
-      state: {
-        questions: project.questions,
-        companyName: project.companyName,
-        jobRole: project.jobRole,
-        jobDescription: project.jobDescription,
-        industry: project.industry,
-        requiredExperience: project.requiredExperience,
-        additionalNotes: project.additionalNotes,
-        mode: "project",
-      },
-    });
+    navigate(`/interview/project/${project.id}`, { state: { project } });
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: PAGE_BG, py: { xs: 6, md: 8 } }}>
-      <Container maxWidth="xl">
+    <Box sx={{ minHeight: "100vh", backgroundColor: PAGE_BG, py: { xs: 5, md: 7 } }}>
+      <Container maxWidth="lg">
 
-        {/* Header */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 4 }}>
+        {/* Top nav */}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "48px 1fr 48px",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
           <IconButton
             onClick={() => navigate("/")}
-            sx={{ color: HEADING_COLOR, borderRadius: 2 }}
+            sx={{ color: INK, borderRadius: 2, width: 40, height: 40 }}
           >
-            <ArrowBackIcon />
+            <ArrowBackIcon fontSize="small" />
           </IconButton>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: HEADING_COLOR }}>
-            Your Projects
+          <Typography
+            align="center"
+            sx={{ fontSize: 13, fontWeight: 600, color: MUTED, letterSpacing: 0.3 }}
+          >
+            Projects
           </Typography>
+          <Box />
+        </Box>
+
+        {/* Page heading */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            mb: 4,
+            flexWrap: "wrap",
+            gap: 2,
+          }}
+        >
+          <Box>
+            <Typography
+              component="h1"
+              sx={{
+                fontFamily: "Georgia, serif",
+                fontSize: { xs: 22, md: 26 },
+                fontWeight: 500,
+                color: INK,
+                lineHeight: 1.25,
+              }}
+            >
+              Your projects
+            </Typography>
+            {!loading && projects.length > 0 && (
+              <Typography sx={{ fontSize: 13, color: MUTED, mt: 0.5 }}>
+                {projects.length} saved
+              </Typography>
+            )}
+          </Box>
+          <Button
+            variant="contained"
+            onClick={() => navigate("/interview")}
+            sx={{
+              textTransform: "none",
+              fontWeight: 600,
+              fontSize: 13,
+              px: 2.5,
+              py: 1,
+              borderRadius: "10px",
+              backgroundColor: CORAL,
+              boxShadow: "0px 8px 18px -6px rgba(250,115,91,0.6)",
+              "&:hover": { backgroundColor: CORAL_INK },
+            }}
+          >
+            + New project
+          </Button>
         </Box>
 
         {/* Content */}
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
-            <CircularProgress size={32} sx={{ color: "#FA735B" }} />
+            <CircularProgress size={28} sx={{ color: CORAL }} />
           </Box>
         ) : projects.length === 0 ? (
           <Box
             sx={{
+              backgroundColor: SURFACE,
+              border: `1px solid ${LINE}`,
+              borderRadius: "18px",
+              p: "48px 32px",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              justifyContent: "center",
-              py: 10,
               gap: 2,
             }}
           >
-            <FolderOpenOutlinedIcon sx={{ fontSize: 48, color: MUTED_COLOR }} />
-            <Typography variant="h6" sx={{ fontWeight: 600, color: HEADING_COLOR }}>
-              No projects yet
+            <FolderOpenOutlinedIcon sx={{ fontSize: 40, color: MUTED }} />
+            <Typography sx={{ fontSize: 16, fontWeight: 700, color: INK }}>
+              No saved projects yet
             </Typography>
-            <Typography variant="body2" sx={{ color: MUTED_COLOR, textAlign: "center", maxWidth: 400 }}>
-              Generate a question set from the Interview Prep page and save it as a project to see it here.
+            <Typography
+              sx={{
+                fontSize: 13.5,
+                color: INK_2,
+                textAlign: "center",
+                maxWidth: 380,
+                lineHeight: 1.6,
+              }}
+            >
+              Create a tailored or custom question set from the Interview Prep page — it'll appear here.
             </Typography>
+            <Button
+              variant="outlined"
+              onClick={() => navigate("/interview")}
+              sx={{
+                mt: 1,
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: 13,
+                borderColor: "rgba(252,150,120,0.4)",
+                color: CORAL,
+                borderRadius: "10px",
+                "&:hover": { borderColor: CORAL, backgroundColor: CORAL_SOFTER },
+              }}
+            >
+              Go to Interview Prep
+            </Button>
           </Box>
         ) : (
-          <Grid container spacing={2.5}>
-            {projects.map((project) => (
-              <Grid item xs={12} sm={6} md={4} key={project.id}>
-                <Paper
-                  elevation={0}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+              gap: 2,
+            }}
+          >
+            {projects.map((project) => {
+              const total = project.questions?.length || 0;
+              const done = project.practicedCount || 0;
+              const pct = total > 0 ? done / total : 0;
+              const createdDate = project.createdAt
+                ? new Date(project.createdAt).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : "";
+
+              return (
+                <Box
+                  key={project.id}
                   onClick={() => openProject(project)}
                   sx={{
                     cursor: "pointer",
-                    px: 3,
-                    py: 3,
-                    borderRadius: 4,
-                    border: SURFACE_BORDER,
-                    backgroundColor: SURFACE_BG,
-                    boxShadow: SURFACE_SHADOW,
-                    height: "100%",
+                    backgroundColor: SURFACE,
+                    border: `1px solid ${LINE}`,
+                    borderRadius: "14px",
+                    p: "18px",
                     display: "flex",
                     flexDirection: "column",
-                    transition: "transform 120ms ease, border-color 120ms ease",
+                    gap: "14px",
+                    transition: "transform 120ms ease, box-shadow 120ms ease",
                     "&:hover": {
                       transform: "translateY(-2px)",
-                      borderColor: "rgba(250,115,91,0.4)",
+                      boxShadow: "0 18px 32px rgba(252,150,120,0.18)",
                     },
                   }}
                 >
-                  {/* Project name */}
-                  <Typography
-                    variant="subtitle1"
-                    sx={{ fontWeight: 700, color: HEADING_COLOR, mb: 0.5 }}
-                  >
-                    {project.name}
-                  </Typography>
+                  {/* Kind badge */}
+                  <KindBadge kind={project.kind} type={project.type} />
 
-                  {/* Company / Role */}
-                  {(project.companyName || project.jobRole) && (
-                    <Typography variant="body2" sx={{ color: BODY_COLOR, mb: 1.5 }}>
-                      {[project.companyName, project.jobRole].filter(Boolean).join(" — ")}
+                  {/* Company / role */}
+                  <Box>
+                    <Typography
+                      sx={{ fontWeight: 600, fontSize: 15, color: INK, lineHeight: 1.3 }}
+                    >
+                      {project.companyName || project.name}
                     </Typography>
-                  )}
-
-                  {/* Chips */}
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: "auto", pb: 2 }}>
-                    {project.requiredExperience && (
-                      <Chip
-                        label={project.requiredExperience}
-                        size="small"
-                        sx={{
-                          backgroundColor: "rgba(250,115,91,0.1)",
-                          color: "#FA735B",
-                          fontWeight: 600,
-                          fontSize: "0.7rem",
-                        }}
-                      />
+                    {project.jobRole && (
+                      <Typography sx={{ fontSize: 12.5, color: MUTED, mt: 0.25 }}>
+                        {project.jobRole}
+                      </Typography>
                     )}
-                    {project.industry && (
-                      <Chip
-                        label={project.industry}
-                        size="small"
-                        sx={{
-                          backgroundColor: "rgba(60,32,25,0.06)",
-                          color: BODY_COLOR,
-                          fontSize: "0.7rem",
-                        }}
-                      />
-                    )}
-                    <Chip
-                      label={`${project.questions?.length ?? 0} questions`}
-                      size="small"
-                      sx={{
-                        backgroundColor: "rgba(60,32,25,0.06)",
-                        color: BODY_COLOR,
-                        fontSize: "0.7rem",
-                      }}
-                    />
                   </Box>
 
-                  {/* Date */}
-                  <Typography variant="caption" sx={{ color: MUTED_COLOR }}>
-                    {project.createdAt
-                      ? new Date(project.createdAt).toLocaleDateString(undefined, {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })
-                      : ""}
+                  {/* Progress bar */}
+                  <Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mb: 0.5,
+                      }}
+                    >
+                      <Typography sx={{ fontSize: 11.5, color: INK_2 }}>
+                        {done} of {total} practised
+                      </Typography>
+                      <Typography sx={{ fontSize: 11.5, color: MUTED }}>
+                        {createdDate}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        height: 4,
+                        borderRadius: 2,
+                        backgroundColor: CORAL_SOFTER,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          height: "100%",
+                          borderRadius: 2,
+                          backgroundColor: CORAL,
+                          width: `${pct * 100}%`,
+                          transition: "width 0.3s ease",
+                        }}
+                      />
+                    </Box>
+                  </Box>
+
+                  {/* CTA */}
+                  <Typography
+                    sx={{
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      color: MUTED,
+                      "&:hover": { color: CORAL },
+                    }}
+                  >
+                    {done > 0 ? "Continue practising →" : "Open project →"}
                   </Typography>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
+                </Box>
+              );
+            })}
+          </Box>
         )}
       </Container>
     </Box>
