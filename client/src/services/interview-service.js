@@ -153,44 +153,6 @@ class InterviewService {
     }
   }
 
-  static normalizeProject(p) {
-    return { type: "interview", ...p };
-  }
-
-  static async getProjects() {
-    try {
-      const response = await backendApiClient.get("/interview/projects");
-      return (response.data.projects || []).map(InterviewService.normalizeProject);
-    } catch (error) {
-      console.error("InterviewService: Error fetching projects:", error);
-      throw error;
-    }
-  }
-
-  static async saveProject(name, questions, metadata) {
-    try {
-      const response = await backendApiClient.post("/interview/projects", {
-        name,
-        questions,
-        type: metadata.type || "interview",
-        ...metadata,
-      });
-      return response.data;
-    } catch (error) {
-      console.error("InterviewService: Error saving project:", error);
-      throw error;
-    }
-  }
-
-  static async getProject(id) {
-    try {
-      const response = await backendApiClient.get(`/interview/projects/${id}`);
-      return InterviewService.normalizeProject(response.data.project);
-    } catch (error) {
-      console.error("InterviewService: Error fetching project:", error);
-      throw error;
-    }
-  }
 
   static async getAllSavedInterviewQuestions(
     questionText,
