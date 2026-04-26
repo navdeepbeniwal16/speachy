@@ -13,7 +13,7 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CreateIcon from "@mui/icons-material/Create";
 import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
 import { AppContext } from "../components/AppContext.js";
-import InterviewService from "../services/interview-service.js";
+import ProjectService from "../services/project-service.js";
 
 const CORAL = "#FA735B";
 const CORAL_SOFTER = "rgba(250,115,91,0.08)";
@@ -48,29 +48,24 @@ const TYPE_CONFIG = {
   },
 };
 
-const KindBadge = ({ kind, type }) => {
-  if (kind === "build") {
-    return (
-      <Box
-        sx={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 0.5,
-          backgroundColor: BUTTER_SOFT,
-          color: BUTTER_INK,
-          borderRadius: "20px",
-          px: 1.1,
-          py: 0.3,
-          fontSize: 10.5,
-          fontWeight: 700,
-        }}
-      >
-        <CreateIcon sx={{ fontSize: 10 }} />
-        Custom
-      </Box>
-    );
-  }
-  const cfg = TYPE_CONFIG[type] || TYPE_CONFIG.interview;
+const KIND_CONFIG = {
+  tailored: {
+    label: "Tailored",
+    bg: CORAL_SOFTER,
+    color: CORAL_INK,
+    icon: <AutoAwesomeIcon sx={{ fontSize: 10 }} />,
+  },
+  custom: {
+    label: "Custom",
+    bg: BUTTER_SOFT,
+    color: BUTTER_INK,
+    icon: <CreateIcon sx={{ fontSize: 10 }} />,
+  },
+};
+
+const KindBadge = ({ kind }) => {
+  const cfg = KIND_CONFIG[kind];
+  if (!cfg) return null;
   return (
     <Box
       sx={{
@@ -87,7 +82,7 @@ const KindBadge = ({ kind, type }) => {
       }}
     >
       {cfg.icon}
-      {kind === "prepare" ? "Tailored" : cfg.label}
+      {cfg.label}
     </Box>
   );
 };
@@ -102,7 +97,7 @@ const ProjectsPage = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const data = await InterviewService.getProjects();
+        const data = await ProjectService.getAll();
         setProjects(data);
       } catch (error) {
         showSnackbar("error", "Could not load your projects. Please try again.");
@@ -114,12 +109,14 @@ const ProjectsPage = () => {
   }, []);
 
   const openProject = (project) => {
-    navigate(`/interview/project/${project.id}`, { state: { project } });
+    navigate("/interview/questions", {
+      state: { project, questions: project.questions, mode: "project" },
+    });
   };
 
   return (
     <Box sx={{ minHeight: "100vh", backgroundColor: PAGE_BG, py: { xs: 5, md: 7 } }}>
-      <Container maxWidth="lg">
+      <Container maxWidth="md">
 
         {/* Top nav */}
         <Box
@@ -285,10 +282,10 @@ const ProjectsPage = () => {
                   }}
                 >
                   {/* Kind badge */}
-                  <KindBadge kind={project.kind} type={project.type} />
+                  <KindBadge kind={project.kind} />
 
-                  {/* Company / role */}
-                  <Box>
+                  {/* Company / role — fixed height so cards align even without a role */}
+                  <Box sx={{ minHeight: 42 }}>
                     <Typography
                       sx={{ fontWeight: 600, fontSize: 15, color: INK, lineHeight: 1.3 }}
                     >
