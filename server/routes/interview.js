@@ -92,7 +92,7 @@ const getQuestionsSet = async (
   industry,
   requiredExperience,
   additionalNotes,
-  count = 12
+  count = 10
 ) => {
   const contextPrompt = [
     `Generate a list of behavioral interview questions for a job role at company: ${company}, which operates in the industry: ${industry}.`,
@@ -195,26 +195,22 @@ router.post("/fetch-questions", async (req, res) => {
   });
 
   try {
-    const predefinedQuestions = await getPreSelectedQuestions();
-
-    const generatedQuestions = await getQuestionsSet(
+    const questions = await getQuestionsSet(
       company,
       role,
       description,
       industry,
       requiredExperience,
       additionalNotes,
-      count || 12
+      count || 10
     );
 
-    const allQuestions = [...predefinedQuestions, ...generatedQuestions];
-
-    console.log("interview.js : Questions generated successfully!");
+    logger.info("Questions generated successfully", { count: questions.length });
 
     res.status(200).json({
       message: "Questions generated successfully.",
       data: {
-        questions: allQuestions,
+        questions,
       },
     });
   } catch (error) {
@@ -226,96 +222,6 @@ router.post("/fetch-questions", async (req, res) => {
   }
 });
 
-router.get("/projects", async (req, res) => {
-  const uid = req.user.user_id;
-  try {
-    const snapshot = await db
-      .collection("interview_projects")
-      .doc(uid)
-      .collection("projects")
-      .orderBy("createdAt", "desc")
-      .get();
-
-    const projects = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    logger.info("Fetched interview projects", { uid, count: projects.length });
-    res.status(200).json({ projects });
-  } catch (error) {
-    logger.error("Error fetching interview projects", { error: error.message });
-    res.status(500).json({ success: false, error: "Failed to fetch projects" });
-  }
-});
-
-router.post("/projects", async (req, res) => {
-  const uid = req.user.user_id;
-  const {
-    name,
-    questions,
-    kind,
-    companyName,
-    jobRole,
-    industry,
-    requiredExperience,
-    jobDescription,
-    additionalNotes,
-  } = req.body;
-
-  if (!name || !name.trim()) {
-    return res.status(400).json({ success: false, error: "Project name is required" });
-  }
-  if (!Array.isArray(questions) || questions.length === 0) {
-    return res.status(400).json({ success: false, error: "Questions array is required" });
-  }
-
-  try {
-    const projectRef = await db
-      .collection("interview_projects")
-      .doc(uid)
-      .collection("projects")
-      .add({
-        name: name.trim(),
-        questions,
-        type: req.body.type || "interview",
-        kind: kind || null,
-        companyName: companyName || null,
-        jobRole: jobRole || null,
-        industry: industry || null,
-        requiredExperience: requiredExperience || null,
-        jobDescription: jobDescription || null,
-        additionalNotes: additionalNotes || null,
-        createdAt: new Date().toISOString(),
-      });
-
-    logger.info("Interview project saved", { uid, projectId: projectRef.id });
-    res.status(201).json({ success: true, projectId: projectRef.id });
-  } catch (error) {
-    logger.error("Error saving interview project", { error: error.message });
-    res.status(500).json({ success: false, error: "Failed to save project" });
-  }
-});
-
-router.get("/projects/:id", async (req, res) => {
-  const uid = req.user.user_id;
-  const { id } = req.params;
-  try {
-    const docSnap = await db
-      .collection("interview_projects")
-      .doc(uid)
-      .collection("projects")
-      .doc(id)
-      .get();
-
-    if (!docSnap.exists) {
-      return res.status(404).json({ success: false, error: "Project not found" });
-    }
-
-    const project = { id: docSnap.id, ...docSnap.data() };
-    logger.info("Fetched interview project by id", { uid, projectId: id });
-    res.status(200).json({ project });
-  } catch (error) {
-    logger.error("Error fetching interview project by id", { error: error.message });
-    res.status(500).json({ success: false, error: "Failed to fetch project" });
-  }
-});
 
 const generatePrompt = async () => {
   const completion = await openai.chat.completions.create({
