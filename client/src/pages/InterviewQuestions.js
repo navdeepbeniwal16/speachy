@@ -1,11 +1,8 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
-  Card,
-  CardContent,
-  Chip,
   CircularProgress,
   Container,
   Dialog,
@@ -13,33 +10,200 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
-  List,
-  ListItemButton,
-  Paper,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography,
-  FormControlLabel,
-  Checkbox,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
+import CreateIcon from "@mui/icons-material/Create";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import ReplayIcon from "@mui/icons-material/Replay";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import TrendingFlatIcon from "@mui/icons-material/TrendingFlat";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TuneIcon from "@mui/icons-material/Tune";
 import { AppContext } from "../components/AppContext.js";
 import InterviewService from "../services/interview-service.js";
+import ProjectService from "../services/project-service.js";
 
-const NAV_ICON_SX = { color: "#2f170f", borderRadius: 2 };
+// ─── Design tokens ─────────────────────────────────────────────────────────────
+const CORAL       = "#FA735B";
+const CORAL_SOFTER = "rgba(250,115,91,0.08)";
+const CORAL_INK   = "#C85A3E";
+const PAGE_BG     = "#fff4ef";
+const SURFACE     = "#ffffff";
+const LINE        = "rgba(252,150,120,0.12)";
+const INK         = "#2f170f";
+const INK_2       = "rgba(60,32,25,0.78)";
+const MUTED       = "rgba(60,32,25,0.45)";
+const MUTED_2     = "rgba(60,32,25,0.28)";
+const BUTTER_SOFT = "rgba(232,200,124,0.25)";
+const BUTTER_INK  = "#8b6a1f";
 
+const DIFF = {
+  easy:   { bg: "rgba(52,168,83,0.08)",   color: "#1e6e30" },
+  medium: { bg: "rgba(251,188,4,0.14)",   color: "#7a5500" },
+  hard:   { bg: CORAL_SOFTER,             color: CORAL_INK },
+};
+
+const inputSx = {
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "10px",
+    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(252,150,120,0.35)" },
+    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(252,150,120,0.6)" },
+    "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: CORAL, borderWidth: "1px" },
+  },
+  "& .MuiInputLabel-root.Mui-focused": { color: CORAL },
+};
+
+// ─── Sub-components ────────────────────────────────────────────────────────────
+
+const TrendBadge = ({ trend }) => {
+  const map = {
+    up:     { icon: <TrendingUpIcon sx={{ fontSize: 11 }} />,   label: "Improving", color: "#1e6e30", bg: "rgba(52,168,83,0.1)"  },
+    stable: { icon: <TrendingFlatIcon sx={{ fontSize: 11 }} />, label: "Stable",    color: MUTED,     bg: "rgba(60,32,25,0.06)"  },
+    down:   { icon: <TrendingDownIcon sx={{ fontSize: 11 }} />, label: "Declining", color: CORAL_INK, bg: CORAL_SOFTER            },
+  };
+  const cfg = map[trend] || map.stable;
+  return (
+    <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4, backgroundColor: cfg.bg, color: cfg.color, borderRadius: "20px", px: 0.9, py: 0.2, fontSize: 10, fontWeight: 600 }}>
+      {cfg.icon}
+      {cfg.label}
+    </Box>
+  );
+};
+
+const ScoreTile = ({ label, avg, trend, noData }) => (
+  <Box sx={{ backgroundColor: PAGE_BG, border: `1px solid ${LINE}`, borderRadius: "12px", p: "14px 16px", display: "flex", flexDirection: "column", gap: 1, minWidth: 100 }}>
+    <Typography sx={{ fontSize: 10, color: MUTED, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.6 }}>
+      {label}
+    </Typography>
+    {noData || avg == null ? (
+      <Typography sx={{ fontSize: 18, fontWeight: 700, color: MUTED_2 }}>—</Typography>
+    ) : (
+      <>
+        <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5 }}>
+          <Typography sx={{ fontSize: 20, fontWeight: 700, color: INK, lineHeight: 1 }}>
+            {Number(avg).toFixed(1)}
+          </Typography>
+          <Typography sx={{ fontSize: 11, color: MUTED }}>/ 10</Typography>
+        </Box>
+        {trend && <TrendBadge trend={trend} />}
+      </>
+    )}
+  </Box>
+);
+
+const FilterPill = ({ label, active, onClick, color }) => (
+  <Box
+    onClick={onClick}
+    sx={{
+      cursor: "pointer",
+      px: 1.5, py: 0.45,
+      borderRadius: "20px",
+      fontSize: 12, fontWeight: 600,
+      userSelect: "none",
+      transition: "all 120ms ease",
+      backgroundColor: active ? (color?.bg || CORAL_SOFTER) : "transparent",
+      color: active ? (color?.text || CORAL_INK) : MUTED,
+      border: `1px solid ${active ? "transparent" : LINE}`,
+      "&:hover": { backgroundColor: color?.bg || CORAL_SOFTER, color: color?.text || CORAL_INK },
+    }}
+  >
+    {label}
+  </Box>
+);
+
+const TagPill = ({ label }) => (
+  <Box sx={{ px: 1.1, py: 0.2, borderRadius: "20px", fontSize: 10.5, fontWeight: 500, color: MUTED, backgroundColor: "rgba(60,32,25,0.05)", whiteSpace: "nowrap" }}>
+    {label}
+  </Box>
+);
+
+const QuestionRow = ({ index, q, onPractice }) => {
+  const diff = (q.difficulty || q.difficultyLevel || "medium").toLowerCase();
+  const diffStyle = DIFF[diff] || DIFF.medium;
+  return (
+    <Box
+      sx={{
+        display: "flex", alignItems: "center", gap: 2.5,
+        px: 2.5, py: 2.25,
+        borderRadius: "14px",
+        border: `1px solid ${LINE}`,
+        backgroundColor: q.attempted ? SURFACE : PAGE_BG,
+        transition: "border-color 120ms ease, box-shadow 120ms ease",
+        "&:hover": { borderColor: "rgba(250,115,91,0.35)", boxShadow: "0 4px 20px rgba(252,150,120,0.1)" },
+      }}
+    >
+      <Box sx={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11.5, fontWeight: 700, backgroundColor: q.attempted ? CORAL : CORAL_SOFTER, color: q.attempted ? "#fff" : CORAL_INK }}>
+        {index}
+      </Box>
+
+      <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <Typography sx={{ fontSize: 14, color: INK_2, lineHeight: 1.55, mb: 1 }}>
+          {q.question}
+        </Typography>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.6, mb: q.attempted && q.scores ? 1.5 : 0 }}>
+          {(q.tags || []).map((t) => <TagPill key={t} label={t} />)}
+        </Box>
+        {q.attempted && q.scores && (
+          <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 0 }}>
+            {["relevance", "structure", "fluency"].map((k, i) => {
+              const val = q.scores[k];
+              const scoreColor =
+                val >= 8   ? { text: "#1e6e30", bg: "rgba(52,168,83,0.10)" }
+                : val >= 6 ? { text: "#7a5500", bg: "rgba(251,188,4,0.12)" }
+                :             { text: CORAL_INK, bg: CORAL_SOFTER };
+              return (
+                <Box key={k} sx={{ display: "flex", alignItems: "center", gap: 0.7, pr: 2, mr: i < 2 ? 2 : 0, borderRight: i < 2 ? `1px solid ${LINE}` : "none" }}>
+                  <Typography sx={{ fontSize: 11.5, color: MUTED, textTransform: "capitalize" }}>{k}</Typography>
+                  <Box sx={{ backgroundColor: scoreColor.bg, color: scoreColor.text, borderRadius: "6px", px: 0.85, py: 0.25, fontSize: 12, fontWeight: 700, lineHeight: 1.5 }}>
+                    {val?.toFixed(1)}
+                  </Box>
+                </Box>
+              );
+            })}
+          </Box>
+        )}
+      </Box>
+
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexShrink: 0 }}>
+        <Box sx={{ px: 1.25, py: 0.4, borderRadius: "20px", fontSize: 11.5, fontWeight: 600, textTransform: "capitalize", backgroundColor: diffStyle.bg, color: diffStyle.color, display: { xs: "none", sm: "block" } }}>
+          {diff}
+        </Box>
+        <Button
+          size="small"
+          variant={q.attempted ? "text" : "outlined"}
+          startIcon={q.attempted ? <ReplayIcon sx={{ fontSize: "13px !important" }} /> : <PlayCircleOutlineIcon sx={{ fontSize: "13px !important" }} />}
+          onClick={() => onPractice(index - 1)}
+          sx={{
+            textTransform: "none", fontWeight: 600, fontSize: 12.5,
+            px: 1.75, py: 0.7, borderRadius: "9px",
+            ...(q.attempted
+              ? { color: MUTED, "&:hover": { color: CORAL, backgroundColor: CORAL_SOFTER } }
+              : { borderColor: "rgba(252,150,120,0.4)", color: CORAL, "&:hover": { borderColor: CORAL, backgroundColor: CORAL_SOFTER } }),
+          }}
+        >
+          {q.attempted ? "Retry" : "Practice"}
+        </Button>
+      </Box>
+    </Box>
+  );
+};
+
+// ─── Main component ────────────────────────────────────────────────────────────
 const InterviewQuestions = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { showSnackbar } = useContext(AppContext);
 
   const {
-    questions: initialQuestions,
+    questions: initialQuestions = [],
+    project,
     companyName,
     jobRole,
     jobDescription,
@@ -47,55 +211,63 @@ const InterviewQuestions = () => {
     requiredExperience,
     additionalNotes,
     mode,
-  } = location.state;
+  } = location.state || {};
+
+  const isProjectMode = !!project;
 
   const [questions, setQuestions] = useState(initialQuestions);
+  const [activeDiffs, setActiveDiffs] = useState([]);
+  const [activeTags, setActiveTags] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [projectName, setProjectName] = useState(
-    companyName && jobRole ? `${companyName} — ${jobRole}` : ""
+    (companyName && jobRole) ? `${companyName} — ${jobRole}` : ""
   );
   const [isSaving, setIsSaving] = useState(false);
 
-  const [selectedDifficulties, setSelectedDifficulties] = useState([
-    "easy",
-    "medium",
-    "hard",
-  ]);
-  const [questionSource, setQuestionSource] = useState("all");
+  // Derive unique tags from the question set
+  const allTags = useMemo(() => {
+    const tagSet = new Set();
+    questions.forEach((q) => (q.tags || []).forEach((t) => tagSet.add(t)));
+    return [...tagSet].sort();
+  }, [questions]);
 
-  const handleDifficultyChange = (event) => {
-    const { value, checked } = event.target;
-    setSelectedDifficulties((prev) =>
-      checked ? [...prev, value] : prev.filter((d) => d !== value)
-    );
-  };
+  const toggleDiff = (d) =>
+    setActiveDiffs((prev) => {
+      const next = prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d];
+      return next.length === 3 ? [] : next; // all selected = same as none = reset to show all
+    });
 
-  const handleSourceChange = (event, newSource) => {
-    if (newSource !== null) setQuestionSource(newSource);
-  };
+  const toggleTag = (t) =>
+    setActiveTags((prev) => prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]);
 
-  const filteredQuestions = questions.filter((q) => {
-    const difficultyMatch = selectedDifficulties.includes(
-      q.difficultyLevel.toLowerCase()
-    );
-    const sourceMatch =
-      questionSource === "all" ||
-      (questionSource === "ai" && q.isAIGenerated) ||
-      (questionSource === "curated" && !q.isAIGenerated);
-    return difficultyMatch && sourceMatch;
+  const filtered = questions.filter((q) => {
+    const diff = (q.difficulty || q.difficultyLevel || "medium").toLowerCase();
+    const diffOk = activeDiffs.length === 0 || activeDiffs.includes(diff);
+    const tagOk  = activeTags.length === 0 || (q.tags || []).some((t) => activeTags.includes(t));
+    return diffOk && tagOk;
   });
 
-  const navigateToPracticePage = (questionId) => {
-    navigate(`/interview/questions/${questionId}`, {
+  const attempted = questions.filter((q) => q.attempted).length;
+  const remaining = questions.length - attempted;
+  const pct = questions.length > 0 ? (attempted / questions.length) * 100 : 0;
+
+  const contextCompanyName = isProjectMode ? project.companyName : companyName;
+  const contextJobRole     = isProjectMode ? project.jobRole     : jobRole;
+
+  const navigateToPractice = (questionIndex) => {
+    navigate(`/interview/questions/${questionIndex}`, {
       state: {
         questions,
-        questionId,
-        companyName,
-        jobRole,
-        jobDescription,
-        industry,
-        requiredExperience,
+        questionId: questionIndex,
+        companyName: contextCompanyName,
+        jobRole: contextJobRole,
+        jobDescription: isProjectMode ? project.jobDescription : jobDescription,
+        industry: isProjectMode ? project.industry : industry,
+        requiredExperience: isProjectMode ? project.requiredExperience : requiredExperience,
+        additionalNotes: isProjectMode ? project.additionalNotes : additionalNotes,
+        mode: isProjectMode ? "project" : mode,
+        projectId: project?.id,
       },
     });
   };
@@ -104,19 +276,11 @@ const InterviewQuestions = () => {
     setIsRefreshing(true);
     try {
       const refreshed = await InterviewService.fetchBehaviouralQuestions(
-        companyName,
-        jobRole,
-        jobDescription,
-        industry,
-        requiredExperience,
-        additionalNotes
+        companyName, jobRole, jobDescription, industry, requiredExperience, additionalNotes
       );
       setQuestions(refreshed);
     } catch (error) {
-      const message =
-        error?.userMessage ||
-        "Unable to refresh questions right now. Your current set is still here.";
-      showSnackbar("error", message);
+      showSnackbar("error", error?.userMessage || "Unable to refresh questions right now.");
     } finally {
       setIsRefreshing(false);
     }
@@ -126,347 +290,359 @@ const InterviewQuestions = () => {
     if (!projectName.trim()) return;
     setIsSaving(true);
     try {
-      await InterviewService.saveProject(projectName.trim(), questions, {
-        companyName,
-        jobRole,
-        jobDescription,
-        industry,
-        requiredExperience,
-        additionalNotes,
+      await ProjectService.save(projectName.trim(), questions, {
+        type: "interview",
+        kind: "tailored",
+        companyName, jobRole, jobDescription, industry, requiredExperience, additionalNotes,
       });
       showSnackbar("success", "Project saved!");
       setSaveDialogOpen(false);
-    } catch (error) {
+    } catch {
       showSnackbar("error", "Failed to save project. Please try again.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const questionsList = filteredQuestions.map((questionObj, index) => (
-    <ListItemButton
-      key={index}
-      component="div"
-      sx={{
-        margin: "0px",
-        padding: 0,
-        marginY: 2,
-        borderRadius: "10px",
-        border: "1px solid #f9f5f4",
-        "&:hover": { border: "1px solid #ff8350" },
-      }}
-      disablePadding
-      onClick={() => navigateToPracticePage(index)}
-    >
-      <Card
-        variant="elevation"
-        elevation={0}
-        sx={{
-          width: "100%",
-          borderRadius: "10px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: 1,
-        }}
-      >
-        <CardContent sx={{ width: "96%" }}>
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="flex-start"
-          >
-            <Typography variant="body2" sx={{ flex: 1 }}>
-              {questionObj.question}
-            </Typography>
-            {questionObj.isAIGenerated && (
-              <AutoAwesomeIcon
-                fontSize="small"
-                color="warning"
-                sx={{ mt: "2px" }}
-              />
-            )}
-          </Box>
+  // Score tile helpers for project mode
+  const scoreKeys = ["relevance", "structure", "fluency"];
+  const trendMap = { improving: "up", stable: "stable", declining: "down" };
+  const getScore = (key) => project?.averageScores?.[key] ?? null;
+  const getTrend = (key) => {
+    const t = project?.scoreTrends?.[key];
+    return t ? (trendMap[t] || t) : null;
+  };
+  const noScoreData = !project?.averageScores;
 
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mt: 1,
-            }}
-          >
-            <Chip
-              variant="filled"
-              size="small"
-              label={
-                questionObj.difficultyLevel.charAt(0).toUpperCase() +
-                questionObj.difficultyLevel.slice(1).toLowerCase()
-              }
-            />
-            <Box />
-            <Box sx={{ display: "flex", alignItems: "right" }}>
-              {questionObj.tags.map((tag) => (
-                <Chip
-                  key={tag}
-                  variant="outlined"
-                  size="small"
-                  label={
-                    <Typography
-                      fontSize={12}
-                      fontStyle="italic"
-                      color="GrayText"
-                    >{`#${tag}`}</Typography>
-                  }
-                  sx={{ border: "0px" }}
-                />
-              ))}
-            </Box>
-          </Box>
-        </CardContent>
-        <Box sx={{ marginRight: 2 }}>
-          <ArrowForwardIosIcon
-            sx={{ height: "22px", width: "22px" }}
-            style={{ color: "#FA735B" }}
-          />
-        </Box>
-      </Card>
-    </ListItemButton>
-  ));
+  // Kind badge config
+  const KIND_BADGE = {
+    tailored: { label: "Tailored", bg: CORAL_SOFTER,  color: CORAL_INK,  icon: <AutoAwesomeIcon sx={{ fontSize: 10 }} /> },
+    custom:   { label: "Custom",   bg: BUTTER_SOFT,   color: BUTTER_INK, icon: <CreateIcon sx={{ fontSize: 10 }} /> },
+  };
+  const kindBadge = isProjectMode ? (KIND_BADGE[project.kind] || null) : null;
+
+  const updatedDate = isProjectMode && project.createdAt
+    ? new Date(project.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+    : null;
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: "#fff4ef", py: { xs: 4, md: 6 } }}>
-      <Container component="main" maxWidth="lg">
-        {/* Header */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <IconButton onClick={() => navigate(-1)} sx={NAV_ICON_SX}>
-            <ArrowBackIcon />
+    <Box sx={{ minHeight: "100vh", backgroundColor: PAGE_BG, py: { xs: 5, md: 7 } }}>
+      <Container maxWidth="md">
+
+        {/* ── Top nav ───────────────────────────────────────────────────────── */}
+        <Box sx={{ display: "grid", gridTemplateColumns: "48px 1fr 48px", alignItems: "center", mb: 3 }}>
+          <IconButton
+            onClick={() => navigate(isProjectMode ? "/projects" : "/interview")}
+            sx={{ color: INK, borderRadius: 2, width: 40, height: 40 }}
+          >
+            <ArrowBackIcon fontSize="small" />
           </IconButton>
-          <Typography variant="h6" gutterBottom>
-            Practice Questions
+          <Typography align="center" sx={{ fontSize: 13, fontWeight: 600, color: MUTED, letterSpacing: 0.3 }}>
+            {isProjectMode ? "Your projects" : "Interview Preparation"}
           </Typography>
-          <Typography />
+          <Box />
         </Box>
 
-        {/* Action bar — only for AI-generated sets */}
-        {mode === "ai" && (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: 1.5,
-              mt: 2,
-            }}
-          >
+        {/* ── Session mode action bar (refresh + save) ─────────────────────── */}
+        {!isProjectMode && mode === "ai" && (
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, mb: 3 }}>
             <Button
               variant="outlined"
-              startIcon={
-                isRefreshing ? (
-                  <CircularProgress size={14} sx={{ color: "#FA735B" }} />
-                ) : (
-                  <RefreshIcon />
-                )
-              }
+              startIcon={isRefreshing ? <CircularProgress size={13} sx={{ color: CORAL }} /> : <RefreshIcon fontSize="small" />}
               disabled={isRefreshing}
               onClick={handleRefresh}
-              sx={{
-                textTransform: "none",
-                fontWeight: 600,
-                borderColor: "rgba(252,150,120,0.4)",
-                color: "#FA735B",
-                borderRadius: 2,
-                "&:hover": {
-                  borderColor: "#FA735B",
-                  backgroundColor: "rgba(250,115,91,0.04)",
-                },
-              }}
+              sx={{ textTransform: "none", fontWeight: 600, fontSize: 13, borderColor: "rgba(252,150,120,0.4)", color: CORAL, borderRadius: "10px", px: 2, "&:hover": { borderColor: CORAL, backgroundColor: CORAL_SOFTER } }}
             >
               {isRefreshing ? "Refreshing…" : "Refresh"}
             </Button>
             <Button
               variant="contained"
-              startIcon={<BookmarkBorderIcon />}
+              startIcon={<BookmarkBorderIcon fontSize="small" />}
               onClick={() => setSaveDialogOpen(true)}
-              sx={{
-                textTransform: "none",
-                fontWeight: 600,
-                borderRadius: 2,
-                backgroundColor: "#FA735B",
-                boxShadow: "0px 8px 20px -8px rgba(250,115,91,0.6)",
-                "&:hover": {
-                  backgroundColor: "#f8643f",
-                },
-              }}
+              sx={{ textTransform: "none", fontWeight: 600, fontSize: 13, borderRadius: "10px", px: 2, backgroundColor: CORAL, boxShadow: "0px 8px 20px -8px rgba(250,115,91,0.6)", "&:hover": { backgroundColor: CORAL_INK } }}
             >
               Save as Project
             </Button>
           </Box>
         )}
 
-        {/* Filters */}
-        <Paper
-          elevation={0}
-          sx={{
-            mt: 3,
-            mb: 3,
-            py: 2,
-            background: "#fff",
-            boxShadow: "0 2px 8px rgba(250, 115, 91, 0.04)",
-            border: "1px solid #f0e6e1",
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            alignItems: { xs: "flex-start", sm: "center" },
-            gap: 3,
-            justifyContent: { xs: "flex-start", sm: "space-between" },
-            borderRadius: 2,
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-              sx={{ minWidth: 70, fontWeight: 600, paddingLeft: 2 }}
-            >
-              Difficulty
-            </Typography>
-            {["easy", "medium", "hard"].map((diff) => (
-              <FormControlLabel
-                key={diff}
-                control={
-                  <Checkbox
-                    checked={selectedDifficulties.includes(diff)}
-                    onChange={handleDifficultyChange}
-                    value={diff}
-                    color="warning"
-                    sx={{ p: 0.5, "&.Mui-checked": { color: "#FA735B" } }}
-                  />
-                }
-                label={
-                  <Typography
-                    variant="body2"
-                    sx={{ textTransform: "capitalize", fontWeight: 500 }}
-                  >
-                    {diff}
-                  </Typography>
-                }
-                sx={{ mr: 2 }}
-              />
-            ))}
-          </Box>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              width: { xs: "100%", sm: "auto" },
-              justifyContent: { xs: "flex-start", sm: "flex-end" },
-              ml: { xs: 0, sm: "auto" },
-              mt: { xs: 2, sm: 0 },
-            }}
-          >
-            <Typography
-              variant="subtitle2"
-              color="text.secondary"
-              sx={{ minWidth: 60, fontWeight: 600 }}
-            >
-              Source
-            </Typography>
-            <ToggleButtonGroup
-              value={questionSource}
-              exclusive
-              onChange={handleSourceChange}
-              size="small"
-              sx={{
-                background: "#fff",
-                borderRadius: 2,
-                boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
-                pl: 1.5,
-                pr: 1.5,
-                py: 0.5,
-                "& .MuiToggleButton-root": {
-                  border: "none",
-                  borderRadius: 2,
-                  mx: 0.5,
-                  px: 2,
-                  color: "text.secondary",
-                  fontWeight: 500,
-                  letterSpacing: 0.5,
-                  "&.Mui-selected": {
-                    color: "#FA735B",
-                    background: "#fff0ec",
-                    fontWeight: 600,
-                  },
-                },
-              }}
-            >
-              <ToggleButton value="all">ALL</ToggleButton>
-              <ToggleButton value="ai">AI-GENERATED</ToggleButton>
-              <ToggleButton value="curated">CURATED</ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
-        </Paper>
+        {/* ── Project mode header card ──────────────────────────────────────── */}
+        {isProjectMode && (
+          <Box sx={{ backgroundColor: SURFACE, border: `1px solid ${LINE}`, borderRadius: "20px", p: { xs: 3, md: "32px 36px" }, mb: 3, boxShadow: "0 18px 36px rgba(252,150,120,0.10)" }}>
+            <Box sx={{ display: "flex", gap: { xs: 0, md: 5 }, flexDirection: { xs: "column", md: "row" }, alignItems: "flex-start" }}>
 
-        <Box>
-          <List>{questionsList}</List>
+              {/* Left — identity + progress */}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                {/* Kind badge */}
+                {kindBadge && (
+                  <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, backgroundColor: kindBadge.bg, color: kindBadge.color, borderRadius: "20px", px: 1.1, py: 0.3, fontSize: 11, fontWeight: 700, mb: 2 }}>
+                    {kindBadge.icon}
+                    {kindBadge.label}
+                  </Box>
+                )}
+
+                {/* Title + edit button */}
+                <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 0.5 }}>
+                  <Typography component="h1" sx={{ fontFamily: "Georgia, serif", fontSize: { xs: 24, md: 30 }, fontWeight: 700, color: INK, lineHeight: 1.15, mr: 2 }}>
+                    {project.companyName || project.name}
+                  </Typography>
+                  <Button
+                    size="small"
+                    startIcon={<EditOutlinedIcon sx={{ fontSize: "13px !important" }} />}
+                    sx={{ textTransform: "none", fontWeight: 600, fontSize: 12.5, color: MUTED, borderRadius: "9px", border: `1px solid ${LINE}`, px: 1.5, py: 0.6, flexShrink: 0, "&:hover": { borderColor: CORAL, color: CORAL, backgroundColor: CORAL_SOFTER } }}
+                  >
+                    Edit
+                  </Button>
+                </Box>
+
+                {/* Subtitle + experience */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+                  {project.jobRole && (
+                    <Typography sx={{ fontSize: 14, color: MUTED }}>{project.jobRole}</Typography>
+                  )}
+                  {project.requiredExperience && (
+                    <Box sx={{ backgroundColor: "rgba(60,32,25,0.06)", color: INK_2, borderRadius: "20px", px: 1.1, py: 0.2, fontSize: 11, fontWeight: 500 }}>
+                      {project.requiredExperience}
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Meta row */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
+                  <Typography sx={{ fontSize: 12, color: MUTED_2 }}>Your project</Typography>
+                  {updatedDate && (
+                    <>
+                      <Box sx={{ width: 3, height: 3, borderRadius: "50%", backgroundColor: MUTED_2 }} />
+                      <Typography sx={{ fontSize: 12, color: MUTED_2 }}>Updated {updatedDate}</Typography>
+                    </>
+                  )}
+                </Box>
+
+                {/* Progress bar */}
+                <Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.75 }}>
+                    <Typography sx={{ fontSize: 12.5, color: INK_2, fontWeight: 500 }}>
+                      {attempted} of {questions.length} attempted
+                    </Typography>
+                    <Typography sx={{ fontSize: 12, color: CORAL, fontWeight: 700 }}>
+                      {Math.round(pct)}%
+                    </Typography>
+                  </Box>
+                  <Box sx={{ height: 6, borderRadius: 3, backgroundColor: CORAL_SOFTER, overflow: "hidden" }}>
+                    <Box sx={{ height: "100%", borderRadius: 3, backgroundColor: CORAL, width: `${pct}%`, transition: "width 0.5s ease" }} />
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Right — score tiles */}
+              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1.25, mt: { xs: 3.5, md: 0 }, flexShrink: 0, minWidth: { md: 360 } }}>
+                {scoreKeys.map((k) => (
+                  <ScoreTile
+                    key={k}
+                    label={k.charAt(0).toUpperCase() + k.slice(1)}
+                    avg={getScore(k)}
+                    trend={getTrend(k)}
+                    noData={noScoreData}
+                  />
+                ))}
+              </Box>
+            </Box>
+          </Box>
+        )}
+
+        {/* ── Session mode compact context strip ───────────────────────────── */}
+        {!isProjectMode && (contextCompanyName || contextJobRole) && (
+          <Box sx={{ mb: 3 }}>
+            <Typography component="h1" sx={{ fontFamily: "Georgia, serif", fontSize: { xs: 20, md: 24 }, fontWeight: 500, color: INK, mb: 0.5 }}>
+              {questions.length} questions, ready to practise.
+            </Typography>
+            {(contextCompanyName || contextJobRole) && (
+              <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, backgroundColor: CORAL_SOFTER, color: CORAL_INK, borderRadius: "20px", px: 1.5, py: 0.4, fontSize: 12, fontWeight: 600 }}>
+                {[contextCompanyName, contextJobRole].filter(Boolean).join(" · ")}
+              </Box>
+            )}
+          </Box>
+        )}
+
+        {/* ── Filter strip ──────────────────────────────────────────────────── */}
+        <Box sx={{ mb: 2.5, display: "flex", flexDirection: "column", gap: 1.25 }}>
+
+          {/* Row 1: filter icon + difficulty toggles + count */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            {/* Filter icon only */}
+            <TuneIcon sx={{ fontSize: 16, color: MUTED, flexShrink: 0 }} />
+
+            {/* Divider */}
+            <Box sx={{ width: "1px", height: 18, backgroundColor: LINE, flexShrink: 0 }} />
+
+            {/* Difficulty — outlined multi-select toggles */}
+            <Box sx={{ display: "flex", gap: 0.75 }}>
+              {["Easy", "Medium", "Hard"].map((label) => {
+                const d = label.toLowerCase();
+                const active = activeDiffs.includes(d);
+                return (
+                  <Box
+                    key={d}
+                    onClick={() => toggleDiff(d)}
+                    sx={{
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: "20px",
+                      fontSize: 12,
+                      fontWeight: 600,
+                      whiteSpace: "nowrap",
+                      userSelect: "none",
+                      transition: "all 120ms ease",
+                      border: `1.5px solid ${active ? "transparent" : "rgba(60,32,25,0.14)"}`,
+                      backgroundColor: active ? DIFF[d].bg : "transparent",
+                      color: active ? DIFF[d].color : MUTED,
+                      "&:hover": { backgroundColor: DIFF[d].bg, color: DIFF[d].color, border: "1.5px solid transparent" },
+                    }}
+                  >
+                    {active && (
+                      <Box sx={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: DIFF[d].color, flexShrink: 0 }} />
+                    )}
+                    {label}
+                  </Box>
+                );
+              })}
+            </Box>
+
+            {/* Count — right-aligned */}
+            <Typography sx={{ ml: "auto", fontSize: 12, color: MUTED_2, fontWeight: 500, flexShrink: 0 }}>
+              {filtered.length === questions.length
+                ? `${questions.length} questions`
+                : `${filtered.length} of ${questions.length}`}
+            </Typography>
+          </Box>
+
+          {/* Row 2: topic filter — scrollable with scroll cue */}
+          {allTags.length > 0 && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              {/* Align with icon + divider above */}
+              <Box sx={{ width: 16, flexShrink: 0 }} />
+              <Box sx={{ width: "1px", height: 18, backgroundColor: "transparent", flexShrink: 0 }} />
+
+              {/* Scrollable tag row */}
+              <Box sx={{ position: "relative", flex: 1, minWidth: 0 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.75,
+                    overflowX: "auto",
+                    scrollbarWidth: "none",
+                    "&::-webkit-scrollbar": { display: "none" },
+                  }}
+                >
+                  {allTags.map((t) => {
+                    const active = activeTags.includes(t);
+                    return (
+                      <Box
+                        key={t}
+                        onClick={() => toggleTag(t)}
+                        sx={{
+                          cursor: "pointer",
+                          flexShrink: 0,
+                          px: 1.5,
+                          py: 0.45,
+                          borderRadius: "20px",
+                          fontSize: 12,
+                          fontWeight: active ? 600 : 400,
+                          whiteSpace: "nowrap",
+                          userSelect: "none",
+                          transition: "all 120ms ease",
+                          border: `1.5px solid ${active ? "transparent" : "rgba(60,32,25,0.14)"}`,
+                          backgroundColor: active ? CORAL_SOFTER : "transparent",
+                          color: active ? CORAL_INK : MUTED,
+                          "&:hover": { backgroundColor: CORAL_SOFTER, color: CORAL_INK, border: "1.5px solid transparent" },
+                        }}
+                      >
+                        {active && (
+                          <Box component="span" sx={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", backgroundColor: CORAL_INK, mr: 0.75, verticalAlign: "middle", mb: "1px" }} />
+                        )}
+                        {t}
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </Box>
+
+              {/* Clear button — always visible when tags are active */}
+              {activeTags.length > 0 && (
+                <Box
+                  onClick={() => setActiveTags([])}
+                  sx={{ cursor: "pointer", flexShrink: 0, fontSize: 11.5, fontWeight: 500, color: MUTED_2, px: 1, py: 0.3, whiteSpace: "nowrap", userSelect: "none", "&:hover": { color: MUTED }, transition: "color 120ms ease" }}
+                >
+                  clear ×
+                </Box>
+              )}
+            </Box>
+          )}
         </Box>
+
+        {/* ── Questions section ─────────────────────────────────────────────── */}
+        <Box sx={{ backgroundColor: SURFACE, border: `1px solid ${LINE}`, borderRadius: "20px", p: { xs: 3, md: "28px 32px" }, boxShadow: "0 18px 36px rgba(252,150,120,0.08)" }}>
+          <Box sx={{ mb: 2.5 }}>
+            <Typography sx={{ fontSize: 15, fontWeight: 700, color: INK }}>Questions</Typography>
+          </Box>
+
+          {filtered.length > 0 ? (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              {filtered.map((q, i) => (
+                <QuestionRow
+                  key={q.id || i}
+                  index={i + 1}
+                  q={q}
+                  onPractice={navigateToPractice}
+                />
+              ))}
+            </Box>
+          ) : (
+            <Box sx={{ py: 6, textAlign: "center", color: MUTED, fontSize: 14 }}>
+              No questions match the selected filters.
+            </Box>
+          )}
+        </Box>
+
       </Container>
 
-      {/* Save as Project dialog */}
+      {/* ── Save as Project dialog ────────────────────────────────────────── */}
       <Dialog
         open={saveDialogOpen}
         onClose={() => !isSaving && setSaveDialogOpen(false)}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        PaperProps={{ sx: { borderRadius: "14px", backgroundColor: PAGE_BG, px: 1, py: 0.5 } }}
       >
-        <DialogTitle sx={{ fontWeight: 700, color: "#2f170f" }}>
+        <DialogTitle sx={{ fontWeight: 700, color: INK, pb: 0.5, fontSize: 16 }}>
           Save as Project
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body2" sx={{ color: "rgba(60,32,25,0.6)", mb: 2 }}>
-            Give this question set a name so you can revisit it and add to it later.
+          <Typography sx={{ fontSize: 13.5, color: INK_2, mb: 2, lineHeight: 1.6 }}>
+            Give this question set a name so you can revisit it later.
           </Typography>
           <TextField
-            autoFocus
-            fullWidth
-            size="small"
-            label="Project name"
+            autoFocus fullWidth size="small" label="Project name"
             value={projectName}
             onChange={(e) => setProjectName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && projectName.trim()) handleSaveProject();
-            }}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "10px",
-                "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(252,150,120,0.35)" },
-                "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(252,150,120,0.6)" },
-                "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#FA735B", borderWidth: "1px" },
-              },
-              "& .MuiInputLabel-root.Mui-focused": { color: "#FA735B" },
-            }}
+            onKeyDown={(e) => { if (e.key === "Enter" && projectName.trim()) handleSaveProject(); }}
+            sx={inputSx}
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button
-            onClick={() => setSaveDialogOpen(false)}
-            disabled={isSaving}
-            sx={{ textTransform: "none", color: "rgba(60,32,25,0.5)" }}
-          >
+          <Button onClick={() => setSaveDialogOpen(false)} disabled={isSaving} sx={{ textTransform: "none", color: MUTED }}>
             Cancel
           </Button>
           <Button
             variant="contained"
             disabled={!projectName.trim() || isSaving}
             onClick={handleSaveProject}
-            sx={{
-              textTransform: "none",
-              fontWeight: 600,
-              borderRadius: 2,
-              backgroundColor: "#FA735B",
-              boxShadow: "0px 8px 20px -8px rgba(250,115,91,0.6)",
-              "&:hover": { backgroundColor: "#f8643f" },
-            }}
+            sx={{ textTransform: "none", fontWeight: 600, borderRadius: "9px", px: 2.5, py: 1, backgroundColor: CORAL, boxShadow: "0px 8px 20px -8px rgba(250,115,91,0.6)", "&:hover": { backgroundColor: CORAL_INK } }}
           >
             {isSaving ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : "Save"}
           </Button>
