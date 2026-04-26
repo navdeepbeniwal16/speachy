@@ -32,6 +32,7 @@ import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import WorkIcon from "@mui/icons-material/Work";
 import AddIcon from "@mui/icons-material/Add";
 import InterviewService from "../services/interview-service.js";
+import ProjectService from "../services/project-service.js";
 import { AppContext } from "../components/AppContext.js";
 
 // Design tokens
@@ -351,7 +352,7 @@ const InterviewHome = () => {
   const [companyName, setCompanyName] = useState("");
   const [jobRole, setRole] = useState("");
   const [industry, setIndustry] = useState("");
-  const [experience, setExperience] = useState("");
+  const [experience, setExperience] = useState("entry");
   const [jobDescription, setJobDescription] = useState("");
   const [additionalNotes, setAdditionalNotes] = useState("");
   // Mode toggle
@@ -365,17 +366,18 @@ const InterviewHome = () => {
   const [customQuestionInput, setCustomQuestionInput] = useState("");
   const [customQuestions, setCustomQuestions] = useState([]);
   const [saveCustomDialogOpen, setSaveCustomDialogOpen] = useState(false);
+  const [saveAsProject, setSaveAsProject] = useState(false);
   const [customProjectName, setCustomProjectName] = useState("");
   const [isSavingCustom, setIsSavingCustom] = useState(false);
 
   // New state
-  const [questionCount, setQuestionCount] = useState(12);
+  const [questionCount, setQuestionCount] = useState(10);
   const [contextOpen, setContextOpen] = useState(false);
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const data = await InterviewService.getProjects();
+        const data = await ProjectService.getAll();
         setProjects(data);
       } catch (error) {
         showSnackbar("error", "Could not load your saved projects.");
@@ -426,8 +428,8 @@ const InterviewHome = () => {
 
       let savedProjectId = null;
       try {
-        const saved = await InterviewService.saveProject(projectName, questions, {
-          kind: "prepare",
+        const saved = await ProjectService.save(projectName, questions, {
+          kind: "tailored",
           companyName: companyName || null,
           jobRole: jobRole || null,
           jobDescription: jobDescription || null,
@@ -443,13 +445,13 @@ const InterviewHome = () => {
       setInterviewMode(null);
 
       if (savedProjectId) {
-        navigate(`/interview/project/${savedProjectId}`, {
+        navigate("/interview/questions", {
           state: {
             project: {
               id: savedProjectId,
               name: projectName,
               questions,
-              kind: "prepare",
+              kind: "tailored",
               companyName: companyName || null,
               jobRole: jobRole || null,
               jobDescription: jobDescription || null,
@@ -458,6 +460,8 @@ const InterviewHome = () => {
               additionalNotes: additionalNotes || null,
               practicedCount: 0,
             },
+            questions,
+            mode: "project",
           },
         });
       } else {
@@ -531,6 +535,13 @@ const InterviewHome = () => {
 
   const handleStartCustomPractice = () => {
     if (customQuestions.length === 0) return;
+    if (saveAsProject) {
+      setCustomProjectName(
+        companyName && jobRole ? `${companyName} — ${jobRole}` : "",
+      );
+      setSaveCustomDialogOpen(true);
+      return;
+    }
     navigate("/interview/questions", {
       state: {
         questions: customQuestions,
@@ -547,11 +558,11 @@ const InterviewHome = () => {
     if (!customProjectName.trim() || customQuestions.length === 0) return;
     setIsSavingCustom(true);
     try {
-      const saved = await InterviewService.saveProject(
+      const saved = await ProjectService.save(
         customProjectName.trim(),
         customQuestions,
         {
-          kind: "build",
+          kind: "custom",
           companyName: companyName || null,
           jobRole: jobRole || null,
           jobDescription: jobDescription || null,
@@ -563,13 +574,13 @@ const InterviewHome = () => {
       setSaveCustomDialogOpen(false);
       setInterviewMode(null);
       if (saved?.projectId) {
-        navigate(`/interview/project/${saved.projectId}`, {
+        navigate("/interview/questions", {
           state: {
             project: {
               id: saved.projectId,
               name: customProjectName.trim(),
               questions: customQuestions,
-              kind: "build",
+              kind: "custom",
               companyName: companyName || null,
               jobRole: jobRole || null,
               jobDescription: jobDescription || null,
@@ -578,6 +589,8 @@ const InterviewHome = () => {
               additionalNotes: null,
               practicedCount: 0,
             },
+            questions: customQuestions,
+            mode: "project",
           },
         });
       }
@@ -602,7 +615,7 @@ const InterviewHome = () => {
         py: { xs: 5, md: 7 },
       }}
     >
-      <Container maxWidth="lg">
+      <Container maxWidth="md">
         {/* Top nav */}
         <Box
           sx={{
@@ -1022,8 +1035,8 @@ const InterviewHome = () => {
                   <Box
                     key={project.id}
                     onClick={() =>
-                      navigate(`/interview/project/${project.id}`, {
-                        state: { project },
+                      navigate("/interview/questions", {
+                        state: { project, questions: project.questions, mode: "project" },
                       })
                     }
                     sx={{
@@ -1416,7 +1429,7 @@ const InterviewHome = () => {
                   <Slider
                     value={questionCount}
                     onChange={(_, v) => setQuestionCount(v)}
-                    min={6}
+                    min={5}
                     max={30}
                     step={1}
                     sx={{
@@ -1493,7 +1506,7 @@ const InterviewHome = () => {
             {isUploading ? (
               <CircularProgress size={18} sx={{ color: "#fff" }} />
             ) : (
-              `Generate ${questionCount} questions`
+              "Generate"
             )}
           </Button>
         </DialogActions>
@@ -1667,6 +1680,30 @@ const InterviewHome = () => {
                       autoComplete="off"
                       value={industry}
                       onChange={(e) => setIndustry(e.target.value)}
+                      sx={inputSx}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      multiline
+                      rows={3}
+                      placeholder="Job description — optional"
+                      value={jobDescription}
+                      onChange={(e) => setJobDescription(e.target.value)}
+                      sx={inputSx}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      multiline
+                      rows={2}
+                      placeholder="Additional notes — optional"
+                      value={additionalNotes}
+                      onChange={(e) => setAdditionalNotes(e.target.value)}
                       sx={inputSx}
                     />
                   </Grid>
@@ -1890,21 +1927,11 @@ const InterviewHome = () => {
         >
           {/* Save as project toggle */}
           <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 0.25,
-              cursor: "pointer",
-            }}
-            onClick={() => {
-              setCustomProjectName(
-                companyName && jobRole ? `${companyName} — ${jobRole}` : "",
-              );
-              setSaveCustomDialogOpen(true);
-            }}
+            sx={{ display: "flex", alignItems: "center", gap: 0.25, cursor: "pointer" }}
+            onClick={() => setSaveAsProject((v) => !v)}
           >
             <Checkbox
-              checked={customQuestions.length > 0}
+              checked={saveAsProject}
               size="small"
               disableRipple
               sx={{
