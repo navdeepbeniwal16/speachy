@@ -230,7 +230,7 @@ const InterviewPractice = () => {
 
   return (
     <Box sx={{ minHeight: "100vh", backgroundColor: "#fff4ef", pb: 6 }}>
-      <Container component="main" maxWidth="lg" sx={{ pt: 3 }}>
+      <Container component="main" maxWidth="md" sx={{ pt: 3 }}>
 
         {/* Header */}
         <Box
