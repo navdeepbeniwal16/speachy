@@ -26,7 +26,6 @@ import "@fontsource/amaranth";
 import UserProfilePage from "./pages/UserProfilePage";
 import PracticePage from "./pages/PracticePage";
 import ProjectsPage from "./pages/ProjectsPage";
-import InterviewProjectDetail from "./pages/InterviewProjectDetail";
 import QuestionsListPrototype from "./pages/prototype/QuestionsListPrototype";
 
 // Function to check if user is authenticated
@@ -89,10 +88,6 @@ function App() {
                 path="/interview/questions/:questionId"
                 element={<InterviewPracticeWrapper />}
               />
-              <Route
-                path="/interview/project/:id"
-                element={<InterviewProjectDetailWrapper />}
-              />
               {/* Prototype routes — no auth */}
               <Route path="/prototype/questions" element={<QuestionsListPrototype />} />
 
@@ -124,6 +119,5 @@ const PaymentSuccessWrapper = requireAuth(PaymentSuccess);
 const PaymentCancelWrapper = requireAuth(PaymentCancel);
 const UserProfilePageWrapper = requireAuth(UserProfilePage);
 const ProjectsPageWrapper = requireAuth(ProjectsPage);
-const InterviewProjectDetailWrapper = requireAuth(InterviewProjectDetail);
 
 export default App;
