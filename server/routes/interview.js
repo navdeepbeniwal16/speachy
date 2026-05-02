@@ -160,6 +160,7 @@ const transcribeAudio = async (audioFile) => {
       file: fileStream,
       model: "whisper-1",
       response_format: "verbose_json",
+      prompt: "Umm, let me think like, hmm... Okay, here's what I'm, like, thinking.",
       timestamp_granularities: ["word"],
     });
 
@@ -688,24 +689,48 @@ const evaluateResponse = async (req, res, next) => {
     return parseFieldValue(completion, "detailedFeedback");
   };
 
+  const getFillers = async () => {
+    try {
+      const completion = await openai.chat.completions.create({
+        model: model,
+        messages: [
+          systemPrompt,
+          userPrompt,
+          getInstructionPrompt(
+            "Count how many filler words appear in the candidate's response. " +
+            "Filler words are: um, uh, like, you know, basically, literally, actually, hmm, err, well, right, kind of, sort of. " +
+            "Return ONLY this exact JSON with no extra fields: {\"fillers\": <integer>}"
+          ),
+        ],
+        response_format: { type: "json_object" },
+      });
+      return await parseFieldValue(completion, "fillers");
+    } catch (err) {
+      logger.warn("getFillers failed, defaulting to null", { error: err.message });
+      return null;
+    }
+  };
+
   try {
     // Run all async functions concurrently
+    const isAudio = !!req.file;
+
     const [
       overview,
       tip,
       relevance,
       structure,
-      // sentiment,
       authenticity,
       detailedFeedback,
+      fillers,
     ] = await Promise.all([
       getOverview(),
       getTip(),
       getRelevance(),
       getStructure(),
-      // getSentiment(),
       getAuthenticity(),
       getDetailedaFeedback(),
+      isAudio ? getFillers() : Promise.resolve(null),
     ]);
 
     // Set results after both have completed
@@ -715,9 +740,9 @@ const evaluateResponse = async (req, res, next) => {
     feedback.overview = overview;
     feedback.tip = tip;
     feedback.detailedFeedback = detailedFeedback;
+    feedback.fillers = fillers;
     feedback.summary.relevance = relevance;
     feedback.summary.structure = structure;
-    // feedback.summary.sentiment = sentiment;
     feedback.summary.authenticity = authenticity;
 
     req.results = feedback;
