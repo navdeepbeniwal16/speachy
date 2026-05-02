@@ -464,115 +464,83 @@ const InterviewQuestions = () => {
           </Box>
         )}
 
-        {/* ── Filter strip ──────────────────────────────────────────────────── */}
-        <Box sx={{ mb: 2.5, display: "flex", flexDirection: "column", gap: 1.25 }}>
+        {/* ── Filter strip — single scrollable row ─────────────────────────── */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: 2.5, minWidth: 0 }}>
 
-          {/* Row 1: filter icon + difficulty toggles + count */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            {/* Filter icon only */}
-            <TuneIcon sx={{ fontSize: 16, color: MUTED, flexShrink: 0 }} />
+          {/* Filter icon */}
+          <TuneIcon sx={{ fontSize: 16, color: MUTED, flexShrink: 0 }} />
+          <Box sx={{ width: "1px", height: 16, backgroundColor: LINE, flexShrink: 0 }} />
 
-            {/* Divider */}
-            <Box sx={{ width: "1px", height: 18, backgroundColor: LINE, flexShrink: 0 }} />
+          {/* Difficulty pills — never shrink */}
+          <Box sx={{ display: "flex", gap: 0.75, flexShrink: 0 }}>
+            {["Easy", "Medium", "Hard"].map((label) => {
+              const d = label.toLowerCase();
+              const active = activeDiffs.includes(d);
+              return (
+                <Box
+                  key={d}
+                  onClick={() => toggleDiff(d)}
+                  sx={{
+                    cursor: "pointer",
+                    display: "inline-flex", alignItems: "center", gap: 0.5,
+                    px: 1.5, py: 0.45,
+                    borderRadius: "20px",
+                    fontSize: 12, fontWeight: 600,
+                    whiteSpace: "nowrap", userSelect: "none",
+                    transition: "all 120ms ease",
+                    border: `1.5px solid ${active ? "transparent" : "rgba(60,32,25,0.14)"}`,
+                    backgroundColor: active ? DIFF[d].bg : "transparent",
+                    color: active ? DIFF[d].color : MUTED,
+                    "&:hover": { backgroundColor: DIFF[d].bg, color: DIFF[d].color, border: "1.5px solid transparent" },
+                  }}
+                >
+                  {active && <Box sx={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: DIFF[d].color, flexShrink: 0 }} />}
+                  {label}
+                </Box>
+              );
+            })}
+          </Box>
 
-            {/* Difficulty — outlined multi-select toggles */}
-            <Box sx={{ display: "flex", gap: 0.75 }}>
-              {["Easy", "Medium", "Hard"].map((label) => {
-                const d = label.toLowerCase();
-                const active = activeDiffs.includes(d);
+          {/* Separator between difficulty and topics */}
+          {allTags.length > 0 && (
+            <Box sx={{ width: "1px", height: 16, backgroundColor: LINE, flexShrink: 0 }} />
+          )}
+
+          {/* Topic pills — scrollable, fills remaining space */}
+          {allTags.length > 0 && (
+            <Box
+              sx={{
+                display: "flex", alignItems: "center", gap: 0.75,
+                flex: 1, minWidth: 0,
+                overflowX: "auto",
+                scrollbarWidth: "none",
+                "&::-webkit-scrollbar": { display: "none" },
+              }}
+            >
+              {allTags.map((t) => {
+                const active = activeTags.includes(t);
                 return (
                   <Box
-                    key={d}
-                    onClick={() => toggleDiff(d)}
+                    key={t}
+                    onClick={() => toggleTag(t)}
                     sx={{
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 0.5,
-                      px: 1.5,
-                      py: 0.5,
+                      cursor: "pointer", flexShrink: 0,
+                      px: 1.5, py: 0.45,
                       borderRadius: "20px",
-                      fontSize: 12,
-                      fontWeight: 600,
-                      whiteSpace: "nowrap",
-                      userSelect: "none",
+                      fontSize: 12, fontWeight: active ? 600 : 400,
+                      whiteSpace: "nowrap", userSelect: "none",
                       transition: "all 120ms ease",
                       border: `1.5px solid ${active ? "transparent" : "rgba(60,32,25,0.14)"}`,
-                      backgroundColor: active ? DIFF[d].bg : "transparent",
-                      color: active ? DIFF[d].color : MUTED,
-                      "&:hover": { backgroundColor: DIFF[d].bg, color: DIFF[d].color, border: "1.5px solid transparent" },
+                      backgroundColor: active ? CORAL_SOFTER : "transparent",
+                      color: active ? CORAL_INK : MUTED,
+                      "&:hover": { backgroundColor: CORAL_SOFTER, color: CORAL_INK, border: "1.5px solid transparent" },
                     }}
                   >
-                    {active && (
-                      <Box sx={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: DIFF[d].color, flexShrink: 0 }} />
-                    )}
-                    {label}
+                    {active && <Box component="span" sx={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", backgroundColor: CORAL_INK, mr: 0.75, verticalAlign: "middle", mb: "1px" }} />}
+                    {t}
                   </Box>
                 );
               })}
-            </Box>
-
-            {/* Count — right-aligned */}
-            <Typography sx={{ ml: "auto", fontSize: 12, color: MUTED_2, fontWeight: 500, flexShrink: 0 }}>
-              {filtered.length === questions.length
-                ? `${questions.length} questions`
-                : `${filtered.length} of ${questions.length}`}
-            </Typography>
-          </Box>
-
-          {/* Row 2: topic filter — scrollable with scroll cue */}
-          {allTags.length > 0 && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              {/* Align with icon + divider above */}
-              <Box sx={{ width: 16, flexShrink: 0 }} />
-              <Box sx={{ width: "1px", height: 18, backgroundColor: "transparent", flexShrink: 0 }} />
-
-              {/* Scrollable tag row */}
-              <Box sx={{ position: "relative", flex: 1, minWidth: 0 }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 0.75,
-                    overflowX: "auto",
-                    scrollbarWidth: "none",
-                    "&::-webkit-scrollbar": { display: "none" },
-                  }}
-                >
-                  {allTags.map((t) => {
-                    const active = activeTags.includes(t);
-                    return (
-                      <Box
-                        key={t}
-                        onClick={() => toggleTag(t)}
-                        sx={{
-                          cursor: "pointer",
-                          flexShrink: 0,
-                          px: 1.5,
-                          py: 0.45,
-                          borderRadius: "20px",
-                          fontSize: 12,
-                          fontWeight: active ? 600 : 400,
-                          whiteSpace: "nowrap",
-                          userSelect: "none",
-                          transition: "all 120ms ease",
-                          border: `1.5px solid ${active ? "transparent" : "rgba(60,32,25,0.14)"}`,
-                          backgroundColor: active ? CORAL_SOFTER : "transparent",
-                          color: active ? CORAL_INK : MUTED,
-                          "&:hover": { backgroundColor: CORAL_SOFTER, color: CORAL_INK, border: "1.5px solid transparent" },
-                        }}
-                      >
-                        {active && (
-                          <Box component="span" sx={{ display: "inline-block", width: 5, height: 5, borderRadius: "50%", backgroundColor: CORAL_INK, mr: 0.75, verticalAlign: "middle", mb: "1px" }} />
-                        )}
-                        {t}
-                      </Box>
-                    );
-                  })}
-                </Box>
-              </Box>
-
-              {/* Clear button — always visible when tags are active */}
               {activeTags.length > 0 && (
                 <Box
                   onClick={() => setActiveTags([])}
@@ -583,6 +551,13 @@ const InterviewQuestions = () => {
               )}
             </Box>
           )}
+
+          {/* Question count — always pinned right */}
+          <Typography sx={{ fontSize: 12, color: MUTED_2, fontWeight: 500, flexShrink: 0, ml: allTags.length > 0 ? 0 : "auto" }}>
+            {filtered.length === questions.length
+              ? `${questions.length} questions`
+              : `${filtered.length} of ${questions.length}`}
+          </Typography>
         </Box>
 
         {/* ── Questions section ─────────────────────────────────────────────── */}
