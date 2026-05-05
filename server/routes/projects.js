@@ -48,6 +48,9 @@ router.post("/", async (req, res) => {
     requiredExperience,
     jobDescription,
     additionalNotes,
+    sourceCollectionId,
+    author,
+    collectionLastUpdated,
   } = req.body;
 
   if (!name || !name.trim()) {
@@ -69,6 +72,9 @@ router.post("/", async (req, res) => {
       requiredExperience: requiredExperience || null,
       jobDescription: jobDescription || null,
       additionalNotes: additionalNotes || null,
+      sourceCollectionId: sourceCollectionId || null,
+      author: author || null,
+      collectionLastUpdated: collectionLastUpdated || null,
       createdAt: new Date().toISOString(),
     });
 
@@ -97,6 +103,27 @@ router.get("/:id", async (req, res) => {
   } catch (error) {
     logger.error("Error fetching project by id", { error: error.message });
     res.status(500).json({ success: false, error: "Failed to fetch project" });
+  }
+});
+
+// DELETE /projects/:id — delete a project (used for unsaving a collection)
+router.delete("/:id", async (req, res) => {
+  const uid = req.user.user_id;
+  const { id } = req.params;
+  try {
+    const docRef = projectsRef(uid).doc(id);
+    const docSnap = await docRef.get();
+
+    if (!docSnap.exists) {
+      return res.status(404).json({ success: false, error: "Project not found" });
+    }
+
+    await docRef.delete();
+    logger.info("Project deleted", { uid, projectId: id });
+    res.status(200).json({ success: true });
+  } catch (error) {
+    logger.error("Error deleting project", { error: error.message });
+    res.status(500).json({ success: false, error: "Failed to delete project" });
   }
 });
 

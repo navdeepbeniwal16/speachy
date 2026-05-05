@@ -10,6 +10,7 @@ const bodyParser = require("body-parser");
 const morgan = require("morgan");
 const interviewRoute = require("./routes/interview.js");
 const projectsRoute = require("./routes/projects.js");
+const collectionsRoute = require("./routes/collections.js");
 const userRoute = require("./routes/user.js");
 const impromptuSpeakingRoute = require("./routes/impromptu-speaking.js");
 const paymentsRoute = require("./routes/payments.js");
@@ -80,6 +81,7 @@ app.get("/", (req, res, next) => {
 
 app.use("/interview", verifyToken, interviewRoute);
 app.use("/projects", verifyToken, projectsRoute);
+app.use("/collections", verifyToken, collectionsRoute);
 app.use("/me", verifyToken, userRoute);
 app.use("/streak", verifyToken, streakRoute);
 app.use("/sessions", verifyToken, sessionsRoute);

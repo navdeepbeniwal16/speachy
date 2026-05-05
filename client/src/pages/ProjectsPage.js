@@ -5,14 +5,14 @@ import {
   Button,
   CircularProgress,
   Container,
-  IconButton,
   Typography,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import CreateIcon from "@mui/icons-material/Create";
 import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
 import { AppContext } from "../components/AppContext.js";
+import HubHeader from "../components/HubHeader.js";
 import ProjectService from "../services/project-service.js";
 
 const CORAL = "#FA735B";
@@ -61,6 +61,12 @@ const KIND_CONFIG = {
     color: BUTTER_INK,
     icon: <CreateIcon sx={{ fontSize: 10 }} />,
   },
+  collection: {
+    label: "Curated",
+    bg: "rgba(82,130,255,0.08)",
+    color: "#2a4bcc",
+    icon: <AutoStoriesIcon sx={{ fontSize: 10 }} />,
+  },
 };
 
 const KindBadge = ({ kind }) => {
@@ -100,7 +106,10 @@ const ProjectsPage = () => {
         const data = await ProjectService.getAll();
         setProjects(data);
       } catch (error) {
-        showSnackbar("error", "Could not load your projects. Please try again.");
+        showSnackbar(
+          "error",
+          "Could not load your projects. Please try again.",
+        );
       } finally {
         setLoading(false);
       }
@@ -109,87 +118,59 @@ const ProjectsPage = () => {
   }, []);
 
   const openProject = (project) => {
-    navigate("/interview/questions", {
-      state: { project, questions: project.questions, mode: "project" },
-    });
+    if (project.kind === "collection") {
+      navigate("/interview/questions", {
+        state: {
+          mode: "collection",
+          collection: {
+            id: project.sourceCollectionId,
+            name: project.name,
+            author: project.author,
+            lastUpdated: project.collectionLastUpdated,
+          },
+          questions: project.questions,
+          from: "projects",
+        },
+      });
+    } else {
+      navigate("/interview/questions", {
+        state: { project, questions: project.questions, mode: "project" },
+      });
+    }
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: PAGE_BG, py: { xs: 5, md: 7 } }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        backgroundColor: PAGE_BG,
+        py: { xs: 5, md: 7 },
+      }}
+    >
       <Container maxWidth="md">
-
-        {/* Top nav */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "48px 1fr 48px",
-            alignItems: "center",
-            mb: 3,
-          }}
-        >
-          <IconButton
-            onClick={() => navigate("/")}
-            sx={{ color: INK, borderRadius: 2, width: 40, height: 40 }}
-          >
-            <ArrowBackIcon fontSize="small" />
-          </IconButton>
-          <Typography
-            align="center"
-            sx={{ fontSize: 13, fontWeight: 600, color: MUTED, letterSpacing: 0.3 }}
-          >
-            Projects
-          </Typography>
-          <Box />
-        </Box>
-
-        {/* Page heading */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            mb: 4,
-            flexWrap: "wrap",
-            gap: 2,
-          }}
-        >
-          <Box>
-            <Typography
-              component="h1"
+        <HubHeader
+          title="Your projects"
+          subtitle={!loading && projects.length > 0 ? `${projects.length} saved` : undefined}
+          action={
+            <Button
+              variant="contained"
+              onClick={() => navigate("/interview")}
               sx={{
-                fontFamily: "Georgia, serif",
-                fontSize: { xs: 22, md: 26 },
-                fontWeight: 500,
-                color: INK,
-                lineHeight: 1.25,
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: 13,
+                px: 2.5,
+                py: 1,
+                borderRadius: "10px",
+                backgroundColor: CORAL,
+                boxShadow: "0px 8px 18px -6px rgba(250,115,91,0.6)",
+                "&:hover": { backgroundColor: CORAL_INK },
               }}
             >
-              Your projects
-            </Typography>
-            {!loading && projects.length > 0 && (
-              <Typography sx={{ fontSize: 13, color: MUTED, mt: 0.5 }}>
-                {projects.length} saved
-              </Typography>
-            )}
-          </Box>
-          <Button
-            variant="contained"
-            onClick={() => navigate("/interview")}
-            sx={{
-              textTransform: "none",
-              fontWeight: 600,
-              fontSize: 13,
-              px: 2.5,
-              py: 1,
-              borderRadius: "10px",
-              backgroundColor: CORAL,
-              boxShadow: "0px 8px 18px -6px rgba(250,115,91,0.6)",
-              "&:hover": { backgroundColor: CORAL_INK },
-            }}
-          >
-            + New project
-          </Button>
-        </Box>
+              + New project
+            </Button>
+          }
+        />
 
         {/* Content */}
         {loading ? (
@@ -222,7 +203,8 @@ const ProjectsPage = () => {
                 lineHeight: 1.6,
               }}
             >
-              Create a tailored or custom question set from the Interview Prep page — it'll appear here.
+              Create a tailored or custom question set from the Interview Prep
+              page — it'll appear here.
             </Typography>
             <Button
               variant="outlined"
@@ -235,7 +217,10 @@ const ProjectsPage = () => {
                 borderColor: "rgba(252,150,120,0.4)",
                 color: CORAL,
                 borderRadius: "10px",
-                "&:hover": { borderColor: CORAL, backgroundColor: CORAL_SOFTER },
+                "&:hover": {
+                  borderColor: CORAL,
+                  backgroundColor: CORAL_SOFTER,
+                },
               }}
             >
               Go to Interview Prep
@@ -273,7 +258,7 @@ const ProjectsPage = () => {
                     p: "18px",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "14px",
+                    gap: "10px",
                     transition: "transform 120ms ease, box-shadow 120ms ease",
                     "&:hover": {
                       transform: "translateY(-2px)",
@@ -284,18 +269,37 @@ const ProjectsPage = () => {
                   {/* Kind badge */}
                   <KindBadge kind={project.kind} />
 
-                  {/* Company / role — fixed height so cards align even without a role */}
-                  <Box sx={{ minHeight: 42 }}>
+                  {/* Title + subtitle — fixed height so cards align */}
+                  <Box sx={{ minHeight: 62 }}>
                     <Typography
-                      sx={{ fontWeight: 600, fontSize: 15, color: INK, lineHeight: 1.3 }}
+                      sx={{
+                        fontWeight: 600,
+                        fontSize: 15,
+                        color: INK,
+                        lineHeight: 1.3,
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}
                     >
-                      {project.companyName || project.name}
+                      {project.kind === "collection"
+                        ? project.name
+                        : project.companyName || project.name}
                     </Typography>
-                    {project.jobRole && (
-                      <Typography sx={{ fontSize: 12.5, color: MUTED, mt: 0.25 }}>
+                    {project.kind === "collection" ? (
+                      <Typography
+                        sx={{ fontSize: 12.5, color: MUTED, mt: 0.25 }}
+                      >
+                        By {project.author || "Speachy"}
+                      </Typography>
+                    ) : project.jobRole ? (
+                      <Typography
+                        sx={{ fontSize: 12.5, color: MUTED, mt: 0.25 }}
+                      >
                         {project.jobRole}
                       </Typography>
-                    )}
+                    ) : null}
                   </Box>
 
                   {/* Progress bar */}
@@ -343,7 +347,11 @@ const ProjectsPage = () => {
                       "&:hover": { color: CORAL },
                     }}
                   >
-                    {done > 0 ? "Continue practising →" : "Open project →"}
+                    {project.kind === "collection"
+                      ? "Open collection"
+                      : done > 0
+                        ? "Continue practising"
+                        : "Open project"}
                   </Typography>
                 </Box>
               );

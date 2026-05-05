@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -13,9 +13,10 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
+import BookmarkIcon from "@mui/icons-material/Bookmark";
 import CreateIcon from "@mui/icons-material/Create";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
@@ -27,6 +28,7 @@ import TrendingFlatIcon from "@mui/icons-material/TrendingFlat";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TuneIcon from "@mui/icons-material/Tune";
 import { AppContext } from "../components/AppContext.js";
+import BreadcrumbHeader from "../components/BreadcrumbHeader.js";
 import InterviewService from "../services/interview-service.js";
 import ProjectService from "../services/project-service.js";
 
@@ -204,6 +206,7 @@ const InterviewQuestions = () => {
   const {
     questions: initialQuestions = [],
     project,
+    collection,
     companyName,
     jobRole,
     jobDescription,
@@ -213,7 +216,8 @@ const InterviewQuestions = () => {
     mode,
   } = location.state || {};
 
-  const isProjectMode = !!project;
+  const isProjectMode    = !!project;
+  const isCollectionMode = mode === "collection";
 
   const [questions, setQuestions] = useState(initialQuestions);
   const [activeDiffs, setActiveDiffs] = useState([]);
@@ -224,6 +228,21 @@ const InterviewQuestions = () => {
     (companyName && jobRole) ? `${companyName} — ${jobRole}` : ""
   );
   const [isSaving, setIsSaving] = useState(false);
+
+  // Collection bookmark state
+  const [savedProjectId, setSavedProjectId] = useState(null);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  const [unsaveDialogOpen, setUnsaveDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isCollectionMode || !collection) return;
+    ProjectService.getAll()
+      .then((projects) => {
+        const match = projects.find((p) => p.sourceCollectionId === collection.id);
+        setSavedProjectId(match ? match.id : null);
+      })
+      .catch(() => {});
+  }, [isCollectionMode, collection?.id]);
 
   // Derive unique tags from the question set
   const allTags = useMemo(() => {
@@ -268,6 +287,8 @@ const InterviewQuestions = () => {
         additionalNotes: isProjectMode ? project.additionalNotes : additionalNotes,
         mode: isProjectMode ? "project" : mode,
         projectId: project?.id,
+        collection: isCollectionMode ? collection : undefined,
+        from: location.state?.from,
       },
     });
   };
@@ -304,6 +325,41 @@ const InterviewQuestions = () => {
     }
   };
 
+  const handleSaveCollection = async () => {
+    if (bookmarkLoading || !collection) return;
+    setBookmarkLoading(true);
+    try {
+      const result = await ProjectService.save(collection.name, questions, {
+        type: "interview",
+        kind: "collection",
+        sourceCollectionId: collection.id,
+        author: collection.author || null,
+        collectionLastUpdated: collection.lastUpdated || null,
+      });
+      setSavedProjectId(result.projectId);
+      showSnackbar("success", "Collection saved to your projects.");
+    } catch {
+      showSnackbar("error", "Could not save collection. Please try again.");
+    } finally {
+      setBookmarkLoading(false);
+    }
+  };
+
+  const handleUnsaveCollection = async () => {
+    if (!savedProjectId) return;
+    setBookmarkLoading(true);
+    setUnsaveDialogOpen(false);
+    try {
+      await ProjectService.delete(savedProjectId);
+      setSavedProjectId(null);
+      showSnackbar("success", "Collection removed from your projects.");
+    } catch {
+      showSnackbar("error", "Could not remove collection. Please try again.");
+    } finally {
+      setBookmarkLoading(false);
+    }
+  };
+
   // Score tile helpers for project mode
   const scoreKeys = ["relevance", "structure", "fluency"];
   const trendMap = { improving: "up", stable: "stable", declining: "down" };
@@ -329,42 +385,56 @@ const InterviewQuestions = () => {
     <Box sx={{ minHeight: "100vh", backgroundColor: PAGE_BG, py: { xs: 5, md: 7 } }}>
       <Container maxWidth="md">
 
-        {/* ── Top nav ───────────────────────────────────────────────────────── */}
-        <Box sx={{ display: "grid", gridTemplateColumns: "48px 1fr 48px", alignItems: "center", mb: 3 }}>
-          <IconButton
-            onClick={() => navigate(isProjectMode ? "/projects" : "/interview")}
-            sx={{ color: INK, borderRadius: 2, width: 40, height: 40 }}
-          >
-            <ArrowBackIcon fontSize="small" />
-          </IconButton>
-          <Typography align="center" sx={{ fontSize: 13, fontWeight: 600, color: MUTED, letterSpacing: 0.3 }}>
-            {isProjectMode ? "Your projects" : "Interview Preparation"}
-          </Typography>
-          <Box />
-        </Box>
-
-        {/* ── Session mode action bar (refresh + save) ─────────────────────── */}
-        {!isProjectMode && mode === "ai" && (
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, mb: 3 }}>
-            <Button
-              variant="outlined"
-              startIcon={isRefreshing ? <CircularProgress size={13} sx={{ color: CORAL }} /> : <RefreshIcon fontSize="small" />}
-              disabled={isRefreshing}
-              onClick={handleRefresh}
-              sx={{ textTransform: "none", fontWeight: 600, fontSize: 13, borderColor: "rgba(252,150,120,0.4)", color: CORAL, borderRadius: "10px", px: 2, "&:hover": { borderColor: CORAL, backgroundColor: CORAL_SOFTER } }}
-            >
-              {isRefreshing ? "Refreshing…" : "Refresh"}
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<BookmarkBorderIcon fontSize="small" />}
-              onClick={() => setSaveDialogOpen(true)}
-              sx={{ textTransform: "none", fontWeight: 600, fontSize: 13, borderRadius: "10px", px: 2, backgroundColor: CORAL, boxShadow: "0px 8px 20px -8px rgba(250,115,91,0.6)", "&:hover": { backgroundColor: CORAL_INK } }}
-            >
-              Save as Project
-            </Button>
-          </Box>
-        )}
+        {/* ── Breadcrumb nav ────────────────────────────────────────────────── */}
+        <BreadcrumbHeader
+          parentLabel={
+            isProjectMode   ? "Projects"
+            : isCollectionMode ? (location.state?.from === "projects" ? "Projects" : "Collections")
+            : "Interview Hub"
+          }
+          parentPath={
+            isProjectMode   ? "/projects"
+            : isCollectionMode ? (location.state?.from === "projects" ? "/projects" : "/interview/collections")
+            : "/interview"
+          }
+          onBack={isCollectionMode ? () => navigate(location.state?.from === "projects" ? "/projects" : "/interview/collections") : undefined}
+          currentLabel={
+            isProjectMode
+              ? (project.companyName || project.name)
+              : isCollectionMode
+                ? collection.name
+                : "Question Set"
+          }
+          right={
+            isProjectMode ? (
+              <Typography sx={{ fontSize: 12.5, color: MUTED, fontWeight: 500 }}>
+                {questions.length} questions
+              </Typography>
+            ) : mode === "ai" ? (
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={isRefreshing ? <CircularProgress size={11} sx={{ color: CORAL }} /> : <RefreshIcon sx={{ fontSize: "14px !important" }} />}
+                  disabled={isRefreshing}
+                  onClick={handleRefresh}
+                  sx={{ textTransform: "none", fontWeight: 600, fontSize: 12, borderColor: "rgba(252,150,120,0.4)", color: CORAL, borderRadius: "9px", px: 1.5, "&:hover": { borderColor: CORAL, backgroundColor: CORAL_SOFTER } }}
+                >
+                  {isRefreshing ? "Refreshing…" : "Refresh"}
+                </Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<BookmarkBorderIcon sx={{ fontSize: "14px !important" }} />}
+                  onClick={() => setSaveDialogOpen(true)}
+                  sx={{ textTransform: "none", fontWeight: 600, fontSize: 12, borderRadius: "9px", px: 1.5, backgroundColor: CORAL, boxShadow: "0px 6px 16px -6px rgba(250,115,91,0.6)", "&:hover": { backgroundColor: CORAL_INK } }}
+                >
+                  Save
+                </Button>
+              </Box>
+            ) : null
+          }
+        />
 
         {/* ── Project mode header card ──────────────────────────────────────── */}
         {isProjectMode && (
@@ -444,6 +514,85 @@ const InterviewQuestions = () => {
                     trend={getTrend(k)}
                     noData={noScoreData}
                   />
+                ))}
+              </Box>
+            </Box>
+          </Box>
+        )}
+
+        {/* ── Collection mode header card ──────────────────────────────────── */}
+        {isCollectionMode && collection && (
+          <Box sx={{ backgroundColor: SURFACE, border: `1px solid ${LINE}`, borderRadius: "20px", p: { xs: 3, md: "32px 36px" }, mb: 3, boxShadow: "0 18px 36px rgba(252,150,120,0.10)" }}>
+            <Box sx={{ display: "flex", gap: { xs: 0, md: 5 }, flexDirection: { xs: "column", md: "row" }, alignItems: "flex-start" }}>
+
+              {/* Left — identity + progress */}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                {/* Curated badge + bookmark */}
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                  <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, backgroundColor: CORAL_SOFTER, color: CORAL_INK, borderRadius: "20px", px: 1.1, py: 0.3, fontSize: 11, fontWeight: 700 }}>
+                    <AutoStoriesIcon sx={{ fontSize: 10 }} />
+                    Curated by Speachy
+                  </Box>
+                  <IconButton
+                    size="small"
+                    disabled={bookmarkLoading}
+                    onClick={() => savedProjectId ? setUnsaveDialogOpen(true) : handleSaveCollection()}
+                    sx={{ color: savedProjectId ? CORAL : MUTED, "&:hover": { color: CORAL, backgroundColor: CORAL_SOFTER } }}
+                  >
+                    {bookmarkLoading
+                      ? <CircularProgress size={16} sx={{ color: CORAL }} />
+                      : savedProjectId ? <BookmarkIcon fontSize="small" /> : <BookmarkBorderIcon fontSize="small" />
+                    }
+                  </IconButton>
+                </Box>
+
+                {/* Title */}
+                <Typography component="h1" sx={{ fontFamily: "Georgia, serif", fontSize: { xs: 24, md: 30 }, fontWeight: 700, color: INK, lineHeight: 1.15, mb: 0.75 }}>
+                  {collection.name}
+                </Typography>
+
+                {/* Description */}
+                {collection.description && (
+                  <Typography sx={{ fontSize: 13.5, color: INK_2, lineHeight: 1.65, mb: 1 }}>
+                    {collection.description}
+                  </Typography>
+                )}
+
+                {/* Meta row */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
+                  {collection.author && (
+                    <Typography sx={{ fontSize: 12, color: MUTED_2 }}>By {collection.author}</Typography>
+                  )}
+                  {collection.lastUpdated && (
+                    <>
+                      <Box sx={{ width: 3, height: 3, borderRadius: "50%", backgroundColor: MUTED_2 }} />
+                      <Typography sx={{ fontSize: 12, color: MUTED_2 }}>
+                        Updated {new Date(collection.lastUpdated).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                      </Typography>
+                    </>
+                  )}
+                </Box>
+
+                {/* Progress bar */}
+                <Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.75 }}>
+                    <Typography sx={{ fontSize: 12.5, color: INK_2, fontWeight: 500 }}>
+                      {attempted} of {questions.length} attempted
+                    </Typography>
+                    <Typography sx={{ fontSize: 12, color: CORAL, fontWeight: 700 }}>
+                      {Math.round(pct)}%
+                    </Typography>
+                  </Box>
+                  <Box sx={{ height: 6, borderRadius: 3, backgroundColor: CORAL_SOFTER, overflow: "hidden" }}>
+                    <Box sx={{ height: "100%", borderRadius: 3, backgroundColor: CORAL, width: `${pct}%`, transition: "width 0.5s ease" }} />
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Right — score tiles (no data until attempt tracking is added in US4) */}
+              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1.25, mt: { xs: 3.5, md: 0 }, flexShrink: 0, minWidth: { md: 360 } }}>
+                {scoreKeys.map((k) => (
+                  <ScoreTile key={k} label={k.charAt(0).toUpperCase() + k.slice(1)} avg={null} trend={null} noData />
                 ))}
               </Box>
             </Box>
@@ -585,6 +734,36 @@ const InterviewQuestions = () => {
         </Box>
 
       </Container>
+
+      {/* ── Unsave collection dialog ─────────────────────────────────────── */}
+      <Dialog
+        open={unsaveDialogOpen}
+        onClose={() => setUnsaveDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: "14px", backgroundColor: PAGE_BG, px: 1, py: 0.5 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: INK, pb: 0.5, fontSize: 16 }}>
+          Remove collection?
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: 13.5, color: INK_2, lineHeight: 1.6 }}>
+            This collection will be removed from your projects. You can always save it again.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={() => setUnsaveDialogOpen(false)} sx={{ textTransform: "none", color: MUTED }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleUnsaveCollection}
+            sx={{ textTransform: "none", fontWeight: 600, borderRadius: "9px", px: 2.5, py: 1, backgroundColor: CORAL, boxShadow: "0px 8px 20px -8px rgba(250,115,91,0.6)", "&:hover": { backgroundColor: CORAL_INK } }}
+          >
+            Remove
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* ── Save as Project dialog ────────────────────────────────────────── */}
       <Dialog

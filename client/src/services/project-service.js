@@ -39,6 +39,16 @@ class ProjectService {
       throw error;
     }
   }
+
+  static async delete(projectId) {
+    try {
+      const response = await backendApiClient.delete(`/projects/${projectId}`);
+      return response.data;
+    } catch (error) {
+      console.error("ProjectService: Error deleting project:", error);
+      throw error;
+    }
+  }
 }
 
 export default ProjectService;

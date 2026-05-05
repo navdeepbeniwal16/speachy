@@ -24,8 +24,8 @@ import DrawerLeft from "./components/DrawerLeft";
 import FAQPage from "./pages/FAQPage";
 import "@fontsource/amaranth";
 import UserProfilePage from "./pages/UserProfilePage";
-import PracticePage from "./pages/PracticePage";
 import ProjectsPage from "./pages/ProjectsPage";
+import CollectionsPage from "./pages/CollectionsPage";
 import QuestionsListPrototype from "./pages/prototype/QuestionsListPrototype";
 
 // Function to check if user is authenticated
@@ -78,8 +78,8 @@ function App() {
               {/* Protected routes */}
               <Route path="/" element={<HomePageWrapper />} />
               <Route path="/interview" element={<InterviewHomeWrapper />} />
-              <Route path="/practice" element={<PracticePageWrapper />} />
               <Route path="/projects" element={<ProjectsPageWrapper />} />
+              <Route path="/interview/collections" element={<CollectionsPageWrapper />} />
               <Route
                 path="/interview/questions"
                 element={<InterviewQuestionsWrapper />}
@@ -110,7 +110,6 @@ function App() {
 
 // Wrappers for protected routes
 const HomePageWrapper = requireAuth(HomePage);
-const PracticePageWrapper = requireAuth(PracticePage);
 const InterviewHomeWrapper = requireAuth(InterviewHome);
 const InterviewQuestionsWrapper = requireAuth(InterviewQuestions);
 const InterviewPracticeWrapper = requireAuth(InterviewPractice);
@@ -119,5 +118,6 @@ const PaymentSuccessWrapper = requireAuth(PaymentSuccess);
 const PaymentCancelWrapper = requireAuth(PaymentCancel);
 const UserProfilePageWrapper = requireAuth(UserProfilePage);
 const ProjectsPageWrapper = requireAuth(ProjectsPage);
+const CollectionsPageWrapper = requireAuth(CollectionsPage);
 
 export default App;

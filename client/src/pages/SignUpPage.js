@@ -852,7 +852,7 @@ const SignUp = () => {
               },
             }}
           >
-            Start practicing for free →
+            Start practicing for free
           </Button> */}
         </Box>
       </Container>

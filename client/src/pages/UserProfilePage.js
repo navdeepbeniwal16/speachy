@@ -16,6 +16,7 @@ import {
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { deleteUser, getAuth, updateProfile } from "firebase/auth";
 import { AppContext } from "../components/AppContext";
+import HubHeader from "../components/HubHeader.js";
 import { useNavigate } from "react-router-dom";
 import SnackbarAlert from "../components/SnackbarAlert";
 
@@ -171,14 +172,7 @@ const UserProfilePage = () => {
           // p: { xs: 2, md: 4 },
         }}
       >
-        <Typography
-          variant="h5"
-          fontWeight="bold"
-          mb={3}
-          sx={{ color: "rgba(36, 20, 14, 0.9)" }}
-        >
-          Your profile
-        </Typography>
+        <HubHeader title="Profile" />
 
         <Paper
           elevation={0}

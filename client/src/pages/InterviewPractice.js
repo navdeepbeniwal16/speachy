@@ -9,7 +9,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import BreadcrumbHeader from "../components/BreadcrumbHeader.js";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import BoltIcon from "@mui/icons-material/Bolt";
@@ -291,18 +291,17 @@ const InterviewPractice = () => {
       <Container maxWidth="md" sx={{ pt: 5 }}>
 
         {/* ── Top nav ─────────────────────────────────────────────────────── */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
-          <Button
-            startIcon={<ArrowBackIcon sx={{ fontSize: 16 }} />}
-            onClick={() => navigate("/interview/questions", { state: { ...location.state } })}
-            sx={{ textTransform: "none", fontWeight: 500, fontSize: 13, color: MUTED, px: 0, "&:hover": { color: INK, backgroundColor: "transparent" } }}
-          >
-            Back to questions
-          </Button>
-          <Typography sx={{ fontSize: 13, fontWeight: 600, color: MUTED }}>
-            {questionIdx + 1} of {questions.length}
-          </Typography>
-        </Box>
+        <BreadcrumbHeader
+          parentLabel="Back to questions"
+          parentPath="/interview/questions"
+          onBack={() => navigate("/interview/questions", { state: { ...location.state } })}
+          currentLabel=""
+          right={
+            <Typography sx={{ fontSize: 13, fontWeight: 600, color: MUTED }}>
+              {questionIdx + 1} of {questions.length}
+            </Typography>
+          }
+        />
 
         {/* ── Question card ────────────────────────────────────────────────── */}
         <Box sx={{ backgroundColor: SURFACE, border: `1px solid ${LINE}`, borderRadius: "18px", p: { xs: 3, md: 4 }, mb: 3, boxShadow: SURFACE_SHADOW }}>

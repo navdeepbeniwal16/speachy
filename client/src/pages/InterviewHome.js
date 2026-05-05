@@ -20,9 +20,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
-import BoltIcon from "@mui/icons-material/Bolt";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import CloseIcon from "@mui/icons-material/Close";
 import CreateIcon from "@mui/icons-material/Create";
@@ -31,6 +29,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import WorkIcon from "@mui/icons-material/Work";
 import AddIcon from "@mui/icons-material/Add";
+import AutoStoriesIcon from "@mui/icons-material/AutoStories";
+import HubHeader from "../components/HubHeader.js";
 import InterviewService from "../services/interview-service.js";
 import ProjectService from "../services/project-service.js";
 import { AppContext } from "../components/AppContext.js";
@@ -345,7 +345,6 @@ const InterviewHome = () => {
   const navigate = useNavigate();
 
   // AI mode state
-  const [isStarting, setIsStarting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isCompanyProvided, setIsCompanyProvided] = useState(true);
   const [isRoleProvided, setIsRoleProvided] = useState(true);
@@ -489,28 +488,6 @@ const InterviewHome = () => {
     }
   };
 
-  const handleStart = async (event) => {
-    event.preventDefault();
-    setIsStarting(true);
-    try {
-      const questions = await InterviewService.fetchBehaviouralQuestions(
-        null,
-        null,
-        null,
-      );
-      navigate("/interview/questions", {
-        state: { questions, companyName, jobRole, jobDescription },
-      });
-    } catch (error) {
-      const message =
-        error?.userMessage ||
-        "Unable to generate questions right now. Please try again.";
-      showSnackbar("error", message);
-    } finally {
-      setIsStarting(false);
-    }
-  };
-
   // --- Custom questions handlers ---
 
   const handleAddCustomQuestion = () => {
@@ -616,55 +593,10 @@ const InterviewHome = () => {
       }}
     >
       <Container maxWidth="md">
-        {/* Top nav */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "48px 1fr 48px",
-            alignItems: "center",
-            mb: 3,
-          }}
-        >
-          <IconButton
-            onClick={() => navigate("/")}
-            sx={{ color: INK, borderRadius: 2, width: 40, height: 40 }}
-          >
-            <ArrowBackIcon fontSize="small" />
-          </IconButton>
-          <Typography
-            align="center"
-            sx={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: MUTED,
-              letterSpacing: 0.3,
-            }}
-          >
-            Job Interview Preparation
-          </Typography>
-          <Box />
-        </Box>
-
-        {/* Intro */}
-        <Box sx={{ mb: 3.5 }}>
-          <Typography
-            component="h1"
-            sx={{
-              fontFamily: "Georgia, serif",
-              fontSize: { xs: 22, md: 26 },
-              fontWeight: 500,
-              color: INK,
-              mb: 0.75,
-              lineHeight: 1.25,
-            }}
-          >
-            Let's get you interview-ready.
-          </Typography>
-          <Typography sx={{ fontSize: 14, color: MUTED, lineHeight: 1.6 }}>
-            Three ways to start - pick the one that matches how much prep time
-            you have.
-          </Typography>
-        </Box>
+        <HubHeader
+          title="Interview Hub"
+          subtitle="Start preparing for your next interview."
+        />
 
         {/* Entry cards grid */}
         <Box
@@ -752,7 +684,7 @@ const InterviewHome = () => {
                 mt: 1.5,
               }}
             >
-              Generate questions →
+              Generate questions
             </Typography>
           </Box>
 
@@ -837,12 +769,13 @@ const InterviewHome = () => {
                 mt: 1.5,
               }}
             >
-              Start a new set →
+              Start a new set
             </Typography>
           </Box>
 
-          {/* QuickCard */}
+          {/* Curated Collections card */}
           <Box
+            onClick={() => navigate("/interview/collections")}
             sx={{
               position: "relative",
               overflow: "hidden",
@@ -872,7 +805,7 @@ const InterviewHome = () => {
                 background:
                   "radial-gradient(circle at 30% 30%, #FA735B 0%, #C85A3E 70%, transparent 72%)",
                 pointerEvents: "none",
-                opacity: 0.85,
+                opacity: 0.4,
               }}
             />
 
@@ -890,7 +823,7 @@ const InterviewHome = () => {
                 flexShrink: 0,
               }}
             >
-              <BoltIcon sx={{ color: "#fff", fontSize: 16 }} />
+              <AutoStoriesIcon sx={{ color: "#fff", fontSize: 16 }} />
             </Box>
 
             {/* Badge */}
@@ -910,13 +843,13 @@ const InterviewHome = () => {
                 letterSpacing: 0.3,
               }}
             >
-              No setup · 5 min
+              Ready to practice
             </Box>
 
             <Typography
               sx={{ fontSize: 17, fontWeight: 600, color: "#fff", mb: 0.75 }}
             >
-              Quick Practice
+              Collections
             </Typography>
             <Typography
               sx={{
@@ -926,18 +859,12 @@ const InterviewHome = () => {
                 flex: 1,
               }}
             >
-              Jump straight into commonly asked behavioural questions.
+              Professionally authored question sets for common interview roles.
             </Typography>
 
             <Button
               variant="contained"
-              onClick={handleStart}
-              disabled={isStarting}
-              startIcon={
-                isStarting ? null : (
-                  <PlayCircleOutlineIcon sx={{ fontSize: "15px !important" }} />
-                )
-              }
+              onClick={() => navigate("/interview/collections")}
               sx={{
                 mt: 1.5,
                 textTransform: "none",
@@ -953,11 +880,7 @@ const InterviewHome = () => {
                 "&:hover": { backgroundColor: CORAL_INK },
               }}
             >
-              {isStarting ? (
-                <CircularProgress size={16} sx={{ color: "#fff" }} />
-              ) : (
-                "Jump In"
-              )}
+              Explore
             </Button>
           </Box>
         </Box>
@@ -996,7 +919,7 @@ const InterviewHome = () => {
                   "&:hover": { color: CORAL, backgroundColor: "transparent" },
                 }}
               >
-                View all →
+                View all
               </Button>
             )}
           </Box>
@@ -1022,7 +945,8 @@ const InterviewHome = () => {
                 const total = project.questions?.length || 0;
                 const done = project.practicedCount || 0;
                 const pct = total > 0 ? done / total : 0;
-                const isCustom = project.kind === "build";
+                const isCustom = project.kind === "custom";
+                const isCollection = project.kind === "collection";
                 const createdDate = project.createdAt
                   ? new Date(project.createdAt).toLocaleDateString(undefined, {
                       month: "short",
@@ -1035,9 +959,27 @@ const InterviewHome = () => {
                   <Box
                     key={project.id}
                     onClick={() =>
-                      navigate("/interview/questions", {
-                        state: { project, questions: project.questions, mode: "project" },
-                      })
+                      isCollection
+                        ? navigate("/interview/questions", {
+                            state: {
+                              mode: "collection",
+                              collection: {
+                                id: project.sourceCollectionId,
+                                name: project.name,
+                                author: project.author,
+                                lastUpdated: project.collectionLastUpdated,
+                              },
+                              questions: project.questions,
+                              from: "projects",
+                            },
+                          })
+                        : navigate("/interview/questions", {
+                            state: {
+                              project,
+                              questions: project.questions,
+                              mode: "project",
+                            },
+                          })
                     }
                     sx={{
                       cursor: "pointer",
@@ -1047,7 +989,7 @@ const InterviewHome = () => {
                       p: "18px",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "14px",
+                      gap: "10px",
                       transition: "transform 120ms ease, box-shadow 120ms ease",
                       "&:hover": {
                         transform: "translateY(-2px)",
@@ -1063,7 +1005,25 @@ const InterviewHome = () => {
                         justifyContent: "space-between",
                       }}
                     >
-                      {isCustom ? (
+                      {isCollection ? (
+                        <Box
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                            backgroundColor: "rgba(82,130,255,0.08)",
+                            color: "#2a4bcc",
+                            borderRadius: "20px",
+                            px: 1.1,
+                            py: 0.3,
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                          }}
+                        >
+                          <AutoStoriesIcon sx={{ fontSize: 10 }} />
+                          Curated
+                        </Box>
+                      ) : isCustom ? (
                         <Box
                           sx={{
                             display: "inline-flex",
@@ -1104,23 +1064,46 @@ const InterviewHome = () => {
                     </Box>
 
                     {/* Company / role */}
-                    <Box>
+                    <Box sx={{ minHeight: 62 }}>
                       <Typography
-                        sx={{ fontWeight: 600, fontSize: 15, color: INK, lineHeight: 1.3 }}
+                        sx={{
+                          fontWeight: 600,
+                          fontSize: 15,
+                          color: INK,
+                          lineHeight: 1.3,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
                       >
-                        {project.companyName || project.name}
+                        {isCollection
+                          ? project.name
+                          : project.companyName || project.name}
                       </Typography>
-                      {project.jobRole && (
-                        <Typography sx={{ fontSize: 12.5, color: MUTED, mt: 0.25 }}>
+                      {isCollection ? (
+                        <Typography
+                          sx={{ fontSize: 12.5, color: MUTED, mt: 0.25 }}
+                        >
+                          By {project.author || "Speachy"}
+                        </Typography>
+                      ) : project.jobRole ? (
+                        <Typography
+                          sx={{ fontSize: 12.5, color: MUTED, mt: 0.25 }}
+                        >
                           {project.jobRole}
                         </Typography>
-                      )}
+                      ) : null}
                     </Box>
 
                     {/* Progress bar */}
                     <Box>
                       <Box
-                        sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          mb: 0.5,
+                        }}
                       >
                         <Typography sx={{ fontSize: 11.5, color: INK_2 }}>
                           {done} of {total} practised
@@ -1157,7 +1140,7 @@ const InterviewHome = () => {
                         "&:hover": { color: CORAL },
                       }}
                     >
-                      {done > 0 ? "Continue practising →" : "Open project →"}
+                      {done > 0 ? "Continue practising" : "Open project"}
                     </Typography>
                   </Box>
                 );
@@ -1927,7 +1910,12 @@ const InterviewHome = () => {
         >
           {/* Save as project toggle */}
           <Box
-            sx={{ display: "flex", alignItems: "center", gap: 0.25, cursor: "pointer" }}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0.25,
+              cursor: "pointer",
+            }}
             onClick={() => setSaveAsProject((v) => !v)}
           >
             <Checkbox

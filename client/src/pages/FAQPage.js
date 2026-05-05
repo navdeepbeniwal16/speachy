@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import HubHeader from "../components/HubHeader.js";
 import SnackbarAlert from "../components/SnackbarAlert";
 import UserService from "../services/user-service";
 
@@ -114,28 +115,12 @@ const FAQPage = () => {
         px: 3,
       }}
     >
-      <Typography
-        variant="h3"
-        fontWeight="bold"
-        align="center"
-        gutterBottom
-        sx={{
-          // background: "linear-gradient(90deg, #ff7a18, #ff3e44)",
-          background: "linear-gradient(90deg, #FA735B 20%, #FF8E53 90%)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        }}
-      >
-        How can we assist you?
-      </Typography>
-      <Typography
-        variant="body1"
-        align="center"
-        sx={{ color: "rgba(60,32,25,0.72)", mb: 4, maxWidth: "600px" }}
-      >
-        Find the answers to frequently asked questions below or let us know what
-        we can do to improve Speachy!
-      </Typography>
+      <Box sx={{ width: "100%", maxWidth: "700px" }}>
+        <HubHeader
+          title="Help & FAQ"
+          subtitle="Find answers to common questions or let us know how we can improve Speachy."
+        />
+      </Box>
       <Paper
         elevation={0}
         sx={{
