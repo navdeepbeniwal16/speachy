@@ -15,10 +15,10 @@ import {
 } from "@mui/material";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
-import BookmarkIcon from "@mui/icons-material/Bookmark";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import CreateIcon from "@mui/icons-material/Create";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ReplayIcon from "@mui/icons-material/Replay";
@@ -30,6 +30,7 @@ import TuneIcon from "@mui/icons-material/Tune";
 import { AppContext } from "../components/AppContext.js";
 import BreadcrumbHeader from "../components/BreadcrumbHeader.js";
 import InterviewService from "../services/interview-service.js";
+import AttemptService from "../services/attempt-service.js";
 import ProjectService from "../services/project-service.js";
 
 // ─── Design tokens ─────────────────────────────────────────────────────────────
@@ -92,7 +93,7 @@ const ScoreTile = ({ label, avg, trend, noData }) => (
           <Typography sx={{ fontSize: 20, fontWeight: 700, color: INK, lineHeight: 1 }}>
             {Number(avg).toFixed(1)}
           </Typography>
-          <Typography sx={{ fontSize: 11, color: MUTED }}>/ 10</Typography>
+          <Typography sx={{ fontSize: 11, color: MUTED }}>avg / 10</Typography>
         </Box>
         {trend && <TrendBadge trend={trend} />}
       </>
@@ -154,7 +155,7 @@ const QuestionRow = ({ index, q, onPractice }) => {
         </Box>
         {q.attempted && q.scores && (
           <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 0 }}>
-            {["relevance", "structure", "fluency"].map((k, i) => {
+            {["relevance", "structure", "authenticity"].map((k, i) => {
               const val = q.scores[k];
               const scoreColor =
                 val >= 8   ? { text: "#1e6e30", bg: "rgba(52,168,83,0.10)" }
@@ -232,7 +233,23 @@ const InterviewQuestions = () => {
   // Collection bookmark state
   const [savedProjectId, setSavedProjectId] = useState(null);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
-  const [unsaveDialogOpen, setUnsaveDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [projectSummary, setProjectSummary] = useState(null);
+
+  // For saved collections opened from Projects, projectId arrives via location.state
+  const summaryProjectId = isProjectMode ? project?.id : (location.state?.projectId ?? null);
+
+  // For saved collections, also pass collectionId so the server can find
+  // older attempts that were saved before projectId tracking was added
+  const summaryCollectionId = isCollectionMode ? (collection?.id ?? null) : null;
+
+  useEffect(() => {
+    if (!summaryProjectId) return;
+    AttemptService.getProjectSummary(summaryProjectId, summaryCollectionId)
+      .then(setProjectSummary)
+      .catch(() => {});
+  }, [summaryProjectId, summaryCollectionId]);
 
   useEffect(() => {
     if (!isCollectionMode || !collection) return;
@@ -267,7 +284,7 @@ const InterviewQuestions = () => {
     return diffOk && tagOk;
   });
 
-  const attempted = questions.filter((q) => q.attempted).length;
+  const attempted = projectSummary?.attemptedQuestionCount ?? 0;
   const remaining = questions.length - attempted;
   const pct = questions.length > 0 ? (attempted / questions.length) * 100 : 0;
 
@@ -286,7 +303,8 @@ const InterviewQuestions = () => {
         requiredExperience: isProjectMode ? project.requiredExperience : requiredExperience,
         additionalNotes: isProjectMode ? project.additionalNotes : additionalNotes,
         mode: isProjectMode ? "project" : mode,
-        projectId: project?.id,
+        project: isProjectMode ? project : undefined,
+        projectId: project?.id ?? location.state?.projectId ?? null,
         collection: isCollectionMode ? collection : undefined,
         from: location.state?.from,
       },
@@ -345,30 +363,29 @@ const InterviewQuestions = () => {
     }
   };
 
-  const handleUnsaveCollection = async () => {
-    if (!savedProjectId) return;
-    setBookmarkLoading(true);
-    setUnsaveDialogOpen(false);
+  const handleDeleteProject = async () => {
+    const targetId = isProjectMode ? project?.id : savedProjectId;
+    if (!targetId) return;
+    setIsDeleting(true);
     try {
-      await ProjectService.delete(savedProjectId);
-      setSavedProjectId(null);
-      showSnackbar("success", "Collection removed from your projects.");
+      await ProjectService.delete(targetId);
+      navigate("/projects");
     } catch {
-      showSnackbar("error", "Could not remove collection. Please try again.");
-    } finally {
-      setBookmarkLoading(false);
+      showSnackbar("error", "Could not delete project. Please try again.");
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
     }
   };
 
   // Score tile helpers for project mode
-  const scoreKeys = ["relevance", "structure", "fluency"];
+  const scoreKeys = ["relevance", "structure", "authenticity"];
   const trendMap = { improving: "up", stable: "stable", declining: "down" };
-  const getScore = (key) => project?.averageScores?.[key] ?? null;
+  const getScore = (key) => projectSummary?.avgScores?.[key] ?? null;
   const getTrend = (key) => {
-    const t = project?.scoreTrends?.[key];
+    const t = projectSummary?.trends?.[key];
     return t ? (trendMap[t] || t) : null;
   };
-  const noScoreData = !project?.averageScores;
+  const noScoreData = !projectSummary?.avgScores;
 
   // Kind badge config
   const KIND_BADGE = {
@@ -451,19 +468,10 @@ const InterviewQuestions = () => {
                   </Box>
                 )}
 
-                {/* Title + edit button */}
-                <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 0.5 }}>
-                  <Typography component="h1" sx={{ fontFamily: "Georgia, serif", fontSize: { xs: 24, md: 30 }, fontWeight: 700, color: INK, lineHeight: 1.15, mr: 2 }}>
-                    {project.companyName || project.name}
-                  </Typography>
-                  <Button
-                    size="small"
-                    startIcon={<EditOutlinedIcon sx={{ fontSize: "13px !important" }} />}
-                    sx={{ textTransform: "none", fontWeight: 600, fontSize: 12.5, color: MUTED, borderRadius: "9px", border: `1px solid ${LINE}`, px: 1.5, py: 0.6, flexShrink: 0, "&:hover": { borderColor: CORAL, color: CORAL, backgroundColor: CORAL_SOFTER } }}
-                  >
-                    Edit
-                  </Button>
-                </Box>
+                {/* Title */}
+                <Typography component="h1" sx={{ fontFamily: "Georgia, serif", fontSize: { xs: 24, md: 30 }, fontWeight: 700, color: INK, lineHeight: 1.15, mb: 0.5 }}>
+                  {project.companyName || project.name}
+                </Typography>
 
                 {/* Subtitle + experience */}
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
@@ -515,7 +523,22 @@ const InterviewQuestions = () => {
                     noData={noScoreData}
                   />
                 ))}
+                {noScoreData && (
+                  <Typography sx={{ gridColumn: "1 / -1", fontSize: 11.5, color: MUTED, mt: 0.75, textAlign: "center" }}>
+                    Complete a practice session to see your scores here.
+                  </Typography>
+                )}
               </Box>
+            </Box>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2.5 }}>
+              <Button
+                size="small"
+                startIcon={<DeleteOutlineIcon sx={{ fontSize: "13px !important" }} />}
+                onClick={() => setDeleteDialogOpen(true)}
+                sx={{ textTransform: "none", fontWeight: 600, fontSize: 12.5, color: MUTED, borderRadius: "9px", px: 1.5, py: 0.6, "&:hover": { color: "#d46262", backgroundColor: "rgba(212,98,98,0.05)" } }}
+              >
+                Delete project
+              </Button>
             </Box>
           </Box>
         )}
@@ -527,23 +550,23 @@ const InterviewQuestions = () => {
 
               {/* Left — identity + progress */}
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                {/* Curated badge + bookmark */}
+                {/* Curated badge + add-to-projects CTA (unsaved only) */}
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
                   <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, backgroundColor: CORAL_SOFTER, color: CORAL_INK, borderRadius: "20px", px: 1.1, py: 0.3, fontSize: 11, fontWeight: 700 }}>
                     <AutoStoriesIcon sx={{ fontSize: 10 }} />
                     Curated by Speachy
                   </Box>
-                  <IconButton
-                    size="small"
-                    disabled={bookmarkLoading}
-                    onClick={() => savedProjectId ? setUnsaveDialogOpen(true) : handleSaveCollection()}
-                    sx={{ color: savedProjectId ? CORAL : MUTED, "&:hover": { color: CORAL, backgroundColor: CORAL_SOFTER } }}
-                  >
-                    {bookmarkLoading
-                      ? <CircularProgress size={16} sx={{ color: CORAL }} />
-                      : savedProjectId ? <BookmarkIcon fontSize="small" /> : <BookmarkBorderIcon fontSize="small" />
-                    }
-                  </IconButton>
+                  {!savedProjectId && (
+                    <Button
+                      size="small"
+                      startIcon={bookmarkLoading ? <CircularProgress size={11} sx={{ color: CORAL }} /> : <AddCircleOutlineIcon sx={{ fontSize: "13px !important" }} />}
+                      disabled={bookmarkLoading}
+                      onClick={handleSaveCollection}
+                      sx={{ textTransform: "none", fontWeight: 600, fontSize: 12, color: CORAL, borderRadius: "9px", border: `1px solid rgba(252,150,120,0.4)`, px: 1.5, py: 0.5, "&:hover": { borderColor: CORAL, backgroundColor: CORAL_SOFTER } }}
+                    >
+                      Add to Projects
+                    </Button>
+                  )}
                 </Box>
 
                 {/* Title */}
@@ -573,29 +596,57 @@ const InterviewQuestions = () => {
                   )}
                 </Box>
 
-                {/* Progress bar */}
-                <Box>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.75 }}>
-                    <Typography sx={{ fontSize: 12.5, color: INK_2, fontWeight: 500 }}>
-                      {attempted} of {questions.length} attempted
-                    </Typography>
-                    <Typography sx={{ fontSize: 12, color: CORAL, fontWeight: 700 }}>
-                      {Math.round(pct)}%
-                    </Typography>
+                {/* Progress bar — only shown for saved collections (tracked as a project) */}
+                {summaryProjectId && (
+                  <Box>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.75 }}>
+                      <Typography sx={{ fontSize: 12.5, color: INK_2, fontWeight: 500 }}>
+                        {attempted} of {questions.length} attempted
+                      </Typography>
+                      <Typography sx={{ fontSize: 12, color: CORAL, fontWeight: 700 }}>
+                        {Math.round(pct)}%
+                      </Typography>
+                    </Box>
+                    <Box sx={{ height: 6, borderRadius: 3, backgroundColor: CORAL_SOFTER, overflow: "hidden" }}>
+                      <Box sx={{ height: "100%", borderRadius: 3, backgroundColor: CORAL, width: `${pct}%`, transition: "width 0.5s ease" }} />
+                    </Box>
                   </Box>
-                  <Box sx={{ height: 6, borderRadius: 3, backgroundColor: CORAL_SOFTER, overflow: "hidden" }}>
-                    <Box sx={{ height: "100%", borderRadius: 3, backgroundColor: CORAL, width: `${pct}%`, transition: "width 0.5s ease" }} />
-                  </Box>
-                </Box>
+                )}
               </Box>
 
-              {/* Right — score tiles (no data until attempt tracking is added in US4) */}
-              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1.25, mt: { xs: 3.5, md: 0 }, flexShrink: 0, minWidth: { md: 360 } }}>
-                {scoreKeys.map((k) => (
-                  <ScoreTile key={k} label={k.charAt(0).toUpperCase() + k.slice(1)} avg={null} trend={null} noData />
-                ))}
-              </Box>
+              {/* Right — score tiles: only for saved collections (summaryProjectId present) */}
+              {summaryProjectId && (
+                <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1.25, mt: { xs: 3.5, md: 0 }, flexShrink: 0, minWidth: { md: 360 } }}>
+                  {scoreKeys.map((k) => (
+                    <ScoreTile
+                      key={k}
+                      label={k.charAt(0).toUpperCase() + k.slice(1)}
+                      avg={getScore(k)}
+                      trend={getTrend(k)}
+                      noData={noScoreData}
+                    />
+                  ))}
+                  {noScoreData && (
+                    <Typography sx={{ gridColumn: "1 / -1", fontSize: 11.5, color: MUTED, mt: 0.75, textAlign: "center" }}>
+                      Complete a practice session to see your scores here.
+                    </Typography>
+                  )}
+                </Box>
+              )}
             </Box>
+            {savedProjectId && (
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2.5 }}>
+                <Button
+                  size="small"
+                  startIcon={<DeleteOutlineIcon sx={{ fontSize: "13px !important" }} />}
+                  disabled={bookmarkLoading}
+                  onClick={() => setDeleteDialogOpen(true)}
+                  sx={{ textTransform: "none", fontWeight: 600, fontSize: 12.5, color: MUTED, borderRadius: "9px", px: 1.5, py: 0.6, "&:hover": { color: "#d46262", backgroundColor: "rgba(212,98,98,0.05)" } }}
+                >
+                  Delete project
+                </Button>
+              </Box>
+            )}
           </Box>
         )}
 
@@ -738,32 +789,33 @@ const InterviewQuestions = () => {
 
       </Container>
 
-      {/* ── Unsave collection dialog ─────────────────────────────────────── */}
+      {/* ── Delete project dialog (unified for all project types) ──────────── */}
       <Dialog
-        open={unsaveDialogOpen}
-        onClose={() => setUnsaveDialogOpen(false)}
+        open={deleteDialogOpen}
+        onClose={() => !isDeleting && setDeleteDialogOpen(false)}
         maxWidth="xs"
         fullWidth
         PaperProps={{ sx: { borderRadius: "14px", backgroundColor: PAGE_BG, px: 1, py: 0.5 } }}
       >
         <DialogTitle sx={{ fontWeight: 700, color: INK, pb: 0.5, fontSize: 16 }}>
-          Remove collection?
+          Delete project?
         </DialogTitle>
         <DialogContent>
           <Typography sx={{ fontSize: 13.5, color: INK_2, lineHeight: 1.6 }}>
-            This collection will be removed from your projects. You can always save it again.
+            This will permanently remove the project and its question list. Your attempt history for these questions will not be affected.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={() => setUnsaveDialogOpen(false)} sx={{ textTransform: "none", color: MUTED }}>
+          <Button onClick={() => setDeleteDialogOpen(false)} disabled={isDeleting} sx={{ textTransform: "none", color: MUTED }}>
             Cancel
           </Button>
           <Button
             variant="contained"
-            onClick={handleUnsaveCollection}
-            sx={{ textTransform: "none", fontWeight: 600, borderRadius: "9px", px: 2.5, py: 1, backgroundColor: CORAL, boxShadow: "0px 8px 20px -8px rgba(250,115,91,0.6)", "&:hover": { backgroundColor: CORAL_INK } }}
+            disabled={isDeleting}
+            onClick={handleDeleteProject}
+            sx={{ textTransform: "none", fontWeight: 600, borderRadius: "9px", px: 2.5, py: 1, backgroundColor: "#d46262", boxShadow: "0px 8px 20px -8px rgba(212,98,98,0.5)", "&:hover": { backgroundColor: "#c05555" } }}
           >
-            Remove
+            {isDeleting ? "Deleting…" : "Delete"}
           </Button>
         </DialogActions>
       </Dialog>

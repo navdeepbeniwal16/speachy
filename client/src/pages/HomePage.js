@@ -211,6 +211,7 @@ const HomePage = () => {
           },
           questions: project.questions,
           from: "projects",
+          projectId: project.id,
         },
       });
     } else {

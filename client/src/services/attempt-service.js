@@ -24,6 +24,17 @@ class AttemptService {
     }
   }
 
+  static async getProjectSummary(projectId, collectionId = null) {
+    try {
+      const params = collectionId ? { collectionId } : {};
+      const response = await backendApiClient.get(`/attempts/project-summary/${projectId}`, { params });
+      return response.data;
+    } catch (error) {
+      console.error("AttemptService: Error fetching project summary:", error);
+      throw error;
+    }
+  }
+
   static async getSummaries() {
     try {
       const response = await backendApiClient.get("/attempts/summaries");

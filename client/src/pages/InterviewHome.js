@@ -971,6 +971,7 @@ const InterviewHome = () => {
                               },
                               questions: project.questions,
                               from: "projects",
+                              projectId: project.id,
                             },
                           })
                         : navigate("/interview/questions", {

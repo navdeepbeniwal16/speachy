@@ -185,13 +185,17 @@ const InterviewPractice = () => {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
 
-  const projectId  = location.state?.projectId  ?? null;
-  const collection = location.state?.collection ?? null;
-  const questionKey = buildQuestionKey(projectId, collection, question, questionIdx);
-  const sourceName =
-    projectId    ? (location.state?.companyName || null)
-    : collection ? collection.name
-    : null;
+  const projectId    = location.state?.projectId  ?? null;
+  const collection   = location.state?.collection ?? null;
+  const stateProject = location.state?.project    ?? null;
+  const questionKey  = buildQuestionKey(projectId, collection, question, questionIdx);
+
+  const sourceName = (() => {
+    if (collection)                      return collection.name;  // curated collection
+    if (stateProject?.kind === "custom") return stateProject.name || null;  // custom project: use project name
+    const parts = [companyName, jobRole].filter(Boolean);
+    return parts.length > 0 ? parts.join(" · ") : null;  // tailored: "Company · Role"
+  })();
 
   let audioDuration = 0;
 
