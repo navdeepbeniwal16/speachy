@@ -717,14 +717,17 @@ const InterviewQuestions = () => {
 
           {filtered.length > 0 ? (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-              {filtered.map((q, i) => (
-                <QuestionRow
-                  key={q.id || i}
-                  index={i + 1}
-                  q={q}
-                  onPractice={navigateToPractice}
-                />
-              ))}
+              {filtered.map((q, i) => {
+                const originalIndex = questions.indexOf(q);
+                return (
+                  <QuestionRow
+                    key={q.id || i}
+                    index={i + 1}
+                    q={q}
+                    onPractice={() => navigateToPractice(originalIndex)}
+                  />
+                );
+              })}
             </Box>
           ) : (
             <Box sx={{ py: 6, textAlign: "center", color: MUTED, fontSize: 14 }}>

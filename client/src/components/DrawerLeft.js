@@ -15,6 +15,7 @@ import HomeIcon from "@mui/icons-material/Home";
 import WorkOutlinedIcon from "@mui/icons-material/WorkOutlined";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
+import HistoryIcon from "@mui/icons-material/History";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -46,6 +47,11 @@ const NAV_ITEMS = [
     label: "Projects",
     icon: <FolderOpenOutlinedIcon sx={{ fontSize: 20 }} />,
     path: "/projects",
+  },
+  {
+    label: "History",
+    icon: <HistoryIcon sx={{ fontSize: 20 }} />,
+    path: "/history",
   },
   {
     label: "FAQs",

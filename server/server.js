@@ -16,6 +16,7 @@ const impromptuSpeakingRoute = require("./routes/impromptu-speaking.js");
 const paymentsRoute = require("./routes/payments.js");
 const sessionsRoute = require("./routes/sessions.js");
 const streakRoute = require("./routes/streak.js");
+const attemptsRoute = require("./routes/attempts.js");
 const admin = require("firebase-admin");
 
 // Log requests in 'dev' format
@@ -87,6 +88,7 @@ app.use("/streak", verifyToken, streakRoute);
 app.use("/sessions", verifyToken, sessionsRoute);
 app.use("/impromptu-speaking", verifyToken, impromptuSpeakingRoute);
 app.use("/payments", paymentsRoute);
+app.use("/attempts", verifyToken, attemptsRoute);
 
 app.get("/debug-sentry", function mainHandler(req, res) {
   throw new Error("My first Sentry testing error!");

@@ -26,6 +26,8 @@ import "@fontsource/amaranth";
 import UserProfilePage from "./pages/UserProfilePage";
 import ProjectsPage from "./pages/ProjectsPage";
 import CollectionsPage from "./pages/CollectionsPage";
+import HistoryPage from "./pages/HistoryPage";
+import QuestionHistoryPage from "./pages/QuestionHistoryPage";
 import QuestionsListPrototype from "./pages/prototype/QuestionsListPrototype";
 
 // Function to check if user is authenticated
@@ -97,6 +99,8 @@ function App() {
                 element={<ImpromptSpeakingPracticeWrapper />}
               />
               <Route path="/profile" element={<UserProfilePageWrapper />} />
+              <Route path="/history" element={<HistoryPageWrapper />} />
+              <Route path="/history/question" element={<QuestionHistoryPageWrapper />} />
 
               {/* Redirect any unknown routes to home */}
               <Route path="*" element={<Navigate to="/signin" />} />
@@ -119,5 +123,7 @@ const PaymentCancelWrapper = requireAuth(PaymentCancel);
 const UserProfilePageWrapper = requireAuth(UserProfilePage);
 const ProjectsPageWrapper = requireAuth(ProjectsPage);
 const CollectionsPageWrapper = requireAuth(CollectionsPage);
+const HistoryPageWrapper = requireAuth(HistoryPage);
+const QuestionHistoryPageWrapper = requireAuth(QuestionHistoryPage);
 
 export default App;

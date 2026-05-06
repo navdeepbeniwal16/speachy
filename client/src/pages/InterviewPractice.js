@@ -24,6 +24,8 @@ import ScheduleIcon from "@mui/icons-material/Schedule";
 import SpeedIcon from "@mui/icons-material/Speed";
 import VoiceRecordingTab from "../components/VoiceRecordingTab";
 import InterviewService from "../services/interview-service.js";
+import AttemptService from "../services/attempt-service.js";
+import AttemptHistoryList from "../components/AttemptHistoryList.js";
 import SnackbarAlert from "../components/SnackbarAlert";
 import DetailedFeedbackModal from "../components/DetailedFeedbackModal";
 
@@ -55,6 +57,16 @@ const fmtDur = (s) => {
   const sec = Math.floor(s % 60);
   return `${m}:${sec.toString().padStart(2, "0")}`;
 };
+
+// ─── Stable key identifying a question across sessions ────────────────────────
+export function buildQuestionKey(projectId, collection, questionText, questionIdx) {
+  if (projectId)      return `proj_${projectId}_${questionIdx}`;
+  if (collection?.id) return `col_${collection.id}_${questionIdx}`;
+  const hash = btoa(unescape(encodeURIComponent(questionText || "")))
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .slice(0, 12);
+  return `text_${hash}_${questionIdx}`;
+}
 
 // ─── Inline audio player ───────────────────────────────────────────────────────
 const AudioPlayer = ({ src, label }) => {
@@ -171,6 +183,15 @@ const InterviewPractice = () => {
   const [alertType, setAlertType]     = useState("error");
   const [alertMessage, setAlertMessage] = useState("");
   const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
+
+  const projectId  = location.state?.projectId  ?? null;
+  const collection = location.state?.collection ?? null;
+  const questionKey = buildQuestionKey(projectId, collection, question, questionIdx);
+  const sourceName =
+    projectId    ? (location.state?.companyName || null)
+    : collection ? collection.name
+    : null;
 
   let audioDuration = 0;
 
@@ -191,6 +212,48 @@ const InterviewPractice = () => {
     return () => clearInterval(timer);
   }, [isEvaluating]);
 
+  const saveAttempt = (fb, trans, durationSecs) => {
+    const wpm = durationSecs && trans?.text
+      ? Math.round((trans.text.split(" ").filter(Boolean).length / durationSecs) * 60)
+      : null;
+    const scores = {
+      relevance:    fb.summary?.relevance?.score    ?? 0,
+      structure:    fb.summary?.structure?.score    ?? 0,
+      authenticity: fb.summary?.authenticity?.score ?? 0,
+    };
+    const payload = {
+      questionKey,
+      questionText: question,
+      sourceName:   sourceName ?? null,
+      sourceKind:   projectId ? "project" : collection?.id ? "collection" : "session",
+      projectId:    projectId ?? null,
+      collectionId: collection?.id ?? null,
+      scores,
+      avgScore: (scores.relevance + scores.structure + scores.authenticity) / 3,
+      overview: fb.overview ?? "",
+      tip:      fb.tip      ?? null,
+      dimensions: {
+        relevance:    { waysToImprove: fb.summary?.relevance?.waysToImprove    ?? [] },
+        structure:    { waysToImprove: fb.summary?.structure?.waysToImprove    ?? [] },
+        authenticity: { waysToImprove: fb.summary?.authenticity?.waysToImprove ?? [] },
+      },
+      speechStats: {
+        duration:    durationSecs  ?? null,
+        wpm,
+        fillerCount: fb.fillers    ?? null,
+      },
+      transcript: trans?.text ?? null,
+      inputMode:  durationSecs != null ? "voice" : "text",
+    };
+    AttemptService.save(payload)
+      .then(() => setHistoryRefreshKey((k) => k + 1))
+      .catch(() => {
+        setAlertType("error");
+        setAlertMessage("Could not save attempt. Your result is still shown above.");
+        setIsAlertOpen(true);
+      });
+  };
+
   const handleModeSwitch = (mode) => {
     if (mode === inputMode) return;
     setInputMode(mode);
@@ -208,6 +271,7 @@ const InterviewPractice = () => {
       fb.duration = null;
       setFeedback(fb);
       setTranscription(response.transcription);
+      saveAttempt(fb, response.transcription, null);
     } catch (error) {
       setAlertMessage(error.message);
       setIsAlertOpen(true);
@@ -256,6 +320,7 @@ const InterviewPractice = () => {
       fb.duration = audioDuration;
       setFeedback(fb);
       setTranscription(response.transcription);
+      saveAttempt(fb, response.transcription, audioDuration);
     } catch (error) {
       setAlertMessage(error.message);
       setIsAlertOpen(true);
@@ -566,6 +631,16 @@ const InterviewPractice = () => {
             </Button>
           </Box>
         )}
+
+        {/* ── Attempt history ──────────────────────────────────────────────── */}
+        <AttemptHistoryList
+          questionKey={questionKey}
+          refreshKey={historyRefreshKey}
+          limit={5}
+          questionText={question}
+          sourceName={sourceName}
+          sx={{ mb: 3 }}
+        />
 
         {/* ── Bottom navigation ────────────────────────────────────────────── */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pt: 2.5, mt: 1, borderTop: `1px solid ${LINE}` }}>
