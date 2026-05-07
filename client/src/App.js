@@ -5,11 +5,10 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { Box, CssBaseline } from "@mui/material";
+import { Box, CssBaseline, CircularProgress } from "@mui/material";
 import "./App.css";
 import HomePage from "./pages/HomePage";
-import NavigationBar from "./components/NavigationBar";
-import InterviewHome from "./pages/InterviewHome";
+import LandingPage from "./pages/LandingPage";
 import PageWrapper from "./components/PageWrapper";
 import InterviewQuestions from "./pages/InterviewQuestions";
 import InterviewPractice from "./pages/InterviewPractice";
@@ -24,8 +23,11 @@ import DrawerLeft from "./components/DrawerLeft";
 import FAQPage from "./pages/FAQPage";
 import "@fontsource/amaranth";
 import UserProfilePage from "./pages/UserProfilePage";
-import PracticePage from "./pages/PracticePage";
-import ComingSoonPage from "./pages/ComingSoonPage";
+import ProjectsPage from "./pages/ProjectsPage";
+import CollectionsPage from "./pages/CollectionsPage";
+import HistoryPage from "./pages/HistoryPage";
+import QuestionHistoryPage from "./pages/QuestionHistoryPage";
+import QuestionsListPrototype from "./pages/prototype/QuestionsListPrototype";
 
 // Function to check if user is authenticated
 const requireAuth = (Component) => {
@@ -43,7 +45,20 @@ const requireAuth = (Component) => {
     }, []);
 
     if (loading) {
-      return null; // While checking auth status, return null to avoid rendering
+      return (
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#fff4ef",
+            minHeight: "100vh",
+          }}
+        >
+          <CircularProgress sx={{ color: "#FA735B" }} size={28} thickness={3} />
+        </Box>
+      );
     }
 
     return user ? <Component {...props} /> : <Navigate to="/signin" />;
@@ -74,11 +89,13 @@ function App() {
                 element={<PaymentCancelWrapper />}
               />
 
+              {/* Public landing page */}
+              <Route path="/" element={<LandingPage />} />
+
               {/* Protected routes */}
-              <Route path="/" element={<HomePageWrapper />} />
-              <Route path="/interview" element={<InterviewHomeWrapper />} />
-              <Route path="/practice" element={<PracticePageWrapper />} />
-              <Route path="/projects" element={<ComingSoonPage />} />
+              <Route path="/home" element={<HomePageWrapper />} />
+              <Route path="/projects" element={<ProjectsPageWrapper />} />
+              <Route path="/interview/collections" element={<CollectionsPageWrapper />} />
               <Route
                 path="/interview/questions"
                 element={<InterviewQuestionsWrapper />}
@@ -87,15 +104,20 @@ function App() {
                 path="/interview/questions/:questionId"
                 element={<InterviewPracticeWrapper />}
               />
+              {/* Prototype routes — no auth */}
+              <Route path="/prototype/questions" element={<QuestionsListPrototype />} />
+
               <Route path="/faq" element={<FAQPage />} />
               <Route
                 path="/imprompt"
                 element={<ImpromptSpeakingPracticeWrapper />}
               />
               <Route path="/profile" element={<UserProfilePageWrapper />} />
+              <Route path="/history" element={<HistoryPageWrapper />} />
+              <Route path="/history/question" element={<QuestionHistoryPageWrapper />} />
 
-              {/* Redirect any unknown routes to home */}
-              <Route path="*" element={<Navigate to="/signin" />} />
+              {/* Redirect any unknown routes to landing */}
+              <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </PageWrapper>
         </Box>
@@ -106,13 +128,15 @@ function App() {
 
 // Wrappers for protected routes
 const HomePageWrapper = requireAuth(HomePage);
-const PracticePageWrapper = requireAuth(PracticePage);
-const InterviewHomeWrapper = requireAuth(InterviewHome);
 const InterviewQuestionsWrapper = requireAuth(InterviewQuestions);
 const InterviewPracticeWrapper = requireAuth(InterviewPractice);
 const ImpromptSpeakingPracticeWrapper = requireAuth(ImpromptSpeakingPractice);
 const PaymentSuccessWrapper = requireAuth(PaymentSuccess);
 const PaymentCancelWrapper = requireAuth(PaymentCancel);
 const UserProfilePageWrapper = requireAuth(UserProfilePage);
+const ProjectsPageWrapper = requireAuth(ProjectsPage);
+const CollectionsPageWrapper = requireAuth(CollectionsPage);
+const HistoryPageWrapper = requireAuth(HistoryPage);
+const QuestionHistoryPageWrapper = requireAuth(QuestionHistoryPage);
 
 export default App;

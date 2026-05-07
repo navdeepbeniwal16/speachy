@@ -1,20 +1,17 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import PrepareForRoleDialog from "../components/PrepareForRoleDialog.js";
+import BuildCustomSetDialog from "../components/BuildCustomSetDialog.js";
 import {
   Typography,
   Container,
   Box,
+  Chip,
   Grid,
   Backdrop,
   CircularProgress,
   Stack,
-  Chip,
   Paper,
   Button,
-  Avatar,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { getAuth } from "firebase/auth";
@@ -22,16 +19,17 @@ import PaymentsService from "../services/payments-service.js";
 import { AppContext } from "../components/AppContext.js";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
-import MicIcon from "@mui/icons-material/Mic";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-// Streak calendar view (scaffold)
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import AutoStoriesIcon from "@mui/icons-material/AutoStories";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import CreateIcon from "@mui/icons-material/Create";
 import StreakCalendar from "../components/StreakCalendar";
 import StreakService from "../services/streak-service.js";
 import SessionService from "../services/session-service.js";
+import ProjectService from "../services/project-service.js";
+import AttemptService from "../services/attempt-service.js";
 
-const FETCH_INTERVAL_MS = 5 * 60 * 1000; // avoid refetching more than once every 5 minutes
+const FETCH_INTERVAL_MS = 5 * 60 * 1000;
 const PAGE_BG = "#fff4ef";
 const SURFACE_BG = "#ffffff";
 const SURFACE_BORDER = "1px solid rgba(252, 150, 120, 0.12)";
@@ -39,140 +37,55 @@ const SURFACE_SHADOW = "0 18px 36px rgba(252, 150, 120, 0.15)";
 const HEADING_COLOR = "#2f170f";
 const BODY_COLOR = "rgba(60,32,25,0.78)";
 const MUTED_COLOR = "rgba(60,32,25,0.45)";
+const CORAL = "#FA735B";
+const CORAL_INK = "#C85A3E";
+const CORAL_SOFTER = "rgba(250,115,91,0.08)";
+const LINE = "rgba(252,150,120,0.12)";
+const BUTTER_SOFT = "rgba(232,200,124,0.25)";
+const BUTTER_INK = "#8b6a1f";
 
 const MemoizedStreakCalendar = React.memo(StreakCalendar);
 
-const StatHighlights = React.memo(({ stats }) => (
-  <Stack
-    direction={{ xs: "column", sm: "row" }}
-    spacing={4}
-    sx={{ mb: { xs: 2, md: 0 } }}
-  >
-    {stats.map((item) => (
-      <Stack key={item.label} direction="row" alignItems="center" spacing={2}>
-        <Box
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: 2,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: "#ffe3d6",
-            color: "#f46a32",
-            transform: "translateY(-2px)",
-          }}
-        >
-          {item.icon}
-        </Box>
-        <Box>
-          <Typography
-            variant="h6"
-            sx={{
-              color: HEADING_COLOR,
-              fontWeight: 700,
-              mb: 0.2,
-              lineHeight: 1.1,
-            }}
-          >
-            {item.value}
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{ color: BODY_COLOR, lineHeight: 1.2 }}
-          >
-            {item.label}
-          </Typography>
-        </Box>
-      </Stack>
-    ))}
-  </Stack>
-));
+const KIND_CONFIG = {
+  tailored: {
+    label: "Tailored",
+    bg: CORAL_SOFTER,
+    color: CORAL_INK,
+    icon: <AutoAwesomeIcon sx={{ fontSize: 14 }} />,
+  },
+  custom: {
+    label: "Custom",
+    bg: BUTTER_SOFT,
+    color: BUTTER_INK,
+    icon: <CreateIcon sx={{ fontSize: 14 }} />,
+  },
+  collection: {
+    label: "Curated",
+    bg: "rgba(82,130,255,0.08)",
+    color: "#2a4bcc",
+    icon: <AutoStoriesIcon sx={{ fontSize: 14 }} />,
+  },
+};
 
 const HomePage = () => {
   const auth = getAuth();
   const { setState } = useContext(AppContext);
+  const navigate = useNavigate();
+
   const [loading, setLoading] = useState(true);
+  const [activeDates, setActiveDates] = useState([]);
+  const [sessionsCount, setSessionsCount] = useState(0);
+  const [recentProjects, setRecentProjects] = useState([]);
+  const [practicedCounts, setPracticedCounts] = useState({});
+  const [prepareOpen, setPrepareOpen] = useState(false);
+  const [customOpen, setCustomOpen] = useState(false);
+
   const entitlementsFetchRef = useRef(0);
   const streakFetchRef = useRef(0);
   const sessionsFetchRef = useRef(0);
-
-  const navigate = useNavigate();
   const userId = auth.currentUser?.uid;
 
-  const getUserEntitlements = async () => {
-    const currentUserUID = auth.currentUser?.uid;
-
-    if (currentUserUID) {
-      const now = Date.now();
-      if (now - entitlementsFetchRef.current < FETCH_INTERVAL_MS) {
-        setLoading(false);
-        return;
-      }
-      entitlementsFetchRef.current = now;
-      try {
-        const response =
-          await PaymentsService.fetchActiveEntitlements(currentUserUID);
-        const data = response.data;
-        if (data.entitlements === undefined || data.entitlements === null) {
-          throw new Error("Entitlements not found");
-        }
-
-        const entitlements = data.entitlements;
-        let isImpromptuSpeakingEnabled = false;
-        let isInterviewPracticeEnabled = false;
-
-        for (const entitlement of entitlements) {
-          if (entitlement.lookup_key === "impromptu_speaking_01") {
-            isImpromptuSpeakingEnabled = true;
-          }
-          if (entitlement.lookup_key === "interview_practice_01") {
-            isInterviewPracticeEnabled = true;
-          }
-        }
-
-        setState((prevState) => ({
-          ...prevState,
-          isImpromptuSpeakingEnabled,
-          isInterviewPracticeEnabled,
-        }));
-      } catch (error) {
-        console.error("Error fetching/assigning entitlements: ", error);
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (auth.currentUser) {
-      getUserEntitlements();
-    } else {
-      setLoading(false);
-    }
-  }, [userId]);
-
-  const navigateToImpromptSpeakingPracticePage = () => {
-    navigate("/imprompt");
-  };
-
-  // Function to get time-based greeting
-  const getTimeBasedGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) {
-      return "Good morning";
-    } else if (hour < 17) {
-      return "Good afternoon";
-    } else {
-      return "Good evening";
-    }
-  };
-
-  // Streak calendar data
-  const [activeDates, setActiveDates] = useState([]);
-  const [sessionsCount, setSessionsCount] = useState(0);
+  // ── helpers ──────────────────────────────────────────────────────────────────
   const ymd = (d) => {
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -187,428 +100,797 @@ const HomePage = () => {
   const computeRange = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    // Align grid start to Sunday for 8 weeks back
-    const start = addDays(today, -7 * (8 - 1));
-    const gridStart = addDays(start, -start.getDay()); // move back to Sun
-    return { from: ymd(gridStart), to: ymd(today) };
+    const start = addDays(today, -7 * 7);
+    return { from: ymd(addDays(start, -start.getDay())), to: ymd(today) };
   };
-
   const computeWeekRange = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const dayOfWeek = today.getDay(); // 0 (Sun) - 6 (Sat)
-    const daysSinceMonday = (dayOfWeek + 6) % 7;
-    const monday = addDays(today, -daysSinceMonday);
-    return { from: ymd(monday), to: ymd(today) };
+    const daysSinceMonday = (today.getDay() + 6) % 7;
+    return { from: ymd(addDays(today, -daysSinceMonday)), to: ymd(today) };
   };
-  const totalPracticeHours = 12; // placeholder until analytics service lands
+
   const { from: weekFrom, to: weekTo } = useMemo(computeWeekRange, []);
   const activeDaysCount = useMemo(
-    () =>
-      activeDates.filter((date) => date >= weekFrom && date <= weekTo).length,
+    () => activeDates.filter((d) => d >= weekFrom && d <= weekTo).length,
     [activeDates, weekFrom, weekTo],
   );
-  const statHighlightsData = useMemo(
-    () => [
-      {
-        icon: <TrackChangesIcon sx={{ fontSize: 28 }} />,
-        label: "Sessions completed",
-        value: sessionsCount,
-      },
-      {
-        icon: <CalendarMonthIcon sx={{ fontSize: 28 }} />,
-        label: "Active practice days",
-        value: activeDaysCount,
-      },
-      // {
-      //   icon: <AccessTimeIcon sx={{ fontSize: 28 }} />,
-      //   label: "Total time spoken",
-      //   value: `${totalPracticeHours}h`,
-      // },
-    ],
-    [sessionsCount, activeDaysCount],
-  );
+
+  const firstName = auth.currentUser?.displayName?.split(" ")[0] || "there";
+  const getTimeBasedGreeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return "Good morning";
+    if (h < 17) return "Good afternoon";
+    return "Good evening";
+  };
+
+  // ── data fetching ─────────────────────────────────────────────────────────────
+  const getUserEntitlements = async () => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+      setLoading(false);
+      return;
+    }
+    const now = Date.now();
+    if (now - entitlementsFetchRef.current < FETCH_INTERVAL_MS) {
+      setLoading(false);
+      return;
+    }
+    entitlementsFetchRef.current = now;
+    try {
+      const response = await PaymentsService.fetchActiveEntitlements(uid);
+      const entitlements = response.data.entitlements || [];
+      setState((prev) => ({
+        ...prev,
+        isImpromptuSpeakingEnabled: entitlements.some(
+          (e) => e.lookup_key === "impromptu_speaking_01",
+        ),
+        isInterviewPracticeEnabled: entitlements.some(
+          (e) => e.lookup_key === "interview_practice_01",
+        ),
+      }));
+    } catch (e) {
+      console.error("Error fetching entitlements:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadActivity = async () => {
-      if (!auth.currentUser) return;
-      const now = Date.now();
-      if (now - streakFetchRef.current < FETCH_INTERVAL_MS) return;
-      streakFetchRef.current = now;
-      try {
-        const { from, to } = computeRange();
-        const data = await StreakService.activity(from, to);
-        setActiveDates(Array.isArray(data.dates) ? data.dates : []);
-      } catch (e) {
-        console.warn("Failed to fetch streak activity:", e);
-      }
-    };
-    loadActivity();
+    getUserEntitlements();
   }, [userId]);
 
   useEffect(() => {
-    const loadSessionsStats = async () => {
-      if (!auth.currentUser) return;
-      const now = Date.now();
-      if (now - sessionsFetchRef.current < FETCH_INTERVAL_MS) return;
-      sessionsFetchRef.current = now;
-      try {
-        const data = await SessionService.stats(weekFrom, weekTo);
-        const weeklySessions =
+    if (!auth.currentUser) return;
+    const now = Date.now();
+    if (now - streakFetchRef.current < FETCH_INTERVAL_MS) return;
+    streakFetchRef.current = now;
+    const { from, to } = computeRange();
+    StreakService.activity(from, to)
+      .then((data) =>
+        setActiveDates(Array.isArray(data.dates) ? data.dates : []),
+      )
+      .catch(() => {});
+  }, [userId]);
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    const now = Date.now();
+    if (now - sessionsFetchRef.current < FETCH_INTERVAL_MS) return;
+    sessionsFetchRef.current = now;
+    SessionService.stats(weekFrom, weekTo)
+      .then((data) =>
+        setSessionsCount(
           data?.rangeSessions !== undefined
             ? Number(data.rangeSessions)
-            : Number(data?.totalSessions) || 0;
-        setSessionsCount(weeklySessions);
-      } catch (e) {
-        console.warn("Failed to fetch sessions stats:", e);
-      }
-    };
-    loadSessionsStats();
+            : Number(data?.totalSessions) || 0,
+        ),
+      )
+      .catch(() => {});
   }, [userId]);
 
+  useEffect(() => {
+    if (!auth.currentUser) return;
+    Promise.all([ProjectService.getAll(), AttemptService.getSummaries()])
+      .then(([projects, summaries]) => {
+        setRecentProjects(projects.slice(0, 6));
+        const counts = {};
+        for (const s of summaries) {
+          if (s.projectId) counts[s.projectId] = (counts[s.projectId] || 0) + 1;
+        }
+        setPracticedCounts(counts);
+      })
+      .catch(() => {});
+  }, [userId]);
+
+  // ── navigation ────────────────────────────────────────────────────────────────
+  const openProject = (project) => {
+    if (project.kind === "collection") {
+      navigate("/interview/questions", {
+        state: {
+          mode: "collection",
+          collection: {
+            id: project.sourceCollectionId,
+            name: project.name,
+            author: project.author,
+            lastUpdated: project.collectionLastUpdated,
+          },
+          questions: project.questions,
+          from: "projects",
+          projectId: project.id,
+        },
+      });
+    } else {
+      navigate("/interview/questions", {
+        state: { project, questions: project.questions, mode: "project" },
+      });
+    }
+  };
+
+  // ── render ────────────────────────────────────────────────────────────────────
   return (
     <Box
       sx={{
         minHeight: "100vh",
         backgroundColor: PAGE_BG,
-        position: "relative",
-        overflow: "hidden",
-        py: { xs: 6, md: 8 },
+        py: { xs: 4, md: 6 },
+        overflowX: "hidden",
       }}
     >
-      <Container maxWidth="xl" sx={{ position: "relative", zIndex: 1 }}>
-        <Stack
-          spacing={{ xs: 4, md: 5 }}
-          sx={{
-            px: { xs: 0, md: 2 },
-          }}
-        >
-          {/* Hero / Greeting */}
-          <Paper
-            elevation={0}
-            sx={{
-              backgroundColor: SURFACE_BG,
-              borderRadius: 4,
-              px: { xs: 3, md: 4 },
-              py: { xs: 4, md: 5 },
-              border: SURFACE_BORDER,
-              boxShadow: SURFACE_SHADOW,
-            }}
-          >
-            <Grid container spacing={{ xs: 4, md: 6 }} alignItems="stretch">
-              <Grid item xs={12} md={7}>
-                <Stack spacing={2.5} sx={{ height: "100%" }}>
-                  <Chip
-                    label="Daily progress"
-                    color="warning"
-                    sx={{
-                      alignSelf: "flex-start",
-                      backgroundColor: "#FA735B",
-                      color: "#fff",
-                      fontWeight: 600,
-                      letterSpacing: 0.3,
-                    }}
-                  />
-                  <Typography
-                    variant="h3"
-                    sx={{
-                      fontWeight: 700,
-                      color: HEADING_COLOR,
-                      lineHeight: 1.1,
-                    }}
-                  >
-                    {getTimeBasedGreeting()},{" "}
-                    {(auth.currentUser?.displayName?.split(" ")[0] || "Speaker")
-                      .charAt(0)
-                      .toUpperCase() +
-                      (
-                        auth.currentUser?.displayName?.split(" ")[0] ||
-                        "Speaker"
-                      ).slice(1)}
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      color: BODY_COLOR,
-                      fontWeight: 400,
-                    }}
-                  >
-                    Ready to take your communication skills to the next level?
-                    Let's make today another step forward in your speaking
-                    journey.
-                  </Typography>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{
-                      color: MUTED_COLOR,
-                      fontWeight: 600,
-                      letterSpacing: 0.2,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Weekly stats
-                  </Typography>
-                  <StatHighlights stats={statHighlightsData} />
-                </Stack>
-              </Grid>
-              <Grid item xs={12} md={5}>
-                <Paper
-                  elevation={0}
+      <Container maxWidth="md">
+        <Stack spacing={2}>
+          {/* ── Section 1: Greeting + Streak ─────────────────────────────── */}
+          <Grid container spacing={2} alignItems="stretch">
+            {/* Left: greeting + stats */}
+            <Grid item xs={12} md={7}>
+              <Box sx={{ py: { xs: 0, md: 1 } }}>
+                <Chip
+                  label="This week"
+                  size="small"
                   sx={{
-                    height: "100%",
-                    borderRadius: 4,
-                    px: 3,
-                    py: 3,
-                    backgroundColor: SURFACE_BG,
-                    border: SURFACE_BORDER,
-                    boxShadow: SURFACE_SHADOW,
+                    mb: 2,
+                    backgroundColor: CORAL,
+                    color: "#fff",
+                    fontWeight: 600,
+                    letterSpacing: 0.3,
+                    fontSize: 12,
+                  }}
+                />
+                <Typography
+                  variant="h3"
+                  sx={{
+                    fontFamily: "Georgia, serif",
+                    fontWeight: 500,
+                    color: HEADING_COLOR,
+                    lineHeight: 1.15,
+                    mb: 1,
+                  }}
+                >
+                  {getTimeBasedGreeting()},{" "}
+                  {firstName.charAt(0).toUpperCase() + firstName.slice(1)}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 14.5,
+                    color: BODY_COLOR,
+                    lineHeight: 1.6,
+                    mb: 3.5,
+                  }}
+                >
+                  Ready to take your interviewing skills to the next level?
+                  Let's make today another step forward.
+                </Typography>
+
+                {/* Stat tiles */}
+                <Box sx={{ display: "flex", gap: 1.5 }}>
+                  {[
+                    {
+                      icon: (
+                        <TrackChangesIcon sx={{ fontSize: 18, color: CORAL }} />
+                      ),
+                      value: sessionsCount,
+                      label: "Sessions this week",
+                    },
+                    {
+                      icon: (
+                        <CalendarMonthIcon
+                          sx={{ fontSize: 18, color: CORAL }}
+                        />
+                      ),
+                      value: activeDaysCount,
+                      label: "Days practised",
+                    },
+                  ].map((stat) => (
+                    <Box
+                      key={stat.label}
+                      sx={{
+                        flex: 1,
+                        backgroundColor: SURFACE_BG,
+                        border: SURFACE_BORDER,
+                        borderRadius: "14px",
+                        px: 2,
+                        py: 1.75,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mb: 0.5,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 30,
+                            height: 30,
+                            borderRadius: "8px",
+                            backgroundColor: "rgba(250,115,91,0.1)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {stat.icon}
+                        </Box>
+                        <Typography
+                          sx={{
+                            fontSize: 24,
+                            fontWeight: 700,
+                            color: HEADING_COLOR,
+                            lineHeight: 1,
+                          }}
+                        >
+                          {stat.value}
+                        </Typography>
+                      </Box>
+                      <Typography
+                        sx={{
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: MUTED_COLOR,
+                          letterSpacing: 0.4,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {stat.label}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            </Grid>
+
+            {/* Right: streak calendar */}
+            <Grid item xs={12} md={5}>
+              <Paper
+                elevation={0}
+                sx={{
+                  height: "100%",
+                  borderRadius: "18px",
+                  p: "20px 24px",
+                  backgroundColor: SURFACE_BG,
+                  border: SURFACE_BORDER,
+                  boxShadow: SURFACE_SHADOW,
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: MUTED_COLOR,
+                    letterSpacing: 0.6,
+                    textTransform: "uppercase",
+                    mb: 0.5,
+                  }}
+                >
+                  Your practice streak
+                </Typography>
+                <Box sx={{ flexGrow: 1 }}>
+                  <MemoizedStreakCalendar
+                    title=""
+                    activeDates={activeDates}
+                    showLegend
+                    highlightCurrentStreak
+                  />
+                </Box>
+              </Paper>
+            </Grid>
+          </Grid>
+
+          {/* ── Section 2: Entry cards ───────────────────────────────────── */}
+          <Grid container spacing={2}>
+            {/* Prepare for a role */}
+            <Grid item xs={12} md={4}>
+              <Box
+                onClick={() => setPrepareOpen(true)}
+                sx={{
+                  position: "relative",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  backgroundColor: SURFACE_BG,
+                  border: SURFACE_BORDER,
+                  borderRadius: "18px",
+                  p: "22px 22px 18px",
+                  minHeight: 200,
+                  display: "flex",
+                  flexDirection: "column",
+                  transition: "transform 120ms ease, box-shadow 120ms ease",
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 22px 40px rgba(252,150,120,0.2)",
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "8px",
+                    backgroundColor: CORAL,
                     display: "flex",
-                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    mb: 1.5,
+                    flexShrink: 0,
+                  }}
+                >
+                  <AutoAwesomeIcon sx={{ color: "#fff", fontSize: 16 }} />
+                </Box>
+                <Box
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    backgroundColor: CORAL_SOFTER,
+                    color: CORAL_INK,
+                    borderRadius: "20px",
+                    px: 1.25,
+                    py: 0.3,
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    mb: 1,
+                    width: "fit-content",
+                    letterSpacing: 0.3,
+                  }}
+                >
+                  AI · Tailored
+                </Box>
+                <Typography
+                  sx={{
+                    fontSize: 17,
+                    fontWeight: 600,
+                    color: HEADING_COLOR,
+                    mb: 0.75,
+                  }}
+                >
+                  Prepare for a role
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    color: BODY_COLOR,
+                    lineHeight: 1.6,
+                    flex: 1,
+                  }}
+                >
+                  Drop in a company &amp; role — we'll generate a set tailored
+                  to the exact bar they'll hold you to.
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: CORAL_INK,
+                    mt: 1.5,
+                  }}
+                >
+                  Generate questions
+                </Typography>
+              </Box>
+            </Grid>
+
+            {/* Build your own set */}
+            <Grid item xs={12} md={4}>
+              <Box
+                onClick={() => setCustomOpen(true)}
+                sx={{
+                  position: "relative",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  backgroundColor: "#fff9f7",
+                  backgroundImage:
+                    "radial-gradient(circle, rgba(200,90,62,0.14) 1px, transparent 1.2px)",
+                  backgroundSize: "14px 14px",
+                  border: SURFACE_BORDER,
+                  borderRadius: "18px",
+                  p: "22px 22px 18px",
+                  minHeight: 200,
+                  display: "flex",
+                  flexDirection: "column",
+                  transition: "transform 120ms ease, box-shadow 120ms ease",
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 22px 40px rgba(232,200,124,0.25)",
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "8px",
+                    backgroundColor: SURFACE_BG,
+                    border: `1px solid ${LINE}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    mb: 1.5,
+                    flexShrink: 0,
+                  }}
+                >
+                  <CreateIcon sx={{ color: CORAL, fontSize: 16 }} />
+                </Box>
+                <Box
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    backgroundColor: BUTTER_SOFT,
+                    color: BUTTER_INK,
+                    borderRadius: "20px",
+                    px: 1.25,
+                    py: 0.3,
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    mb: 1,
+                    width: "fit-content",
+                    letterSpacing: 0.3,
+                  }}
+                >
+                  Custom
+                </Box>
+                <Typography
+                  sx={{
+                    fontSize: 17,
+                    fontWeight: 600,
+                    color: HEADING_COLOR,
+                    mb: 0.75,
+                  }}
+                >
+                  Build your own set
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    color: BODY_COLOR,
+                    lineHeight: 1.6,
+                    flex: 1,
+                  }}
+                >
+                  Write the exact questions you're dreading — the ones the AI
+                  wouldn't think to ask.
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: BUTTER_INK,
+                    mt: 1.5,
+                  }}
+                >
+                  Start a new set
+                </Typography>
+              </Box>
+            </Grid>
+
+            {/* Explore collections */}
+            <Grid item xs={12} md={4}>
+              <Box
+                onClick={() => navigate("/interview/collections")}
+                sx={{
+                  position: "relative",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  backgroundColor: "#2f170f",
+                  borderRadius: "18px",
+                  p: "22px 22px 18px",
+                  minHeight: 200,
+                  display: "flex",
+                  flexDirection: "column",
+                  transition: "transform 120ms ease, box-shadow 120ms ease",
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 22px 40px rgba(47,23,15,0.35)",
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: -40,
+                    right: -40,
+                    width: 180,
+                    height: 180,
+                    borderRadius: "50%",
+                    background:
+                      "radial-gradient(circle at 30% 30%, #FA735B 0%, #C85A3E 70%, transparent 72%)",
+                    pointerEvents: "none",
+                    opacity: 0.4,
+                  }}
+                />
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "8px",
+                    backgroundColor: "rgba(255,255,255,0.12)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    mb: 1.5,
+                    flexShrink: 0,
+                  }}
+                >
+                  <AutoStoriesIcon sx={{ color: "#fff", fontSize: 16 }} />
+                </Box>
+                <Box
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    backgroundColor: "rgba(255,255,255,0.14)",
+                    color: "rgba(255,255,255,0.9)",
+                    borderRadius: "20px",
+                    px: 1.25,
+                    py: 0.3,
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    mb: 1,
+                    width: "fit-content",
+                    letterSpacing: 0.3,
+                  }}
+                >
+                  Ready to practise
+                </Box>
+                <Typography
+                  sx={{
+                    fontSize: 17,
+                    fontWeight: 600,
+                    color: "#fff",
+                    mb: 0.75,
+                  }}
+                >
+                  Collections
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    color: "rgba(255,255,255,0.68)",
+                    lineHeight: 1.6,
+                    flex: 1,
+                  }}
+                >
+                  Professionally authored question sets for common interview
+                  roles.
+                </Typography>
+                <Button
+                  variant="contained"
+                  onClick={() => navigate("/interview/collections")}
+                  sx={{
+                    mt: 1.5,
+                    textTransform: "none",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    px: 2.5,
+                    py: 1,
+                    borderRadius: "10px",
+                    backgroundColor: CORAL,
+                    color: "#fff",
+                    alignSelf: "flex-start",
+                    boxShadow: "0 8px 18px rgba(250,115,91,0.45)",
+                    "&:hover": { backgroundColor: CORAL_INK },
+                  }}
+                >
+                  Explore
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
+
+          {/* ── Section 3: Recent Projects ───────────────────────────────── */}
+          <Grid container spacing={2}>
+            {/* Recent projects — full width */}
+            <Grid item xs={12}>
+              <Paper
+                elevation={0}
+                sx={{
+                  height: "100%",
+                  borderRadius: "18px",
+                  p: "28px 28px 24px",
+                  backgroundColor: SURFACE_BG,
+                  border: SURFACE_BORDER,
+                  boxShadow: SURFACE_SHADOW,
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    mb: 2.5,
                   }}
                 >
                   <Typography
-                    variant="subtitle2"
-                    sx={{ color: BODY_COLOR, fontWeight: 600, mb: 1 }}
-                  >
-                    Your practice streak
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    sx={{ color: HEADING_COLOR, fontWeight: 600, mb: 2 }}
-                  >
-                    A quick look at recent activity.
-                  </Typography>
-                  <Box sx={{ flexGrow: 1 }}>
-                    <MemoizedStreakCalendar
-                      title=""
-                      activeDates={activeDates}
-                      showLegend
-                      highlightCurrentStreak
-                    />
-                  </Box>
-                </Paper>
-              </Grid>
-            </Grid>
-          </Paper>
-
-          {/* Main Grid */}
-          <Grid container spacing={{ xs: 4, md: 0 }}>
-            <Grid item xs={12} md={6} sx={{ display: "flex" }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  width: "100%",
-                  height: "100%",
-                  borderRadius: 4,
-                  px: { xs: 3, md: 4 },
-                  pt: { xs: 4, md: 4.5 },
-                  pb: { xs: 3, md: 3.5 },
-                  backgroundColor: SURFACE_BG,
-                  border: SURFACE_BORDER,
-                  boxShadow: SURFACE_SHADOW,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  gap: 3,
-                  margin: 2,
-                }}
-              >
-                <Stack spacing={1.5}>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ color: BODY_COLOR, fontWeight: 600 }}
-                  >
-                    Recommended next step
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    sx={{ color: HEADING_COLOR, fontWeight: 600 }}
-                  >
-                    Pick up with impromptu warm-ups
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: BODY_COLOR }}>
-                    A focused warm-up to get your voice moving.
-                  </Typography>
-                </Stack>
-                <Stack spacing={2.5} sx={{ flexGrow: 1 }}>
-                  <Box
-                    component="img"
-                    src="/assets/impromptu_speaking.png"
-                    alt="Impromptu speaking focus"
-                    loading="lazy"
-                    decoding="async"
                     sx={{
-                      width: "100%",
-                      maxWidth: 260,
-                      maxHeight: 160,
-                      objectFit: "contain",
-                      mx: { xs: 0, md: "auto" },
-                    }}
-                  />
-                  <Button
-                    variant="contained"
-                    onClick={navigateToImpromptSpeakingPracticePage}
-                    sx={{
-                      alignSelf: "flex-start",
-                      textTransform: "none",
-                      fontWeight: 600,
-                      px: 3.5,
-                      py: 1.4,
-                      borderRadius: 2,
-                      backgroundColor: "#FA735B",
-                      boxShadow:
-                        "0px 12px 24px -12px rgba(250,115,91,0.7), 0px 10px 18px -14px rgba(49,30,20,0.35)",
-                      "&:hover": {
-                        backgroundColor: "#f8643f",
-                        boxShadow:
-                          "0px 14px 26px -12px rgba(250,115,91,0.8), 0px 12px 18px -14px rgba(49,30,20,0.35)",
-                      },
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: MUTED_COLOR,
+                      letterSpacing: 0.5,
+                      textTransform: "uppercase",
                     }}
                   >
-                    Resume practice
-                  </Button>
-                </Stack>
-              </Paper>
-            </Grid>
-            <Grid item xs={12} md={6} sx={{ display: "flex" }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  width: "100%",
-                  height: "100%",
-                  borderRadius: 4,
-                  px: { xs: 3, md: 4 },
-                  pt: { xs: 4, md: 4.5 },
-                  pb: { xs: 3, md: 3.5 },
-                  backgroundColor: SURFACE_BG,
-                  border: SURFACE_BORDER,
-                  boxShadow: SURFACE_SHADOW,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  gap: 2.5,
-                  margin: 2,
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant="h6"
-                    sx={{ color: HEADING_COLOR, fontWeight: 700, mb: 0.5 }}
-                  >
-                    What do you want to work on today?
+                    Recent projects
+                    {recentProjects.length > 0
+                      ? ` · ${recentProjects.length} saved`
+                      : ""}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: BODY_COLOR }}>
-                    Choose a practice lane whenever you're ready.
-                  </Typography>
-                </Box>
-                <List disablePadding sx={{ flexGrow: 1 }}>
-                  {[
-                    {
-                      title: "Job Interviews",
-                      description:
-                        "Work through targeted questions, capture AI feedback, and refine replies.",
-                      iconColor: "rgba(250,115,91,0.95)",
-                      icon: (
-                        <WorkOutlineIcon
-                          sx={{ color: "inherit", fontSize: 24 }}
-                        />
-                      ),
-                      duration: "15-30 min",
-                      action: () => navigate("/interview"),
-                    },
-                    {
-                      title: "Impromptu Speaking",
-                      description:
-                        "Stay comfortable with spontaneous prompts and soft skills drills.",
-                      iconColor: "rgba(250,115,91,0.95)",
-                      icon: <MicIcon sx={{ color: "inherit", fontSize: 24 }} />,
-                      duration: "10-20 min",
-                      action: navigateToImpromptSpeakingPracticePage,
-                    },
-                  ].map((item) => (
-                    <ListItem
-                      key={item.title}
-                      onClick={item.action}
+                  {recentProjects.length > 0 && (
+                    <Typography
+                      onClick={() => navigate("/projects")}
                       sx={{
-                        borderRadius: 3,
-                        mb: 1.5,
-                        px: 2.5,
-                        py: 2,
-                        backgroundColor: "#fff8f4",
-                        border: SURFACE_BORDER,
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        color: MUTED_COLOR,
                         cursor: "pointer",
-                        transition:
-                          "transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease",
+                        "&:hover": { color: CORAL },
+                        transition: "color 120ms ease",
+                      }}
+                    >
+                      View all
+                    </Typography>
+                  )}
+                </Box>
+
+                {recentProjects.length === 0 ? (
+                  <Box sx={{ py: 3, textAlign: "center" }}>
+                    <Typography
+                      sx={{ fontSize: 13.5, color: MUTED_COLOR, mb: 1.5 }}
+                    >
+                      No saved projects yet.
+                    </Typography>
+                    {/* <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => setPrepareOpen(true)}
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 600,
+                        fontSize: 12.5,
+                        borderColor: LINE,
+                        color: HEADING_COLOR,
+                        borderRadius: "9px",
                         "&:hover": {
-                          transform: "translateY(-2px)",
-                          boxShadow: SURFACE_SHADOW,
-                          borderColor: "rgba(252, 150, 120, 0.3)",
+                          borderColor: CORAL,
+                          color: CORAL,
+                          backgroundColor: CORAL_SOFTER,
                         },
                       }}
-                      secondaryAction={
-                        <Stack alignItems="flex-end" spacing={0.5}>
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: "rgba(250,115,91,0.9)",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {item.duration}
-                          </Typography>
-                          <ArrowForwardIosIcon
-                            fontSize="small"
-                            sx={{ color: MUTED_COLOR }}
-                          />
-                        </Stack>
-                      }
                     >
-                      <ListItemAvatar>
-                        <Avatar
+                      Start a project
+                    </Button> */}
+                  </Box>
+                ) : (
+                  <Box sx={{ display: "flex", flexDirection: "column" }}>
+                    {recentProjects.map((project, i) => {
+                      const kind = KIND_CONFIG[project.kind];
+                      const isLast = i === recentProjects.length - 1;
+                      return (
+                        <Box
+                          key={project.id}
+                          onClick={() => openProject(project)}
                           sx={{
-                            bgcolor: "rgba(250,115,91,0.12)",
-                            color: item.iconColor,
-                            width: 48,
-                            height: 48,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                            py: 1.75,
+                            borderBottom: isLast ? "none" : `1px solid ${LINE}`,
+                            cursor: "pointer",
+                            "&:hover": { "& .project-name": { color: CORAL } },
+                            transition: "all 120ms ease",
                           }}
                         >
-                          {item.icon}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={
-                          <Typography
-                            variant="subtitle1"
-                            sx={{ color: HEADING_COLOR, fontWeight: 600 }}
+                          <Box
+                            sx={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: "10px",
+                              backgroundColor: kind?.bg || CORAL_SOFTER,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0,
+                              color: kind?.color || CORAL_INK,
+                            }}
                           >
-                            {item.title}
-                          </Typography>
-                        }
-                        secondary={
-                          <Typography
-                            variant="body2"
-                            sx={{ color: BODY_COLOR }}
+                            {kind?.icon}
+                          </Box>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography
+                              className="project-name"
+                              sx={{
+                                fontSize: 14,
+                                fontWeight: 600,
+                                color: HEADING_COLOR,
+                                lineHeight: 1.3,
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                transition: "color 120ms ease",
+                              }}
+                            >
+                              {project.kind === "collection"
+                                ? project.name
+                                : project.companyName || project.name}
+                            </Typography>
+                            <Typography
+                              sx={{ fontSize: 12, color: MUTED_COLOR, mt: 0.2 }}
+                            >
+                              {project.kind === "collection"
+                                ? `By ${project.author || "Speachy"} · ${practicedCounts[project.id] || 0}/${project.questions?.length || 0} practised`
+                                : `${project.jobRole || ""}${project.jobRole ? " · " : ""}${practicedCounts[project.id] || 0}/${project.questions?.length || 0} practised`}
+                            </Typography>
+                          </Box>
+                          <Box
+                            sx={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 0.4,
+                              backgroundColor: kind?.bg || CORAL_SOFTER,
+                              color: kind?.color || CORAL_INK,
+                              borderRadius: "20px",
+                              px: 1.1,
+                              py: 0.3,
+                              fontSize: 10.5,
+                              fontWeight: 700,
+                              flexShrink: 0,
+                            }}
                           >
-                            {item.description}
-                          </Typography>
-                        }
-                      />
-                    </ListItem>
-                  ))}
-                </List>
+                            {kind?.label || "Project"}
+                          </Box>
+                          <ChevronRightIcon
+                            sx={{
+                              fontSize: 16,
+                              color: MUTED_COLOR,
+                              flexShrink: 0,
+                            }}
+                          />
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                )}
               </Paper>
             </Grid>
           </Grid>
         </Stack>
       </Container>
 
-      {/* Loading Backdrop */}
       <Backdrop
         sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
         open={loading}
       >
         <CircularProgress color="inherit" />
       </Backdrop>
+
+      <PrepareForRoleDialog
+        open={prepareOpen}
+        onClose={() => setPrepareOpen(false)}
+      />
+      <BuildCustomSetDialog
+        open={customOpen}
+        onClose={() => setCustomOpen(false)}
+      />
     </Box>
   );
 };

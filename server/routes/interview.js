@@ -90,8 +90,20 @@ const getQuestionsSet = async (
   role,
   description,
   industry,
-  requiredExperience
+  requiredExperience,
+  additionalNotes,
+  count = 10
 ) => {
+  const contextPrompt = [
+    `Generate a list of behavioral interview questions for a job role at company: ${company}, which operates in the industry: ${industry}.`,
+    `The job title is ${role} and requires someone with a ${requiredExperience} experience level.`,
+    `Here is the job description: ${description}`,
+    additionalNotes ? `Additional notes from the candidate: ${additionalNotes}` : "",
+    `Please generate exactly ${count} behavioral interview questions.`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   const completion = await openai.chat.completions.create({
     messages: [
       {
@@ -101,7 +113,7 @@ const getQuestionsSet = async (
       },
       {
         role: "user",
-        content: `Generate a list of behavioral interview questions for a job role at company: ${company}, which operates in the industry: ${industry}. The job title is ${role} and requires someone with a ${requiredExperience} experience level. Here is the job description: ${description}`,
+        content: contextPrompt,
       },
       {
         role: "user",
@@ -148,6 +160,7 @@ const transcribeAudio = async (audioFile) => {
       file: fileStream,
       model: "whisper-1",
       response_format: "verbose_json",
+      prompt: "Umm, let me think like, hmm... Okay, here's what I'm, like, thinking.",
       timestamp_granularities: ["word"],
     });
 
@@ -170,35 +183,35 @@ router.get("/", (req, res, next) => {
 });
 
 router.post("/fetch-questions", async (req, res) => {
-  const { company, role, description, industry, requiredExperience } = req.body;
+  const { company, role, description, industry, requiredExperience, additionalNotes, count } = req.body;
 
-  console.log("interview.js : Received job details:", {
+  logger.info("Received job details for question generation", {
     company,
     role,
-    description,
     industry,
     requiredExperience,
-  }); // TODO: Include a logger instead of console statement
+    hasDescription: !!description,
+    hasAdditionalNotes: !!additionalNotes,
+    count,
+  });
 
   try {
-    const predefinedQuestions = await getPreSelectedQuestions();
-
-    const generatedQuestions = await getQuestionsSet(
+    const questions = await getQuestionsSet(
       company,
       role,
       description,
       industry,
-      requiredExperience
+      requiredExperience,
+      additionalNotes,
+      count || 10
     );
 
-    const allQuestions = [...predefinedQuestions, ...generatedQuestions];
-
-    console.log("interview.js : Questions generated successfully!");
+    logger.info("Questions generated successfully", { count: questions.length });
 
     res.status(200).json({
       message: "Questions generated successfully.",
       data: {
-        questions: allQuestions,
+        questions,
       },
     });
   } catch (error) {
@@ -209,6 +222,7 @@ router.post("/fetch-questions", async (req, res) => {
     });
   }
 });
+
 
 const generatePrompt = async () => {
   const completion = await openai.chat.completions.create({
@@ -675,24 +689,48 @@ const evaluateResponse = async (req, res, next) => {
     return parseFieldValue(completion, "detailedFeedback");
   };
 
+  const getFillers = async () => {
+    try {
+      const completion = await openai.chat.completions.create({
+        model: model,
+        messages: [
+          systemPrompt,
+          userPrompt,
+          getInstructionPrompt(
+            "Count how many filler words appear in the candidate's response. " +
+            "Filler words are: um, uh, like, you know, basically, literally, actually, hmm, err, well, right, kind of, sort of. " +
+            "Return ONLY this exact JSON with no extra fields: {\"fillers\": <integer>}"
+          ),
+        ],
+        response_format: { type: "json_object" },
+      });
+      return await parseFieldValue(completion, "fillers");
+    } catch (err) {
+      logger.warn("getFillers failed, defaulting to null", { error: err.message });
+      return null;
+    }
+  };
+
   try {
     // Run all async functions concurrently
+    const isAudio = !!req.file;
+
     const [
       overview,
       tip,
       relevance,
       structure,
-      // sentiment,
       authenticity,
       detailedFeedback,
+      fillers,
     ] = await Promise.all([
       getOverview(),
       getTip(),
       getRelevance(),
       getStructure(),
-      // getSentiment(),
       getAuthenticity(),
       getDetailedaFeedback(),
+      isAudio ? getFillers() : Promise.resolve(null),
     ]);
 
     // Set results after both have completed
@@ -702,9 +740,9 @@ const evaluateResponse = async (req, res, next) => {
     feedback.overview = overview;
     feedback.tip = tip;
     feedback.detailedFeedback = detailedFeedback;
+    feedback.fillers = fillers;
     feedback.summary.relevance = relevance;
     feedback.summary.structure = structure;
-    // feedback.summary.sentiment = sentiment;
     feedback.summary.authenticity = authenticity;
 
     req.results = feedback;

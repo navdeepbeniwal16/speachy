@@ -10,6 +10,7 @@ import {
   Button,
   CardHeader,
 } from "@mui/material";
+import HubHeader from "../components/HubHeader.js";
 import { useNavigate } from "react-router-dom";
 import { getAuth } from "firebase/auth";
 
@@ -38,21 +39,10 @@ const PracticePage = () => {
         maxWidth="lg"
         sx={{ mt: 0, pt: { xs: 4, md: 6 }, pb: 6, fontFamily: "Roboto" }}
       >
-        <Box sx={{ textAlign: "start", mb: 2 }}>
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{ color: "rgba(36, 20, 14, 0.9)" }}
-          >
-            Practice your skills
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            sx={{ color: "rgba(60,32,25,0.72)" }}
-          >
-            Build your skills and gain feedback in the speaking arena!
-          </Typography>
-        </Box>
+        <HubHeader
+          title="Practice"
+          subtitle="Build your skills and gain feedback in the speaking arena."
+        />
 
         <Grid container spacing={4} justifyContent="flex-start" mt={4}>
           <Grid item xs={12} sm={6} md={5}>

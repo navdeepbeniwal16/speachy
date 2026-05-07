@@ -197,7 +197,7 @@ const ImpromptSpeakingPractice = () => {
         py: { xs: 4, md: 6 },
       }}
     >
-      <Container component="main" maxWidth="lg">
+      <Container component="main" maxWidth="md">
         <Box
           sx={{
             display: "flex",
