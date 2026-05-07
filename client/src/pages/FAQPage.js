@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
   Box,
+  Container,
   Typography,
   Button,
   Paper,
@@ -14,6 +15,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import HubHeader from "../components/HubHeader.js";
+import BreadcrumbHeader from "../components/BreadcrumbHeader.js";
 import SnackbarAlert from "../components/SnackbarAlert";
 import UserService from "../services/user-service";
 
@@ -103,170 +105,178 @@ const FAQPage = () => {
     triggerSnackbar("info", "Email copied to clipboard!");
   };
 
+  const LINE = "rgba(252,150,120,0.12)";
+  const INK = "#2f170f";
+  const INK_2 = "rgba(60,32,25,0.78)";
+  const MUTED = "rgba(60,32,25,0.45)";
+  const CORAL = "#FA735B";
+  const SURFACE_SHADOW = "0 18px 36px rgba(252,150,120,0.10)";
+  const inputSx = {
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "10px",
+      "& .MuiOutlinedInput-notchedOutline": {
+        borderColor: "rgba(252,150,120,0.35)",
+      },
+      "&:hover .MuiOutlinedInput-notchedOutline": {
+        borderColor: "rgba(252,150,120,0.6)",
+      },
+      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+        borderColor: CORAL,
+        borderWidth: "1px",
+      },
+    },
+  };
+
   return (
     <Box
       sx={{
         minHeight: "100vh",
         backgroundColor: "#fff4ef",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        py: 5,
-        px: 3,
+        py: { xs: 5, md: 7 },
       }}
     >
-      <Box sx={{ width: "100%", maxWidth: "700px" }}>
+      <Container maxWidth="md">
+        <BreadcrumbHeader
+          parentLabel="Home"
+          parentPath="/home"
+          currentLabel="Help & FAQ"
+        />
         <HubHeader
           title="Help & FAQ"
           subtitle="Find answers to common questions or let us know how we can improve Speachy."
         />
-      </Box>
-      <Paper
-        elevation={0}
-        sx={{
-          marginTop: 4,
-          width: "100%",
-          maxWidth: "700px",
-          borderRadius: 2,
-          overflow: "hidden",
-          backgroundColor: "#fff",
-          border: "1px solid #f0e6e1",
-          boxShadow: "0 2px 8px rgba(250, 115, 91, 0.06)",
-        }}
-      >
-        {faqs.map((faq, index) => (
-          <Accordion
-            key={index}
-            expanded={expandedIndex === index}
-            onChange={() => handleExpansion(index)}
-            elevation={0}
-            sx={{
-              "&:before": {
-                display: "none",
-              },
-              borderBottom:
-                index === faqs.length - 1 ? "none" : "1px solid #f4e9e3",
-            }}
-          >
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              aria-controls={`faq-content-${index}`}
-              id={`faq-header-${index}`}
-              sx={{ py: 1.5 }}
-            >
-              <Typography sx={{ fontWeight: 500 }}>{faq.question}</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography sx={{ color: "rgba(60,32,25,0.72)" }}>
-                {faq.answer}
-              </Typography>
-            </AccordionDetails>
-          </Accordion>
-        ))}
-      </Paper>
 
-      <Box
-        sx={{
-          width: "100%",
-          maxWidth: "700px",
-          mt: 6,
-          px: 3,
-          py: 4,
-          backgroundColor: "#fff",
-          border: "1px solid #f0e6e1",
-          borderRadius: 2,
-          boxShadow: "0 2px 8px rgba(250, 115, 91, 0.06)",
-        }}
-      >
-        <Typography variant="h6" fontWeight="bold" gutterBottom>
-          How are you finding Speachy so far?
-        </Typography>
-        <Typography variant="body2" sx={{ color: "rgba(60,32,25,0.72)", mb: 2 }}>
-          We're eager to hear your feedback!
-        </Typography>
-
-        <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 2 }}>
-          <Rating
-            name="feedback-rating"
-            value={rating}
-            onChange={(event, newValue) => setRating(newValue)}
-          />
-        </Box>
-
-        <TextField
-          fullWidth
-          multiline
-          minRows={4}
-          placeholder="Share your thoughts..."
-          variant="outlined"
-          value={userFeedback}
-          onChange={(e) => setUserFeedback(e.target.value)}
+        {/* FAQ accordion card */}
+        <Paper
+          elevation={0}
           sx={{
+            borderRadius: "18px",
+            overflow: "hidden",
             backgroundColor: "#fff",
-            borderRadius: 0.5,
+            border: `1px solid ${LINE}`,
+            boxShadow: SURFACE_SHADOW,
             mb: 3,
           }}
-        />
-
-        <Button
-          variant="contained"
-          onClick={() => uploadUserFeedback(rating, userFeedback)}
-          disabled={!rating && userFeedback.trim() === ""}
-          sx={primaryButtonSx}
         >
-          Send feedback
-        </Button>
-      </Box>
+          {faqs.map((faq, index) => (
+            <Accordion
+              key={index}
+              expanded={expandedIndex === index}
+              onChange={() => handleExpansion(index)}
+              elevation={0}
+              sx={{
+                "&:before": { display: "none" },
+                borderBottom:
+                  index === faqs.length - 1 ? "none" : `1px solid ${LINE}`,
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon />}
+                aria-controls={`faq-content-${index}`}
+                id={`faq-header-${index}`}
+                sx={{ px: 3, py: 1.5 }}
+              >
+                <Typography sx={{ fontWeight: 500, color: INK }}>
+                  {faq.question}
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails sx={{ px: 3 }}>
+                <Typography sx={{ color: INK_2, lineHeight: 1.65 }}>
+                  {faq.answer}
+                </Typography>
+              </AccordionDetails>
+            </Accordion>
+          ))}
+        </Paper>
 
-      <Box
-        sx={{
-          mt: 6,
-          textAlign: "center",
-        }}
-      >
-        <Typography variant="h6" fontWeight="bold" gutterBottom>
-          Have any other questions?
-        </Typography>
-        <Typography variant="body1" sx={{ color: "rgba(60,32,25,0.72)", mb: 2 }}>
-          Don’t hesitate to send us an email with your enquiry or statement at:
-        </Typography>
-        <Box
+        {/* Feedback card */}
+        <Paper
+          elevation={0}
           sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: 2,
+            p: { xs: 3, md: 4 },
+            borderRadius: "18px",
+            backgroundColor: "#fff",
+            border: `1px solid ${LINE}`,
+            boxShadow: SURFACE_SHADOW,
+            mb: 3,
           }}
         >
-          <Paper
-            variant="none"
+          <Typography
+            sx={{ fontSize: 16, fontWeight: 700, color: INK, mb: 0.5 }}
+          >
+            How are you finding Speachy so far?
+          </Typography>
+          <Typography sx={{ fontSize: 13.5, color: MUTED, mb: 2.5 }}>
+            We’re eager to hear your feedback!
+          </Typography>
+
+          <Box sx={{ mb: 2.5 }}>
+            <Rating
+              name="feedback-rating"
+              value={rating}
+              onChange={(event, newValue) => setRating(newValue)}
+              sx={{
+                "& .MuiRating-iconFilled": { color: CORAL },
+                "& .MuiRating-iconHover": { color: CORAL },
+              }}
+            />
+          </Box>
+
+          <TextField
+            fullWidth
+            multiline
+            minRows={4}
+            placeholder="Share your thoughts..."
+            variant="outlined"
+            value={userFeedback}
+            onChange={(e) => setUserFeedback(e.target.value)}
+            sx={{ ...inputSx, mb: 3 }}
+          />
+
+          <Button
+            variant="contained"
+            onClick={() => uploadUserFeedback(rating, userFeedback)}
+            disabled={!rating && userFeedback.trim() === ""}
+            sx={primaryButtonSx}
+          >
+            Send feedback
+          </Button>
+        </Paper>
+
+        {/* Contact section */}
+        <Box sx={{ textAlign: "center", pt: 2, pb: 4 }}>
+          <Typography
+            sx={{ fontSize: 16, fontWeight: 700, color: INK, mb: 0.5 }}
+          >
+            Have any other questions?
+          </Typography>
+          <Typography sx={{ fontSize: 13.5, color: MUTED, mb: 2.5 }}>
+            Don’t hesitate to reach out at:
+          </Typography>
+          <Box
             sx={{
-              px: 2,
-              py: 1,
-              borderRadius: 1,
-              display: "flex",
+              display: "inline-flex",
               alignItems: "center",
-              bgcolor: "#fff4ef",
-              border: "1px solid #f0e6e1",
+              gap: 1,
+              backgroundColor: "#fff",
+              border: `1px solid ${LINE}`,
+              borderRadius: "12px",
+              px: 2.5,
+              py: 1.25,
             }}
           >
-            <Typography
-              sx={{
-                mr: 2,
-              }}
-            >
-              {email}
-            </Typography>
-
+            <Typography sx={{ fontSize: 14, color: INK_2 }}>{email}</Typography>
             <IconButton
               onClick={copyToClipboard}
+              size="small"
               sx={{
-                color: "#FA735B",
+                color: CORAL,
+                "&:hover": { backgroundColor: "rgba(250,115,91,0.08)" },
               }}
             >
-              <ContentCopyIcon />
+              <ContentCopyIcon fontSize="small" />
             </IconButton>
-          </Paper>
+          </Box>
         </Box>
 
         <SnackbarAlert
@@ -275,7 +285,7 @@ const FAQPage = () => {
           isOpen={snackbarOpen}
           onClose={handleSnackbarClose}
         />
-      </Box>
+      </Container>
     </Box>
   );
 };

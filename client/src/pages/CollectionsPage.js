@@ -1,11 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  CircularProgress,
-  Container,
-  Typography,
-} from "@mui/material";
+import { Box, CircularProgress, Container, Typography } from "@mui/material";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import { AppContext } from "../components/AppContext.js";
@@ -53,7 +48,12 @@ const CollectionsPage = () => {
         col.id,
       );
       navigate("/interview/questions", {
-        state: { mode: "collection", collection, questions, from: "collections" },
+        state: {
+          mode: "collection",
+          collection,
+          questions,
+          from: "collections",
+        },
       });
     } catch {
       showSnackbar("error", "Could not load questions. Please try again.");
@@ -71,8 +71,8 @@ const CollectionsPage = () => {
     >
       <Container maxWidth="md">
         <BreadcrumbHeader
-          parentLabel="Interview Hub"
-          parentPath="/interview"
+          parentLabel="Home"
+          parentPath="/home"
           currentLabel="Collections"
         />
 

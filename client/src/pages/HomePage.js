@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { keyframes } from "@emotion/react";
+import PrepareForRoleDialog from "../components/PrepareForRoleDialog.js";
+import BuildCustomSetDialog from "../components/BuildCustomSetDialog.js";
 import {
   Typography,
   Container,
@@ -18,7 +19,6 @@ import PaymentsService from "../services/payments-service.js";
 import { AppContext } from "../components/AppContext.js";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import MicIcon from "@mui/icons-material/Mic";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -27,11 +27,7 @@ import StreakCalendar from "../components/StreakCalendar";
 import StreakService from "../services/streak-service.js";
 import SessionService from "../services/session-service.js";
 import ProjectService from "../services/project-service.js";
-
-const twinkleAnim = keyframes`
-  0%, 100% { opacity: 0.25; transform: scale(0.8); }
-  50%       { opacity: 0.9;  transform: scale(1.25); }
-`;
+import AttemptService from "../services/attempt-service.js";
 
 const FETCH_INTERVAL_MS = 5 * 60 * 1000;
 const PAGE_BG = "#fff4ef";
@@ -80,6 +76,9 @@ const HomePage = () => {
   const [activeDates, setActiveDates] = useState([]);
   const [sessionsCount, setSessionsCount] = useState(0);
   const [recentProjects, setRecentProjects] = useState([]);
+  const [practicedCounts, setPracticedCounts] = useState({});
+  const [prepareOpen, setPrepareOpen] = useState(false);
+  const [customOpen, setCustomOpen] = useState(false);
 
   const entitlementsFetchRef = useRef(0);
   const streakFetchRef = useRef(0);
@@ -192,8 +191,15 @@ const HomePage = () => {
 
   useEffect(() => {
     if (!auth.currentUser) return;
-    ProjectService.getAll()
-      .then((projects) => setRecentProjects(projects.slice(0, 3)))
+    Promise.all([ProjectService.getAll(), AttemptService.getSummaries()])
+      .then(([projects, summaries]) => {
+        setRecentProjects(projects.slice(0, 6));
+        const counts = {};
+        for (const s of summaries) {
+          if (s.projectId) counts[s.projectId] = (counts[s.projectId] || 0) + 1;
+        }
+        setPracticedCounts(counts);
+      })
       .catch(() => {});
   }, [userId]);
 
@@ -395,241 +401,307 @@ const HomePage = () => {
             </Grid>
           </Grid>
 
-          {/* ── Section 2: Featured — Job Interview Preparation ───────────── */}
+          {/* ── Section 2: Entry cards ───────────────────────────────────── */}
           <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <Paper
-                elevation={0}
+            {/* Prepare for a role */}
+            <Grid item xs={12} md={4}>
+              <Box
+                onClick={() => setPrepareOpen(true)}
                 sx={{
-                  borderRadius: "18px",
-                  px: { xs: 3, md: 4 },
-                  py: { xs: 3.5, md: 4 },
+                  position: "relative",
+                  overflow: "hidden",
+                  cursor: "pointer",
                   backgroundColor: SURFACE_BG,
                   border: SURFACE_BORDER,
-                  boxShadow: SURFACE_SHADOW,
-                  overflow: "hidden",
-                  position: "relative",
+                  borderRadius: "18px",
+                  p: "22px 22px 18px",
+                  minHeight: 200,
+                  display: "flex",
+                  flexDirection: "column",
+                  transition: "transform 120ms ease, box-shadow 120ms ease",
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 22px 40px rgba(252,150,120,0.2)",
+                  },
                 }}
               >
-                <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={12} md={8}>
-                    <Box
-                      sx={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        backgroundColor: CORAL_SOFTER,
-                        color: CORAL_INK,
-                        borderRadius: "20px",
-                        px: 1.25,
-                        py: 0.3,
-                        fontSize: 10.5,
-                        fontWeight: 700,
-                        letterSpacing: 0.4,
-                        mb: 1.75,
-                      }}
-                    >
-                      FEATURED
-                    </Box>
-                    <Typography
-                      component="h2"
-                      sx={{
-                        fontFamily: "Georgia, serif",
-                        fontSize: { xs: 22, md: 26 },
-                        fontWeight: 500,
-                        color: HEADING_COLOR,
-                        lineHeight: 1.2,
-                        mb: 1.25,
-                      }}
-                    >
-                      Job Interview Preparation
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: 14,
-                        color: BODY_COLOR,
-                        lineHeight: 1.65,
-                        mb: 3,
-                      }}
-                    >
-                      Work through targeted behavioural questions, capture AI
-                      feedback, and refine your replies until they're
-                      interview-ready.
-                    </Typography>
-                    {/* Feature indicators */}
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 3 }}>
-                      {[
-                        { label: "Prepare for a role",  icon: <AutoAwesomeIcon sx={{ fontSize: 13 }} /> },
-                        { label: "Build your own set",  icon: <CreateIcon       sx={{ fontSize: 13 }} /> },
-                        { label: "Explore collections", icon: <AutoStoriesIcon  sx={{ fontSize: 13 }} /> },
-                      ].map((item) => (
-                        <Box
-                          key={item.label}
-                          sx={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 0.6,
-                            px: 1.5,
-                            py: 0.6,
-                            borderRadius: "20px",
-                            border: `1px solid ${LINE}`,
-                            color: MUTED_COLOR,
-                            fontSize: 12.5,
-                            fontWeight: 500,
-                            userSelect: "none",
-                          }}
-                        >
-                          {item.icon}
-                          {item.label}
-                        </Box>
-                      ))}
-                    </Box>
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "8px",
+                    backgroundColor: CORAL,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    mb: 1.5,
+                    flexShrink: 0,
+                  }}
+                >
+                  <AutoAwesomeIcon sx={{ color: "#fff", fontSize: 16 }} />
+                </Box>
+                <Box
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    backgroundColor: CORAL_SOFTER,
+                    color: CORAL_INK,
+                    borderRadius: "20px",
+                    px: 1.25,
+                    py: 0.3,
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    mb: 1,
+                    width: "fit-content",
+                    letterSpacing: 0.3,
+                  }}
+                >
+                  AI · Tailored
+                </Box>
+                <Typography
+                  sx={{
+                    fontSize: 17,
+                    fontWeight: 600,
+                    color: HEADING_COLOR,
+                    mb: 0.75,
+                  }}
+                >
+                  Prepare for a role
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    color: BODY_COLOR,
+                    lineHeight: 1.6,
+                    flex: 1,
+                  }}
+                >
+                  Drop in a company &amp; role — we'll generate a set tailored
+                  to the exact bar they'll hold you to.
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: CORAL_INK,
+                    mt: 1.5,
+                  }}
+                >
+                  Generate questions
+                </Typography>
+              </Box>
+            </Grid>
 
-                    {/* CTA */}
-                    <Button
-                      variant="contained"
-                      onClick={() => navigate("/interview")}
-                      sx={{
-                        textTransform: "none",
-                        fontWeight: 600,
-                        fontSize: 13.5,
-                        px: 3,
-                        py: 1.1,
-                        borderRadius: "10px",
-                        backgroundColor: CORAL,
-                        boxShadow: "0px 8px 18px -6px rgba(250,115,91,0.6)",
-                        "&:hover": { backgroundColor: CORAL_INK },
-                      }}
-                    >
-                      Go to Interview Hub →
-                    </Button>
-                  </Grid>
+            {/* Build your own set */}
+            <Grid item xs={12} md={4}>
+              <Box
+                onClick={() => setCustomOpen(true)}
+                sx={{
+                  position: "relative",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  backgroundColor: "#fff9f7",
+                  backgroundImage:
+                    "radial-gradient(circle, rgba(200,90,62,0.14) 1px, transparent 1.2px)",
+                  backgroundSize: "14px 14px",
+                  border: SURFACE_BORDER,
+                  borderRadius: "18px",
+                  p: "22px 22px 18px",
+                  minHeight: 200,
+                  display: "flex",
+                  flexDirection: "column",
+                  transition: "transform 120ms ease, box-shadow 120ms ease",
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 22px 40px rgba(232,200,124,0.25)",
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "8px",
+                    backgroundColor: SURFACE_BG,
+                    border: `1px solid ${LINE}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    mb: 1.5,
+                    flexShrink: 0,
+                  }}
+                >
+                  <CreateIcon sx={{ color: CORAL, fontSize: 16 }} />
+                </Box>
+                <Box
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    backgroundColor: BUTTER_SOFT,
+                    color: BUTTER_INK,
+                    borderRadius: "20px",
+                    px: 1.25,
+                    py: 0.3,
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    mb: 1,
+                    width: "fit-content",
+                    letterSpacing: 0.3,
+                  }}
+                >
+                  Custom
+                </Box>
+                <Typography
+                  sx={{
+                    fontSize: 17,
+                    fontWeight: 600,
+                    color: HEADING_COLOR,
+                    mb: 0.75,
+                  }}
+                >
+                  Build your own set
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    color: BODY_COLOR,
+                    lineHeight: 1.6,
+                    flex: 1,
+                  }}
+                >
+                  Write the exact questions you're dreading — the ones the AI
+                  wouldn't think to ask.
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: BUTTER_INK,
+                    mt: 1.5,
+                  }}
+                >
+                  Start a new set
+                </Typography>
+              </Box>
+            </Grid>
 
-                  {/* Mic illustration */}
-                  <Grid
-                    item
-                    xs={12}
-                    md={4}
-                    sx={{
-                      display: { xs: "none", md: "flex" },
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Box sx={{ position: "relative", width: 160, height: 160 }}>
-                      {/* Icon wrapper */}
-                      <Box sx={{ position: "relative", width: 160, height: 160 }}>
-                        <Box
-                          sx={{
-                            width: 160, height: 160,
-                            borderRadius: "50%",
-                            backgroundColor: "rgba(250,115,91,0.12)",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              width: 110, height: 110,
-                              borderRadius: "50%",
-                              backgroundColor: "rgba(250,115,91,0.18)",
-                              display: "flex", alignItems: "center", justifyContent: "center",
-                            }}
-                          >
-                            <MicIcon sx={{ fontSize: 52, color: CORAL }} />
-                          </Box>
-                        </Box>
-
-                        {/* Sparkle dots */}
-                        {[
-                          { top: 10, right: 18, size: 8 },
-                          { top: 30, left: 12,  size: 5 },
-                          { bottom: 16, right: 12, size: 6 },
-                        ].map((dot, i) => (
-                          <Box
-                            key={i}
-                            sx={{
-                              position: "absolute",
-                              top: dot.top, right: dot.right,
-                              left: dot.left, bottom: dot.bottom,
-                              width: dot.size, height: dot.size,
-                              borderRadius: "50%",
-                              backgroundColor: CORAL,
-                              animation: `${twinkleAnim} 2.8s ease-in-out infinite`,
-                            }}
-                          />
-                        ))}
-                      </Box>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </Paper>
+            {/* Explore collections */}
+            <Grid item xs={12} md={4}>
+              <Box
+                onClick={() => navigate("/interview/collections")}
+                sx={{
+                  position: "relative",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  backgroundColor: "#2f170f",
+                  borderRadius: "18px",
+                  p: "22px 22px 18px",
+                  minHeight: 200,
+                  display: "flex",
+                  flexDirection: "column",
+                  transition: "transform 120ms ease, box-shadow 120ms ease",
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 22px 40px rgba(47,23,15,0.35)",
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: -40,
+                    right: -40,
+                    width: 180,
+                    height: 180,
+                    borderRadius: "50%",
+                    background:
+                      "radial-gradient(circle at 30% 30%, #FA735B 0%, #C85A3E 70%, transparent 72%)",
+                    pointerEvents: "none",
+                    opacity: 0.4,
+                  }}
+                />
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: "8px",
+                    backgroundColor: "rgba(255,255,255,0.12)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    mb: 1.5,
+                    flexShrink: 0,
+                  }}
+                >
+                  <AutoStoriesIcon sx={{ color: "#fff", fontSize: 16 }} />
+                </Box>
+                <Box
+                  sx={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    backgroundColor: "rgba(255,255,255,0.14)",
+                    color: "rgba(255,255,255,0.9)",
+                    borderRadius: "20px",
+                    px: 1.25,
+                    py: 0.3,
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    mb: 1,
+                    width: "fit-content",
+                    letterSpacing: 0.3,
+                  }}
+                >
+                  Ready to practise
+                </Box>
+                <Typography
+                  sx={{
+                    fontSize: 17,
+                    fontWeight: 600,
+                    color: "#fff",
+                    mb: 0.75,
+                  }}
+                >
+                  Collections
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    color: "rgba(255,255,255,0.68)",
+                    lineHeight: 1.6,
+                    flex: 1,
+                  }}
+                >
+                  Professionally authored question sets for common interview
+                  roles.
+                </Typography>
+                <Button
+                  variant="contained"
+                  onClick={() => navigate("/interview/collections")}
+                  sx={{
+                    mt: 1.5,
+                    textTransform: "none",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    px: 2.5,
+                    py: 1,
+                    borderRadius: "10px",
+                    backgroundColor: CORAL,
+                    color: "#fff",
+                    alignSelf: "flex-start",
+                    boxShadow: "0 8px 18px rgba(250,115,91,0.45)",
+                    "&:hover": { backgroundColor: CORAL_INK },
+                  }}
+                >
+                  Explore
+                </Button>
+              </Box>
             </Grid>
           </Grid>
 
-          {/* ── Section 3: Recommended + Recent Projects ─────────────────── */}
+          {/* ── Section 3: Recent Projects ───────────────────────────────── */}
           <Grid container spacing={2}>
-            {/* Recommended next step */}
-            <Grid item xs={12} md={6}>
-              <Paper
-                elevation={0}
-                sx={{
-                  width: "100%",
-                  height: "100%",
-                  borderRadius: "18px",
-                  px: { xs: 3, md: 4 },
-                  pt: { xs: 4, md: 4.5 },
-                  pb: { xs: 3, md: 3.5 },
-                  backgroundColor: SURFACE_BG,
-                  border: SURFACE_BORDER,
-                  boxShadow: SURFACE_SHADOW,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  gap: 3,
-                }}
-              >
-                <Stack spacing={1.5}>
-                  <Typography variant="subtitle2" sx={{ color: BODY_COLOR, fontWeight: 600 }}>
-                    Recommended next step
-                  </Typography>
-                  <Typography variant="h6" sx={{ color: HEADING_COLOR, fontWeight: 600 }}>
-                    Pick up with impromptu warm-ups
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: BODY_COLOR }}>
-                    A focused warm-up to get your voice moving.
-                  </Typography>
-                </Stack>
-                <Stack spacing={2.5} sx={{ flexGrow: 1 }}>
-                  <Box
-                    component="img"
-                    src="/assets/impromptu_speaking.png"
-                    alt="Impromptu speaking"
-                    loading="lazy"
-                    decoding="async"
-                    sx={{ width: "100%", maxWidth: 260, maxHeight: 160, objectFit: "contain", mx: { xs: 0, md: "auto" } }}
-                  />
-                  <Button
-                    variant="contained"
-                    onClick={() => navigate("/imprompt")}
-                    sx={{
-                      alignSelf: "flex-start",
-                      textTransform: "none",
-                      fontWeight: 600,
-                      px: 3.5,
-                      py: 1.4,
-                      borderRadius: 2,
-                      backgroundColor: CORAL,
-                      boxShadow: "0px 12px 24px -12px rgba(250,115,91,0.7)",
-                      "&:hover": { backgroundColor: CORAL_INK },
-                    }}
-                  >
-                    Resume practice
-                  </Button>
-                </Stack>
-              </Paper>
-            </Grid>
-
-            {/* Recent projects */}
-            <Grid item xs={12} md={6}>
+            {/* Recent projects — full width */}
+            <Grid item xs={12}>
               <Paper
                 elevation={0}
                 sx={{
@@ -675,7 +747,7 @@ const HomePage = () => {
                         transition: "color 120ms ease",
                       }}
                     >
-                      View all →
+                      View all
                     </Typography>
                   )}
                 </Box>
@@ -687,10 +759,10 @@ const HomePage = () => {
                     >
                       No saved projects yet.
                     </Typography>
-                    <Button
+                    {/* <Button
                       size="small"
                       variant="outlined"
-                      onClick={() => navigate("/interview")}
+                      onClick={() => setPrepareOpen(true)}
                       sx={{
                         textTransform: "none",
                         fontWeight: 600,
@@ -705,8 +777,8 @@ const HomePage = () => {
                         },
                       }}
                     >
-                      Start a project →
-                    </Button>
+                      Start a project
+                    </Button> */}
                   </Box>
                 ) : (
                   <Box sx={{ display: "flex", flexDirection: "column" }}>
@@ -765,8 +837,8 @@ const HomePage = () => {
                               sx={{ fontSize: 12, color: MUTED_COLOR, mt: 0.2 }}
                             >
                               {project.kind === "collection"
-                                ? `By ${project.author || "Speachy"} · 0/${project.questions?.length || 0} practised`
-                                : `${project.jobRole || ""}${project.jobRole ? " · " : ""}0/${project.questions?.length || 0} practised`}
+                                ? `By ${project.author || "Speachy"} · ${practicedCounts[project.id] || 0}/${project.questions?.length || 0} practised`
+                                : `${project.jobRole || ""}${project.jobRole ? " · " : ""}${practicedCounts[project.id] || 0}/${project.questions?.length || 0} practised`}
                             </Typography>
                           </Box>
                           <Box
@@ -810,6 +882,15 @@ const HomePage = () => {
       >
         <CircularProgress color="inherit" />
       </Backdrop>
+
+      <PrepareForRoleDialog
+        open={prepareOpen}
+        onClose={() => setPrepareOpen(false)}
+      />
+      <BuildCustomSetDialog
+        open={customOpen}
+        onClose={() => setCustomOpen(false)}
+      />
     </Box>
   );
 };

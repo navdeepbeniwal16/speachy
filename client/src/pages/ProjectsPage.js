@@ -13,7 +13,9 @@ import CreateIcon from "@mui/icons-material/Create";
 import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
 import { AppContext } from "../components/AppContext.js";
 import HubHeader from "../components/HubHeader.js";
+import BreadcrumbHeader from "../components/BreadcrumbHeader.js";
 import ProjectService from "../services/project-service.js";
+import AttemptService from "../services/attempt-service.js";
 
 const CORAL = "#FA735B";
 const CORAL_SOFTER = "rgba(250,115,91,0.08)";
@@ -98,13 +100,25 @@ const ProjectsPage = () => {
   const { showSnackbar } = useContext(AppContext);
 
   const [projects, setProjects] = useState([]);
+  const [practicedCounts, setPracticedCounts] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const data = await ProjectService.getAll();
+        const [data, summaries] = await Promise.all([
+          ProjectService.getAll(),
+          AttemptService.getSummaries(),
+        ]);
+        // Count unique attempted questions per project from the summaries collection
+        const counts = {};
+        for (const s of summaries) {
+          if (s.projectId) {
+            counts[s.projectId] = (counts[s.projectId] || 0) + 1;
+          }
+        }
         setProjects(data);
+        setPracticedCounts(counts);
       } catch (error) {
         showSnackbar(
           "error",
@@ -149,28 +163,37 @@ const ProjectsPage = () => {
       }}
     >
       <Container maxWidth="md">
+        <BreadcrumbHeader
+          parentLabel="Home"
+          parentPath="/home"
+          currentLabel="Projects"
+        />
         <HubHeader
           title="Your projects"
-          subtitle={!loading && projects.length > 0 ? `${projects.length} saved` : undefined}
-          action={
-            <Button
-              variant="contained"
-              onClick={() => navigate("/interview")}
-              sx={{
-                textTransform: "none",
-                fontWeight: 600,
-                fontSize: 13,
-                px: 2.5,
-                py: 1,
-                borderRadius: "10px",
-                backgroundColor: CORAL,
-                boxShadow: "0px 8px 18px -6px rgba(250,115,91,0.6)",
-                "&:hover": { backgroundColor: CORAL_INK },
-              }}
-            >
-              + New project
-            </Button>
+          subtitle={
+            !loading && projects.length > 0
+              ? `${projects.length} saved`
+              : undefined
           }
+          // action={
+          // <Button
+          //   variant="contained"
+          //   onClick={() => navigate("/interview")}
+          //   sx={{
+          //     textTransform: "none",
+          //     fontWeight: 600,
+          //     fontSize: 13,
+          //     px: 2.5,
+          //     py: 1,
+          //     borderRadius: "10px",
+          //     backgroundColor: CORAL,
+          //     boxShadow: "0px 8px 18px -6px rgba(250,115,91,0.6)",
+          //     "&:hover": { backgroundColor: CORAL_INK },
+          //   }}
+          // >
+          //   + New project
+          // </Button>
+          // }
         />
 
         {/* Content */}
@@ -204,12 +227,12 @@ const ProjectsPage = () => {
                 lineHeight: 1.6,
               }}
             >
-              Create a tailored or custom question set from the Interview Prep
-              page — it'll appear here.
+              Create a tailored or custom question set, or save a curated
+              collection — it'll appear here.
             </Typography>
             <Button
               variant="outlined"
-              onClick={() => navigate("/interview")}
+              onClick={() => navigate("/home")}
               sx={{
                 mt: 1,
                 textTransform: "none",
@@ -224,7 +247,7 @@ const ProjectsPage = () => {
                 },
               }}
             >
-              Go to Interview Prep
+              Go to Home
             </Button>
           </Box>
         ) : (
@@ -237,7 +260,7 @@ const ProjectsPage = () => {
           >
             {projects.map((project) => {
               const total = project.questions?.length || 0;
-              const done = project.practicedCount || 0;
+              const done = practicedCounts[project.id] || 0;
               const pct = total > 0 ? done / total : 0;
               const createdDate = project.createdAt
                 ? new Date(project.createdAt).toLocaleDateString(undefined, {

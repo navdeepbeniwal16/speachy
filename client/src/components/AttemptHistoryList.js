@@ -446,7 +446,7 @@ const AttemptHistoryList = ({ questionKey, refreshKey, limit, questionText, sour
             }}
           >
             <Typography sx={{ fontSize: 13, fontWeight: 600, color: CORAL }}>
-              View all {attempts.length} attempts →
+              View all {attempts.length} attempts
             </Typography>
           </Box>
         )}

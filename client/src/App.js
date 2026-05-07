@@ -5,11 +5,10 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { Box, CssBaseline } from "@mui/material";
+import { Box, CssBaseline, CircularProgress } from "@mui/material";
 import "./App.css";
 import HomePage from "./pages/HomePage";
-import NavigationBar from "./components/NavigationBar";
-import InterviewHome from "./pages/InterviewHome";
+import LandingPage from "./pages/LandingPage";
 import PageWrapper from "./components/PageWrapper";
 import InterviewQuestions from "./pages/InterviewQuestions";
 import InterviewPractice from "./pages/InterviewPractice";
@@ -46,7 +45,20 @@ const requireAuth = (Component) => {
     }, []);
 
     if (loading) {
-      return null; // While checking auth status, return null to avoid rendering
+      return (
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#fff4ef",
+            minHeight: "100vh",
+          }}
+        >
+          <CircularProgress sx={{ color: "#FA735B" }} size={28} thickness={3} />
+        </Box>
+      );
     }
 
     return user ? <Component {...props} /> : <Navigate to="/signin" />;
@@ -77,9 +89,11 @@ function App() {
                 element={<PaymentCancelWrapper />}
               />
 
+              {/* Public landing page */}
+              <Route path="/" element={<LandingPage />} />
+
               {/* Protected routes */}
-              <Route path="/" element={<HomePageWrapper />} />
-              <Route path="/interview" element={<InterviewHomeWrapper />} />
+              <Route path="/home" element={<HomePageWrapper />} />
               <Route path="/projects" element={<ProjectsPageWrapper />} />
               <Route path="/interview/collections" element={<CollectionsPageWrapper />} />
               <Route
@@ -102,8 +116,8 @@ function App() {
               <Route path="/history" element={<HistoryPageWrapper />} />
               <Route path="/history/question" element={<QuestionHistoryPageWrapper />} />
 
-              {/* Redirect any unknown routes to home */}
-              <Route path="*" element={<Navigate to="/signin" />} />
+              {/* Redirect any unknown routes to landing */}
+              <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </PageWrapper>
         </Box>
@@ -114,7 +128,6 @@ function App() {
 
 // Wrappers for protected routes
 const HomePageWrapper = requireAuth(HomePage);
-const InterviewHomeWrapper = requireAuth(InterviewHome);
 const InterviewQuestionsWrapper = requireAuth(InterviewQuestions);
 const InterviewPracticeWrapper = requireAuth(InterviewPractice);
 const ImpromptSpeakingPracticeWrapper = requireAuth(ImpromptSpeakingPractice);

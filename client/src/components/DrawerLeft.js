@@ -12,7 +12,6 @@ import {
   IconButton,
 } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
-import WorkOutlinedIcon from "@mui/icons-material/WorkOutlined";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import FolderOpenOutlinedIcon from "@mui/icons-material/FolderOpenOutlined";
 import HistoryIcon from "@mui/icons-material/History";
@@ -37,12 +36,7 @@ const COLLAPSED_WIDTH = 64;
 const BANNER_HEIGHT = 20;
 
 const NAV_ITEMS = [
-  { label: "Home", icon: <HomeIcon sx={{ fontSize: 20 }} />, path: "/" },
-  {
-    label: "Interview",
-    icon: <WorkOutlinedIcon sx={{ fontSize: 20 }} />,
-    path: "/interview",
-  },
+  { label: "Home", icon: <HomeIcon sx={{ fontSize: 20 }} />, path: "/home" },
   {
     label: "Projects",
     icon: <FolderOpenOutlinedIcon sx={{ fontSize: 20 }} />,
@@ -90,7 +84,7 @@ export default function DrawerLeft() {
   };
 
   const isActive = (path) => {
-    if (path === "/") return location.pathname === "/";
+    if (path === "/home") return location.pathname === "/home";
     return (
       location.pathname === path || location.pathname.startsWith(path + "/")
     );
@@ -123,7 +117,7 @@ export default function DrawerLeft() {
           flexShrink: 0,
         }}
       >
-        <Link to="/" style={{ display: "flex", alignItems: "center" }}>
+        <Link to="/home" style={{ display: "flex", alignItems: "center" }}>
           {isCollapsed ? (
             <img
               src="/assets/Speachy_Logo_SVG.svg"
