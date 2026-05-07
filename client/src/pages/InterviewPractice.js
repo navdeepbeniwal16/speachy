@@ -1,146 +1,282 @@
+import React, { useState, useEffect, useRef } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   Box,
+  Button,
+  CircularProgress,
   Container,
   IconButton,
-  Paper,
+  TextField,
   Typography,
-  Skeleton,
-  Grid,
-  Collapse,
 } from "@mui/material";
-import React, { useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import BookmarkAddIcon from "@mui/icons-material/BookmarkAdd";
-import BookmarkAddedIcon from "@mui/icons-material/BookmarkAdded";
+import BreadcrumbHeader from "../components/BreadcrumbHeader.js";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import BoltIcon from "@mui/icons-material/Bolt";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import EditNoteIcon from "@mui/icons-material/EditNote";
+import KeyboardVoiceIcon from "@mui/icons-material/KeyboardVoice";
+import PauseIcon from "@mui/icons-material/Pause";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import SpeedIcon from "@mui/icons-material/Speed";
 import VoiceRecordingTab from "../components/VoiceRecordingTab";
 import InterviewService from "../services/interview-service.js";
-import FeedbackPane from "../components/FeedbackPane";
-import { ReactComponent as FeedbackIcon } from "../assets/chat-evaluation.svg";
+import AttemptService from "../services/attempt-service.js";
+import AttemptHistoryList from "../components/AttemptHistoryList.js";
 import SnackbarAlert from "../components/SnackbarAlert";
-import QuestionProgressView from "../components/QuestionProgressView.js";
+import DetailedFeedbackModal from "../components/DetailedFeedbackModal";
 
-const NAV_ICON_SX = { color: "#2f170f", borderRadius: 2 };
+// ─── Design tokens ─────────────────────────────────────────────────────────────
+const CORAL       = "#FA735B";
+const CORAL_SOFTER = "rgba(250,115,91,0.08)";
+const CORAL_INK   = "#C85A3E";
+const PAGE_BG     = "#fff4ef";
+const SURFACE     = "#ffffff";
+const LINE        = "rgba(252,150,120,0.12)";
+const INK         = "#2f170f";
+const INK_2       = "rgba(60,32,25,0.78)";
+const MUTED       = "rgba(60,32,25,0.45)";
+const SURFACE_SHADOW = "0 18px 36px rgba(252,150,120,0.10)";
 
+const DIFFICULTY_LABEL = { easy: "beginner", medium: "intermediate", hard: "advanced" };
+
+const scoreBarColor = (score) => {
+  if (score >= 8) return { color: "#4caf50", track: "rgba(76,175,80,0.12)" };
+  if (score >= 5) return { color: "#f5a623", track: "rgba(245,166,35,0.12)" };
+  return            { color: "#f44336", track: "rgba(244,67,54,0.12)" };
+};
+
+const ANALYSE_STEPS = ["Transcribing", "Scoring", "Generating feedback"];
+
+const fmtDur = (s) => {
+  if (!s) return null;
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, "0")}`;
+};
+
+// ─── Stable key identifying a question across sessions ────────────────────────
+export function buildQuestionKey(projectId, collection, questionText, questionIdx) {
+  if (projectId)      return `proj_${projectId}_${questionIdx}`;
+  if (collection?.id) return `col_${collection.id}_${questionIdx}`;
+  const hash = btoa(unescape(encodeURIComponent(questionText || "")))
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .slice(0, 12);
+  return `text_${hash}_${questionIdx}`;
+}
+
+// ─── Inline audio player ───────────────────────────────────────────────────────
+const AudioPlayer = ({ src, label }) => {
+  const audioRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
+  const [current, setCurrent] = useState(0);
+  const [dur, setDur] = useState(0);
+
+  const fmt = (s) => {
+    const m = Math.floor((s || 0) / 60);
+    const sec = Math.floor((s || 0) % 60);
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
+
+  const toggle = () => {
+    if (!audioRef.current) return;
+    if (playing) { audioRef.current.pause(); } else { audioRef.current.play(); }
+    setPlaying(!playing);
+  };
+
+  // MediaRecorder blobs don't embed duration — seek trick forces the browser to calculate it
+  const handleLoadedMetadata = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.duration === Infinity || isNaN(audio.duration)) {
+      audio.currentTime = 1e101;
+      const detectDuration = () => {
+        if (!isNaN(audio.duration) && audio.duration !== Infinity) {
+          setDur(audio.duration);
+          audio.currentTime = 0;
+          audio.removeEventListener("timeupdate", detectDuration);
+        }
+      };
+      audio.addEventListener("timeupdate", detectDuration);
+    } else {
+      setDur(audio.duration);
+    }
+  };
+
+  return (
+    <Box>
+      <audio
+        ref={audioRef}
+        src={src}
+        onTimeUpdate={() => {
+          const t = audioRef.current?.currentTime;
+          if (t != null && isFinite(t)) setCurrent(t);
+        }}
+        onLoadedMetadata={handleLoadedMetadata}
+        onEnded={() => { setPlaying(false); setCurrent(0); }}
+      />
+      {label && (
+        <Typography sx={{ fontSize: 12, fontWeight: 600, color: MUTED, mb: 0.75, textTransform: "uppercase", letterSpacing: 0.5 }}>
+          {label}
+        </Typography>
+      )}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <IconButton
+          size="small"
+          onClick={toggle}
+          sx={{ backgroundColor: CORAL, color: "#fff", width: 32, height: 32, flexShrink: 0, "&:hover": { backgroundColor: CORAL_INK } }}
+        >
+          {playing ? <PauseIcon sx={{ fontSize: 16 }} /> : <PlayArrowIcon sx={{ fontSize: 16 }} />}
+        </IconButton>
+        <input
+          type="range"
+          min={0}
+          max={dur || 1}
+          step={0.1}
+          value={current}
+          onChange={(e) => {
+            if (audioRef.current) audioRef.current.currentTime = Number(e.target.value);
+            setCurrent(Number(e.target.value));
+          }}
+          style={{ flex: 1, accentColor: CORAL, height: 4, cursor: "pointer" }}
+        />
+        <Typography sx={{ fontSize: 12, color: MUTED, whiteSpace: "nowrap", flexShrink: 0 }}>
+          {fmt(current)} / {fmt(dur)}
+        </Typography>
+      </Box>
+    </Box>
+  );
+};
+
+// ─── Main component ────────────────────────────────────────────────────────────
 const InterviewPractice = () => {
   const location = useLocation();
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
   const { questionId } = useParams();
-  console.log("QuestionId:", questionId);
 
-  const questions = location.state.questions;
-  const question = questions[questionId].question;
-  const companyName = location.state.companyName;
-  const jobRole = location.state.jobRole;
-  const jobDescription = location.state.jobDescription;
-  const industry = location.state.industry;
-  const requiredExperience = location.state.requiredExperience;
+  const questions        = location.state?.questions || [];
+  const questionIdx      = parseInt(questionId);
+  const q                = questions[questionIdx] || {};
+  const question         = q.question || "";
+  const qTags            = q.tags || [];
+  const qDiff            = (q.difficultyLevel || q.difficulty || "medium").toLowerCase();
+  const diffLabel        = DIFFICULTY_LABEL[qDiff] || qDiff;
 
-  const [isEvaluating, setIsEvaluating] = useState(false);
+  const companyName      = location.state?.companyName;
+  const jobRole          = location.state?.jobRole;
+  const jobDescription   = location.state?.jobDescription;
+  const industry         = location.state?.industry;
+  const requiredExperience = location.state?.requiredExperience;
 
-  const [audioUrl, setAudioUrl] = useState(null);
-  let audioDuration = 0;
-  const [transcription, setTranscription] = useState({
-    text: "No response recorded yet",
-  });
-  const [feedback, setFeedback] = useState(null);
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [inputMode, setInputMode]               = useState("voice");
+  const [textAnswer, setTextAnswer]             = useState("");
+  const [isEvaluating, setIsEvaluating]         = useState(false);
+  const [analysingStep, setAnalysingStep]       = useState(0);
+  const [audioUrl, setAudioUrl]                 = useState(null);
+  const [transcription, setTranscription]       = useState({ text: "" });
+  const [feedback, setFeedback]                 = useState(null);
+  const [detailedFeedbackOpen, setDetailedFeedbackOpen] = useState(false);
 
-  const [alertType, setAlertType] = useState("error");
+  const [alertType, setAlertType]     = useState("error");
   const [alertMessage, setAlertMessage] = useState("");
   const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
 
-  const [responseProgressData, setResponseProgressData] = useState([
-    { name: "relevance", data: [], attemptDateTime: [] },
-    { name: "structure", data: [], attemptDateTime: [] },
-    { name: "authenticity", data: [], attemptDateTime: [] },
-  ]);
+  const projectId    = location.state?.projectId  ?? null;
+  const collection   = location.state?.collection ?? null;
+  const stateProject = location.state?.project    ?? null;
+  const questionKey  = buildQuestionKey(projectId, collection, question, questionIdx);
 
-  const handleVoiceRecordingSubmit = async (audioBlob) => {
-    console.log("handleVoiceRecordingSubmit is called...");
+  const sourceName = (() => {
+    if (collection)                      return collection.name;  // curated collection
+    if (stateProject?.kind === "custom") return stateProject.name || null;  // custom project: use project name
+    const parts = [companyName, jobRole].filter(Boolean);
+    return parts.length > 0 ? parts.join(" · ") : null;  // tailored: "Company · Role"
+  })();
+
+  let audioDuration = 0;
+
+  // Reset all answer state when the question changes
+  useEffect(() => {
+    setFeedback(null);
+    setTranscription({ text: "" });
+    setAudioUrl(null);
+    setTextAnswer("");
+    setIsEvaluating(false);
+    setDetailedFeedbackOpen(false);
+  }, [questionIdx]);
+
+  // Cycle analysing step animation while evaluating
+  useEffect(() => {
+    if (!isEvaluating) { setAnalysingStep(0); return; }
+    const timer = setInterval(() => setAnalysingStep((s) => Math.min(s + 1, 2)), 3000);
+    return () => clearInterval(timer);
+  }, [isEvaluating]);
+
+  const saveAttempt = (fb, trans, durationSecs) => {
+    const wpm = durationSecs && trans?.text
+      ? Math.round((trans.text.split(" ").filter(Boolean).length / durationSecs) * 60)
+      : null;
+    const scores = {
+      relevance:    fb.summary?.relevance?.score    ?? 0,
+      structure:    fb.summary?.structure?.score    ?? 0,
+      authenticity: fb.summary?.authenticity?.score ?? 0,
+    };
+    const payload = {
+      questionKey,
+      questionText: question,
+      sourceName:   sourceName ?? null,
+      sourceKind:   projectId ? "project" : collection?.id ? "collection" : "session",
+      projectId:    projectId ?? null,
+      collectionId: collection?.id ?? null,
+      scores,
+      avgScore: (scores.relevance + scores.structure + scores.authenticity) / 3,
+      overview: fb.overview ?? "",
+      tip:      fb.tip      ?? null,
+      dimensions: {
+        relevance:    { waysToImprove: fb.summary?.relevance?.waysToImprove    ?? [] },
+        structure:    { waysToImprove: fb.summary?.structure?.waysToImprove    ?? [] },
+        authenticity: { waysToImprove: fb.summary?.authenticity?.waysToImprove ?? [] },
+      },
+      speechStats: {
+        duration:    durationSecs  ?? null,
+        wpm,
+        fillerCount: fb.fillers    ?? null,
+      },
+      transcript: trans?.text ?? null,
+      inputMode:  durationSecs != null ? "voice" : "text",
+    };
+    AttemptService.save(payload)
+      .then(() => setHistoryRefreshKey((k) => k + 1))
+      .catch(() => {
+        setAlertType("error");
+        setAlertMessage("Could not save attempt. Your result is still shown above.");
+        setIsAlertOpen(true);
+      });
+  };
+
+  const handleModeSwitch = (mode) => {
+    if (mode === inputMode) return;
+    setInputMode(mode);
+    setTextAnswer("");
+  };
+
+  const handleTextResponseSubmit = async () => {
+    if (!textAnswer.trim()) return;
     setIsEvaluating(true);
-
-    const audioUrl = URL.createObjectURL(audioBlob);
-    setAudioUrl(audioUrl);
-
-    const audio = new Audio(audioUrl);
-    audio.preload = "auto";
-
-    const duration = await getAudioDuration(audio);
-    console.log("Audio Duration:", duration);
-
-    audioDuration = parseInt(duration);
-
-    console.log("Initiate request to get response feedback");
-
-    await getAudioResponseFeedback(audioUrl);
-  };
-
-  const getAudioDuration = (audio) => {
-    return new Promise((resolve, reject) => {
-      audio.addEventListener("loadedmetadata", () => {
-        if (audio.duration === Infinity || isNaN(Number(audio.duration))) {
-          audio.currentTime = 1e101;
-
-          audio.addEventListener("timeupdate", function getDuration(event) {
-            const duration = event.target.duration;
-            event.target.currentTime = 0;
-            event.target.removeEventListener("timeupdate", getDuration);
-
-            if (duration) {
-              resolve(duration); // Resolve the promise with the correct duration
-            } else {
-              reject("Unable to determine duration");
-            }
-          });
-        } else {
-          resolve(audio.duration); // Duration is already available, resolve it
-        }
-      });
-
-      audio.addEventListener("error", (err) => {
-        reject("Error loading audio metadata");
-      });
-    });
-  };
-
-  const getAudioResponseFeedback = async (audioUrl) => {
     try {
-      console.log("Fetching audio response feedback...");
-      const audioBlob = await urlToBlob(audioUrl);
-      console.log("Audio blob obtained:", audioBlob);
-
-      const response = await InterviewService.fetchAudioResponseFeedback(
-        question,
-        audioBlob,
-        companyName,
-        jobRole,
-        jobDescription,
-        industry,
-        requiredExperience
+      const response = await InterviewService.fetchTextResponseFeedback(
+        question, textAnswer, companyName, jobRole, jobDescription, industry, requiredExperience
       );
-
-      console.log("Audio Evaluation Results:", response);
-
-      if (!response) {
-        throw new Error("No response received from the server");
-      }
-
-      const feedback = response.feedback;
-      if (!feedback) {
-        throw new Error("No feedback data received from the server");
-      }
-
-      feedback.duration = audioDuration; // Set duration of the audio
-      updateProgressView(feedback);
-      const transcription = response.transcription;
-
-      setFeedback(feedback);
-      setTranscription(transcription);
+      const fb = response.feedback;
+      fb.duration = null;
+      setFeedback(fb);
+      setTranscription(response.transcription);
+      saveAttempt(fb, response.transcription, null);
     } catch (error) {
-      console.error("Error in fetching audio response feedback:", error);
       setAlertMessage(error.message);
       setIsAlertOpen(true);
     } finally {
@@ -148,268 +284,405 @@ const InterviewPractice = () => {
     }
   };
 
-  const getCurrentTime = () => {
-    const now = new Date();
-    return now.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
+  const handleVoiceRecordingSubmit = async (audioBlob) => {
+    setIsEvaluating(true);
+    const url = URL.createObjectURL(audioBlob);
+    setAudioUrl(url);
+    const audio = new Audio(url);
+    audio.preload = "auto";
+    const duration = await getAudioDuration(audio);
+    audioDuration = parseInt(duration);
+    await getAudioResponseFeedback(url);
   };
 
-  const updateProgressView = (feedbackData) => {
-    console.log("InterviewPractice: updateProgressView() is called");
-    const relevanceScore = feedbackData.summary.relevance.score;
-    const structureScore = feedbackData.summary.structure.score;
-    const authenticityScore = feedbackData.summary.authenticity.score;
-
-    const feedbackTimeStamp = getCurrentTime();
-
-    setResponseProgressData((prevData) =>
-      prevData.map((progress) => {
-        // Create updated progress objects based on feedbackData
-        if (progress.name === "relevance") {
-          return {
-            ...progress,
-            data: [...progress.data, relevanceScore],
-            attemptDateTime: [...progress.attemptDateTime, feedbackTimeStamp],
-          };
-        } else if (progress.name === "structure") {
-          return {
-            ...progress,
-            data: [...progress.data, structureScore],
-            attemptDateTime: [...progress.attemptDateTime, feedbackTimeStamp],
-          };
-        } else if (progress.name === "authenticity") {
-          return {
-            ...progress,
-            data: [...progress.data, authenticityScore],
-            attemptDateTime: [...progress.attemptDateTime, feedbackTimeStamp],
-          };
+  const getAudioDuration = (audio) =>
+    new Promise((resolve, reject) => {
+      audio.addEventListener("loadedmetadata", () => {
+        if (audio.duration === Infinity || isNaN(Number(audio.duration))) {
+          audio.currentTime = 1e101;
+          audio.addEventListener("timeupdate", function getDuration(e) {
+            const d = e.target.duration;
+            e.target.currentTime = 0;
+            e.target.removeEventListener("timeupdate", getDuration);
+            d ? resolve(d) : reject("Unable to determine duration");
+          });
+        } else {
+          resolve(audio.duration);
         }
-        console.log("InterviewPractice: Progress is updated");
-        return progress;
-      })
-    );
+      });
+      audio.addEventListener("error", () => reject("Error loading audio"));
+    });
+
+  const getAudioResponseFeedback = async (url) => {
+    try {
+      const blob = await fetch(url).then((r) => r.blob());
+      const response = await InterviewService.fetchAudioResponseFeedback(
+        question, blob, companyName, jobRole, jobDescription, industry, requiredExperience
+      );
+      if (!response?.feedback) throw new Error("No feedback received");
+      const fb = response.feedback;
+      fb.duration = audioDuration;
+      setFeedback(fb);
+      setTranscription(response.transcription);
+      saveAttempt(fb, response.transcription, audioDuration);
+    } catch (error) {
+      setAlertMessage(error.message);
+      setIsAlertOpen(true);
+    } finally {
+      setIsEvaluating(false);
+    }
   };
 
-  async function urlToBlob(url) {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    return blob;
-  }
+  const navigateToQuestion = (idx) =>
+    navigate(`/interview/questions/${idx}`, { state: { ...location.state } });
 
-  async function handleBookmarkClick() {
-    const questionText = question;
-    const responseText = transcription;
-    const progressStats = [
-      responseProgressData.reduce((acc, item) => {
-        acc[item.name] = item.data[0];
-        return acc;
-      }, {}),
-    ];
-    console.log("Progress:", JSON.stringify(responseProgressData));
-    const saveSuccessful = await InterviewService.saveInterviewQuestion(
-      questionText,
-      responseText,
-      progressStats
-    );
-    console.log("Is bookmark successful? :", saveSuccessful);
+  // Score computations
+  const summaryKeys = ["relevance", "structure", "authenticity"];
+  const avgScore = feedback
+    ? summaryKeys.reduce((sum, k) => sum + (feedback.summary?.[k]?.score || 0), 0) / summaryKeys.length
+    : null;
 
-    setIsBookmarked(saveSuccessful);
-  }
+  const scoreColor =
+    avgScore == null         ? { bg: CORAL_SOFTER,               text: CORAL_INK  }
+    : avgScore >= 8          ? { bg: "rgba(52,168,83,0.12)",      text: "#1a6b31"  }
+    : avgScore >= 6          ? { bg: "rgba(251,188,4,0.14)",      text: "#7a5500"  }
+    :                          { bg: CORAL_SOFTER,                text: CORAL_INK  };
+
+  const pace = feedback?.duration && transcription?.text
+    ? Math.round((transcription.text.split(" ").filter(Boolean).length / feedback.duration) * 60)
+    : null;
+  const paceLabel = pace == null ? null : pace < 120 ? "Slow" : pace < 180 ? "Good" : "Fast";
+
+  const fillerCount = feedback?.fillers ?? null;
 
   return (
-    <Container component="main" maxWidth="lg">
-      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-        <IconButton
-          onClick={() =>
-            navigate("/interview/questions", {
-              state: { questions: questions },
-            })
+    <Box sx={{ minHeight: "100vh", backgroundColor: PAGE_BG, pb: 6 }}>
+      <Container maxWidth="md" sx={{ pt: 5 }}>
+
+        {/* ── Top nav ─────────────────────────────────────────────────────── */}
+        <BreadcrumbHeader
+          parentLabel="Back to questions"
+          parentPath="/interview/questions"
+          onBack={() => navigate("/interview/questions", { state: { ...location.state } })}
+          currentLabel=""
+          right={
+            <Typography sx={{ fontSize: 13, fontWeight: 600, color: MUTED }}>
+              {questionIdx + 1} of {questions.length}
+            </Typography>
           }
-          sx={NAV_ICON_SX}
-        >
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography variant="h6" gutterBottom>
-          👔 Interview Practice Arena
-        </Typography>
-        <Typography></Typography>
-      </Box>
+        />
 
-      <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <Box>
-          {question ? (
-            <Paper
-              variant="rounded"
-              sx={{
-                p: 2,
-                my: 2,
-                borderRadius: "10px",
-                backgroundColor: "#fff",
-              }}
-            >
-              <Typography
-                variant="body"
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  fontWeight: "bold",
-                  color: "#333333",
-                }}
-              >
-                {question}
-              </Typography>
-              {/* <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Box></Box>
-                <IconButton
-                  onClick={() => {
-                    // setIsBookmarked(!isBookmarked);
-                    // TODO: Handle bookmark save
-                    handleBookmarkClick();
-                  }}
-                >
-                  {isBookmarked ? (
-                    <BookmarkAddedIcon></BookmarkAddedIcon>
-                  ) : (
-                    <BookmarkAddIcon></BookmarkAddIcon>
-                  )}
-                </IconButton>
-              </Box> */}
-            </Paper>
-          ) : (
-            <Skeleton
-              variant="rectangular"
-              sx={{ mx: 1, mt: 2, borderRadius: "10px" }}
-              height={118}
-            />
-          )}
+        {/* ── Question card ────────────────────────────────────────────────── */}
+        <Box sx={{ backgroundColor: SURFACE, border: `1px solid ${LINE}`, borderRadius: "18px", p: { xs: 3, md: 4 }, mb: 3, boxShadow: SURFACE_SHADOW }}>
+          {/* Q icon · difficulty · topic tags — single aligned row */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 2 }}>
+            <Box sx={{ width: 32, height: 32, borderRadius: "8px", backgroundColor: CORAL, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Typography sx={{ color: "#fff", fontWeight: 700, fontSize: 13 }}>Q</Typography>
+            </Box>
+            <Box sx={{ width: "1px", height: 16, backgroundColor: LINE, flexShrink: 0 }} />
+            <Box sx={{ backgroundColor: CORAL_SOFTER, color: CORAL_INK, borderRadius: "20px", px: 1.25, py: 0.3, fontSize: 11.5, fontWeight: 600, textTransform: "capitalize" }}>
+              {diffLabel}
+            </Box>
+            {qTags.length > 0 && (
+              <Box sx={{ width: "1px", height: 16, backgroundColor: LINE, flexShrink: 0 }} />
+            )}
+            {qTags.map((tag) => (
+              <Box key={tag} sx={{ backgroundColor: "rgba(60,32,25,0.06)", color: MUTED, borderRadius: "20px", px: 1.25, py: 0.3, fontSize: 11.5, fontWeight: 500, textTransform: "capitalize" }}>
+                {tag}
+              </Box>
+            ))}
+          </Box>
+          <Typography sx={{ fontFamily: "Georgia, serif", fontSize: { xs: 16, md: 18 }, color: INK, lineHeight: 1.65 }}>
+            {question}
+          </Typography>
+        </Box>
 
+        {/* ── Voice / Text toggle ──────────────────────────────────────────── */}
+        <Box sx={{ display: "flex", justifyContent: "center", mb: 2.5 }}>
           <Box
             sx={{
-              flexGrow: 1,
               display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              mt: 2,
-              mb: 3,
+              backgroundColor: SURFACE,
+              border: `1px solid ${LINE}`,
+              borderRadius: "12px",
+              p: "4px",
+              gap: "4px",
+              boxShadow: "0 2px 8px rgba(252,150,120,0.08)",
             }}
           >
-            <VoiceRecordingTab
-              handleRecord={() => console.log("Handle record is pressed...")}
-              handleSubmit={handleVoiceRecordingSubmit}
-              style={{ width: "100%" }}
-            />
+            {[
+              { id: "voice", label: "Voice", Icon: KeyboardVoiceIcon },
+              { id: "text",  label: "Text",  Icon: EditNoteIcon },
+            ].map(({ id, label, Icon }) => (
+              <Box
+                key={id}
+                onClick={() => handleModeSwitch(id)}
+                sx={{
+                  cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 0.75,
+                  px: 2.25, py: 0.7,
+                  borderRadius: "8px",
+                  fontSize: 13, fontWeight: inputMode === id ? 600 : 500,
+                  color: inputMode === id ? "#fff" : MUTED,
+                  backgroundColor: inputMode === id ? CORAL : "transparent",
+                  boxShadow: inputMode === id ? "0 2px 8px rgba(250,115,91,0.35)" : "none",
+                  transition: "all 120ms ease",
+                  userSelect: "none",
+                }}
+              >
+                <Icon sx={{ fontSize: 14 }} />
+                {label}
+              </Box>
+            ))}
           </Box>
         </Box>
-      </Box>
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} lg={12}>
-          <Box sx={{ mt: "auto", mb: 0 }}>
-            <TranscriptionBox
-              transcription={transcription.text}
-              audioUrl={audioUrl}
-            />
-          </Box>
-        </Grid>
-        <Grid item xs={12} lg={6}>
-          <Box sx={{ mt: "auto", mb: 2 }}>
-            <QuestionProgressView seriesData={responseProgressData} />
-          </Box>
-        </Grid>
-
-        <Grid item xs={12} lg={6}>
-          <Box sx={{ minHeight: "40vh" }}>
-            <Paper
-              variant="elevation"
-              elevation={0}
-              sx={{
-                borderRadius: "10px",
-                height: "100%",
-                overflowY: "auto",
-              }}
-            >
-              {feedback ? (
-                <FeedbackPane
-                  feedback={feedback}
-                  transcription={transcription}
-                />
-              ) : (
-                <Box
+        {/* ── Recording card ───────────────────────────────────────────────── */}
+        <Box sx={{ backgroundColor: SURFACE, border: `1px solid ${LINE}`, borderRadius: "18px", overflow: "hidden", mb: 3, boxShadow: SURFACE_SHADOW }}>
+          {isEvaluating ? (
+            <Box sx={{ py: 5, px: 4, display: "flex", flexDirection: "column", alignItems: "center", gap: 2.5 }}>
+              <CircularProgress size={48} sx={{ color: CORAL }} />
+              <Box sx={{ textAlign: "center" }}>
+                <Typography sx={{ fontSize: 16, fontWeight: 700, color: INK, mb: 0.5 }}>
+                  Analysing your response…
+                </Typography>
+                <Typography sx={{ fontSize: 13, color: MUTED }}>
+                  Evaluating relevance, structure, and authenticity
+                </Typography>
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", justifyContent: "center" }}>
+                {ANALYSE_STEPS.map((label, i) => {
+                  const isDone   = i < analysingStep;
+                  const isActive = i === analysingStep;
+                  return (
+                    <Box
+                      key={label}
+                      sx={{
+                        display: "inline-flex", alignItems: "center", gap: 0.5,
+                        px: 1.5, py: 0.4,
+                        borderRadius: "20px",
+                        fontSize: 12, fontWeight: isDone || isActive ? 600 : 400,
+                        backgroundColor: isDone ? "rgba(52,168,83,0.10)" : isActive ? CORAL_SOFTER : "transparent",
+                        color: isDone ? "#1a6b31" : isActive ? CORAL_INK : MUTED,
+                        border: `1px solid ${isDone ? "rgba(52,168,83,0.2)" : isActive ? "rgba(250,115,91,0.2)" : LINE}`,
+                      }}
+                    >
+                      {isDone   && <CheckCircleIcon sx={{ fontSize: 12 }} />}
+                      {isActive && <Box sx={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: CORAL, flexShrink: 0 }} />}
+                      {label}
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+          ) : inputMode === "voice" ? (
+            <Box sx={{ p: { xs: 3, md: 4 } }}>
+              <VoiceRecordingTab
+                handleRecord={() => {}}
+                handleSubmit={handleVoiceRecordingSubmit}
+              />
+            </Box>
+          ) : (
+            <Box sx={{ p: { xs: 3, md: 4 }, display: "flex", flexDirection: "column", gap: 2 }}>
+              <TextField
+                multiline
+                rows={5}
+                fullWidth
+                placeholder="Type your answer here…"
+                value={textAnswer}
+                onChange={(e) => setTextAnswer(e.target.value)}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "10px",
+                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(250,115,91,0.25)" },
+                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(250,115,91,0.55)" },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: CORAL, borderWidth: "1px" },
+                  },
+                  "& .MuiInputBase-input": { color: INK_2, fontSize: "0.95rem", lineHeight: 1.7 },
+                  "& .MuiInputBase-input::placeholder": { color: "rgba(60,32,25,0.35)" },
+                }}
+              />
+              <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                <Button
+                  variant="contained"
+                  disableElevation
+                  disabled={!textAnswer.trim()}
+                  onClick={handleTextResponseSubmit}
                   sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    p: 3,
+                    textTransform: "none", fontWeight: 700, px: 3, py: 1, borderRadius: "10px",
+                    backgroundColor: CORAL,
+                    boxShadow: "0px 8px 20px -8px rgba(250,115,91,0.6)",
+                    "&:hover": { backgroundColor: CORAL_INK },
                   }}
                 >
-                  <FeedbackIcon
-                    style={{ width: 300, height: 300, marginBottom: 8 }}
-                  />
-                  <Typography variant="subtitle2" sx={{ textAlign: "center" }}>
-                    {isEvaluating
-                      ? "Hang tight! We're processing your response..."
-                      : "Your personalised feedback will be shown here..."}
+                  Submit Answer
+                </Button>
+              </Box>
+            </Box>
+          )}
+        </Box>
+
+        {/* ── Feedback card ────────────────────────────────────────────────── */}
+        {feedback && (
+          <Box sx={{ backgroundColor: SURFACE, border: `1px solid ${LINE}`, borderRadius: "18px", p: { xs: 3, md: 4 }, mb: 3, boxShadow: SURFACE_SHADOW }}>
+            {/* Header row */}
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                <AutoAwesomeIcon sx={{ fontSize: 16, color: CORAL }} />
+                <Typography sx={{ fontSize: 15, fontWeight: 700, color: INK }}>Feedback</Typography>
+              </Box>
+              {avgScore != null && (
+                <Box sx={{ backgroundColor: scoreColor.bg, color: scoreColor.text, borderRadius: "10px", px: 1.75, py: 0.75, textAlign: "center" }}>
+                  <Typography sx={{ fontSize: 22, fontWeight: 800, lineHeight: 1, color: "inherit" }}>
+                    {avgScore.toFixed(1)}
                   </Typography>
+                  <Typography sx={{ fontSize: 10, fontWeight: 500, color: "inherit", opacity: 0.8 }}>avg /10</Typography>
                 </Box>
               )}
-            </Paper>
-            <SnackbarAlert
-              alertType={alertType}
-              alertMessage={alertMessage}
-              isOpen={isAlertOpen}
-            />
+            </Box>
+
+            {/* Overview */}
+            {feedback.overview && (
+              <Typography sx={{ fontSize: 14, color: INK_2, lineHeight: 1.65, mb: 2 }}>
+                {feedback.overview}
+              </Typography>
+            )}
+
+            {/* Tip card */}
+            {feedback.tip && (
+              <Box sx={{ backgroundColor: "rgba(232,200,124,0.20)", border: "1px solid rgba(232,200,124,0.4)", borderRadius: "12px", px: 2, py: 1.5, mb: 2.5, display: "flex", alignItems: "flex-start", gap: 1 }}>
+                <BoltIcon sx={{ fontSize: 16, color: "#8b6a1f", flexShrink: 0, mt: 0.25 }} />
+                <Typography sx={{ fontSize: 13.5, color: "#5a3f00", lineHeight: 1.6 }}>
+                  {feedback.tip}
+                </Typography>
+              </Box>
+            )}
+
+            {/* Stats chips (voice only — based on whether audio was recorded) */}
+            {!!audioUrl && (
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2.5 }}>
+                {fmtDur(feedback.duration) && (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, backgroundColor: "rgba(60,32,25,0.05)", borderRadius: "20px", px: 1.5, py: 0.5 }}>
+                    <ScheduleIcon sx={{ fontSize: 13, color: MUTED }} />
+                    <Typography sx={{ fontSize: 12.5, color: INK_2, fontWeight: 500 }}>{fmtDur(feedback.duration)}</Typography>
+                  </Box>
+                )}
+                {pace != null && (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, backgroundColor: "rgba(60,32,25,0.05)", borderRadius: "20px", px: 1.5, py: 0.5 }}>
+                    <SpeedIcon sx={{ fontSize: 13, color: MUTED }} />
+                    <Typography sx={{ fontSize: 12.5, color: INK_2, fontWeight: 500 }}>{pace} wpm · {paceLabel}</Typography>
+                  </Box>
+                )}
+                <Box sx={{ backgroundColor: fillerCount > 5 ? CORAL_SOFTER : "rgba(60,32,25,0.05)", borderRadius: "20px", px: 1.5, py: 0.5 }}>
+                  <Typography sx={{ fontSize: 12.5, color: fillerCount > 5 ? CORAL_INK : INK_2, fontWeight: 500 }}>
+                    {fillerCount ? `Fillers: ${fillerCount}` : "No filler words"}
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+
+            {/* Score bars — 3-column horizontal grid, colour = score level */}
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 2, mb: 2.5 }}>
+              {summaryKeys.map((key) => {
+                const score = feedback.summary?.[key]?.score;
+                if (score == null) return null;
+                const { color, track } = scoreBarColor(score);
+                return (
+                  <Box key={key}>
+                    <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", mb: 0.6 }}>
+                      <Typography sx={{ fontSize: 12.5, color: MUTED, textTransform: "capitalize", fontWeight: 500 }}>
+                        {key}
+                      </Typography>
+                      <Typography sx={{ fontSize: 13, fontWeight: 700, color }}>
+                        {score.toFixed(1)}
+                        <span style={{ fontSize: 11, fontWeight: 400, color: MUTED }}>/10</span>
+                      </Typography>
+                    </Box>
+                    <Box sx={{ height: 5, borderRadius: 3, backgroundColor: track, overflow: "hidden" }}>
+                      <Box sx={{ height: "100%", borderRadius: 3, backgroundColor: color, width: `${(score / 10) * 100}%`, transition: "width 0.5s ease" }} />
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Box>
+
+            {/* Audio player */}
+            {audioUrl && (
+              <Box sx={{ mb: 2.5 }}>
+                <AudioPlayer src={audioUrl} label="Your recording" />
+              </Box>
+            )}
+
+            {/* View detailed feedback */}
+            <Button
+              fullWidth
+              variant="contained"
+              disableElevation
+              startIcon={<BarChartIcon sx={{ fontSize: "16px !important" }} />}
+              onClick={() => setDetailedFeedbackOpen(true)}
+              sx={{
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: 13.5,
+                py: 1.2,
+                borderRadius: "10px",
+                backgroundColor: CORAL_SOFTER,
+                color: CORAL_INK,
+                "&:hover": { backgroundColor: "rgba(250,115,91,0.14)", color: CORAL_INK },
+              }}
+            >
+              View detailed feedback
+            </Button>
           </Box>
-        </Grid>
-      </Grid>
-    </Container>
-  );
-};
+        )}
 
-const TranscriptionBox = ({ transcription, audioUrl }) => {
-  const [showText, setShowText] = useState(false);
-
-  const handleToggleText = () => {
-    setShowText(!showText);
-  };
-
-  return (
-    <Box sx={{ bgcolor: "#fff", py: 2, px: 2, borderRadius: "10px" }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Typography variant="h6" sx={{ width: "100%" }}>
-          Transcription
-        </Typography>
-
-        <audio
-          src={audioUrl}
-          controls
-          style={{ width: "100%", marginRight: "5px" }}
+        {/* ── Attempt history ──────────────────────────────────────────────── */}
+        <AttemptHistoryList
+          questionKey={questionKey}
+          refreshKey={historyRefreshKey}
+          limit={5}
+          questionText={question}
+          sourceName={sourceName}
+          sx={{ mb: 3 }}
         />
-        <IconButton onClick={handleToggleText}>
-          {showText ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-        </IconButton>
-      </Box>
 
-      <Collapse in={showText}>
-        <Typography variant="body2" sx={{ mt: 2 }}>
-          {transcription}
-        </Typography>
-      </Collapse>
+        {/* ── Bottom navigation ────────────────────────────────────────────── */}
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pt: 2.5, mt: 1, borderTop: `1px solid ${LINE}` }}>
+          <Button
+            startIcon={<ChevronLeftIcon />}
+            disabled={questionIdx === 0}
+            onClick={() => navigateToQuestion(questionIdx - 1)}
+            sx={{ textTransform: "none", fontWeight: 600, fontSize: 13, color: questionIdx === 0 ? MUTED : INK_2, "&:hover": { backgroundColor: "transparent", color: CORAL } }}
+          >
+            Previous
+          </Button>
+          <Typography sx={{ fontSize: 13, color: MUTED }}>
+            Question {questionIdx + 1} of {questions.length}
+          </Typography>
+          <Button
+            endIcon={<ChevronRightIcon />}
+            disabled={questionIdx === questions.length - 1}
+            onClick={() => navigateToQuestion(questionIdx + 1)}
+            sx={{ textTransform: "none", fontWeight: 600, fontSize: 13, color: questionIdx === questions.length - 1 ? MUTED : INK_2, "&:hover": { backgroundColor: "transparent", color: CORAL } }}
+          >
+            Next
+          </Button>
+        </Box>
+
+      </Container>
+
+      {/* Detailed feedback modal */}
+      <DetailedFeedbackModal
+        open={detailedFeedbackOpen}
+        handleClose={() => setDetailedFeedbackOpen(false)}
+        feedback={feedback}
+        transcription={transcription}
+        audioUrl={audioUrl}
+        showAudioMetrics={!!audioUrl}
+        fillerCount={fillerCount}
+      />
+
+      <SnackbarAlert alertType={alertType} alertMessage={alertMessage} isOpen={isAlertOpen} />
     </Box>
   );
 };

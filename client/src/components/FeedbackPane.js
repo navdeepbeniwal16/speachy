@@ -8,7 +8,7 @@ import AlarmOnOutlinedIcon from "@mui/icons-material/AlarmOnOutlined";
 import SpeedIcon from "@mui/icons-material/Speed";
 import BoltIcon from "@mui/icons-material/Bolt";
 
-const FeedbackPane = ({ feedback, transcription }) => {
+const FeedbackPane = ({ feedback, transcription, showAudioMetrics = true }) => {
   const [open, setOpen] = useState(false);
 
   const handleOpenModal = () => {
@@ -103,34 +103,35 @@ const FeedbackPane = ({ feedback, transcription }) => {
               </Typography>
             </Paper>
 
-            <Box
-              sx={{
-                mb: 2,
-                display: "flex",
-                flexDirection: "row",
-                alignContent: "space-around",
-              }}
-            >
-              <Chip
-                icon={<AlarmOnOutlinedIcon />}
-                label={getDurationFormattedString(feedback?.duration || 0)}
-                sx={{ mr: 1 }}
-              ></Chip>
-              <Chip
-                icon={<SpeedIcon />}
-                label={getPraceString(
-                  transcription.text || "",
-
-                  feedback?.duration || 0
-                )}
-                sx={{ mr: 1 }}
-              ></Chip>
-              <Chip
-                icon={<BoltIcon />}
-                label={(feedback?.fillers || "No") + " Filler Words"}
-                sx={{ mr: 1 }}
-              ></Chip>
-            </Box>
+            {showAudioMetrics && (
+              <Box
+                sx={{
+                  mb: 2,
+                  display: "flex",
+                  flexDirection: "row",
+                  alignContent: "space-around",
+                }}
+              >
+                <Chip
+                  icon={<AlarmOnOutlinedIcon />}
+                  label={getDurationFormattedString(feedback?.duration || 0)}
+                  sx={{ mr: 1 }}
+                ></Chip>
+                <Chip
+                  icon={<SpeedIcon />}
+                  label={getPraceString(
+                    transcription.text || "",
+                    feedback?.duration || 0
+                  )}
+                  sx={{ mr: 1 }}
+                ></Chip>
+                <Chip
+                  icon={<BoltIcon />}
+                  label={(feedback?.fillers || "No") + " Filler Words"}
+                  sx={{ mr: 1 }}
+                ></Chip>
+              </Box>
+            )}
 
             {Object.entries(feedback?.summary || {}).map(
               ([heading, details]) => (

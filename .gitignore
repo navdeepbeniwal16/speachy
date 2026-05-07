@@ -5,3 +5,9 @@
 *.log
 
 firebase-admin-security.json
+
+### Dependencies ###
+node_modules/
+
+### Tooling ###
+.claude/
