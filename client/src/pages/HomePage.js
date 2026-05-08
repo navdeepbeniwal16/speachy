@@ -72,7 +72,7 @@ const HomePage = () => {
   const { setState } = useContext(AppContext);
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [activeDates, setActiveDates] = useState([]);
   const [sessionsCount, setSessionsCount] = useState(0);
   const [recentProjects, setRecentProjects] = useState([]);
@@ -156,9 +156,9 @@ const HomePage = () => {
     }
   };
 
-  useEffect(() => {
-    getUserEntitlements();
-  }, [userId]);
+  // useEffect(() => {
+  //   getUserEntitlements();
+  // }, [userId]);
 
   useEffect(() => {
     if (!auth.currentUser) return;
