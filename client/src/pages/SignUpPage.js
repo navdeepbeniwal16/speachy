@@ -215,6 +215,8 @@ const SignUp = () => {
       });
       navigate("/home");
     } catch (err) {
+      console.debug("Error occured when signing up a user");
+      console.debug(err);
       const code =
         err.code || (err.message.match(/\(auth\/([^)]+)\)/) || [])[1];
       const map = {
@@ -252,7 +254,9 @@ const SignUp = () => {
           }}
         >
           <CircularProgress sx={{ color: "#FA735B" }} size={32} thickness={3} />
-          <Typography sx={{ fontSize: 14, color: "rgba(255,200,175,0.60)", mt: 0.5 }}>
+          <Typography
+            sx={{ fontSize: 14, color: "rgba(255,200,175,0.60)", mt: 0.5 }}
+          >
             Setting up your account...
           </Typography>
         </Box>
