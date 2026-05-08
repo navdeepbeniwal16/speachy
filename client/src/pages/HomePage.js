@@ -156,9 +156,9 @@ const HomePage = () => {
     }
   };
 
-  useEffect(() => {
-    getUserEntitlements();
-  }, [userId]);
+  // useEffect(() => {
+  //   getUserEntitlements();
+  // }, [userId]);
 
   useEffect(() => {
     if (!auth.currentUser) return;
