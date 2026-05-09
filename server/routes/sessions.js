@@ -7,6 +7,7 @@ const winston = require("winston");
 const firebaseAdminApp = require("../configs/firebase-admin.js");
 const admin = require("firebase-admin");
 const { getFirestore } = require("firebase-admin/firestore");
+const { recordStreakDay } = require("../utils/recordSession.js");
 
 const LOG_LEVEL = process.env.LOG_LEVEL || "info";
 const logger = winston.createLogger({
@@ -85,16 +86,9 @@ router.post("/record", async (req, res) => {
 
     await batch.commit();
 
-    // Record streak day (best-effort); reuse existing endpoint
+    // Record streak day (best-effort); direct call — no internal HTTP
     try {
-      await fetch(`${req.protocol}://${req.get("host")}/streak/record`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: req.headers.authorization,
-        },
-        body: JSON.stringify({ sessionType, tz: timeZone }),
-      });
+      await recordStreakDay(uid, sessionType, timeZone);
     } catch (err) {
       logger.warn("Failed to update streak after session record", { error: err.message });
     }

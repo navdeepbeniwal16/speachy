@@ -10,6 +10,7 @@ const multer = require("multer");
 const winston = require("winston");
 const firebaseAdmin = require("../configs/firebase-admin.js");
 const { getFirestore } = require("firebase-admin/firestore");
+const { recordSessionAndStreak } = require("../utils/recordSession.js");
 
 // Constants
 const TEMPORARY_AUDIO_FILENAME = "temp_audio_file.mp3";
@@ -765,28 +766,9 @@ router.post(
 
     // Record session after successful evaluation
     try {
-      const sessionResponse = await fetch(
-        `${req.protocol}://${req.get("host")}/sessions/record`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: req.headers.authorization,
-          },
-          body: JSON.stringify({ sessionType: "interview" }),
-        }
-      );
-
-      if (sessionResponse.ok) {
-        const sessionData = await sessionResponse.json();
-        console.log("Session recorded successfully:", sessionData);
-      } else {
-        console.warn(
-          "Failed to record session, but evaluation completed successfully"
-        );
-      }
+      await recordSessionAndStreak(req.user.user_id, "interview", req.body.tz || null);
     } catch (error) {
-      console.error("Error recording session:", error);
+      console.error("Error recording session (text):", error);
       // Don't fail the evaluation if session recording fails
     }
 
@@ -814,28 +796,9 @@ router.post(
 
     // Record session after successful evaluation
     try {
-      const sessionResponse = await fetch(
-        `${req.protocol}://${req.get("host")}/sessions/record`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: req.headers.authorization,
-          },
-          body: JSON.stringify({ sessionType: "interview" }),
-        }
-      );
-
-      if (sessionResponse.ok) {
-        const sessionData = await sessionResponse.json();
-        console.log("Session recorded successfully:", sessionData);
-      } else {
-        console.warn(
-          "Failed to record session, but evaluation completed successfully"
-        );
-      }
+      await recordSessionAndStreak(req.user.user_id, "interview", req.body.tz || null);
     } catch (error) {
-      console.error("Error recording session:", error);
+      console.error("Error recording session (audio):", error);
       // Don't fail the evaluation if session recording fails
     }
 
