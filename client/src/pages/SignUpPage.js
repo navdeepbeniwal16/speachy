@@ -209,10 +209,15 @@ const SignUp = () => {
       );
       await sendEmailVerification(auth.currentUser);
       await updateProfile(auth.currentUser, { displayName: name });
-      await setDoc(doc(db, "subscriptions", user.uid), {
-        email: user.email,
-        userUID: user.uid,
-      });
+      try {
+        await setDoc(doc(db, "subscriptions", user.uid), {
+          email: user.email,
+          userUID: user.uid,
+        });
+      } catch (_) {
+        // Non-blocking — Firestore write may fail due to production security rules.
+        // The subscription record is managed server-side; this is best-effort only.
+      }
       navigate("/home");
     } catch (err) {
       console.debug("Error occured when signing up a user");
